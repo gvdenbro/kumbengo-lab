@@ -67,8 +67,11 @@ function stepStrings(step: Step): string[] {
     const side = stringId[0];
     const num = parseInt(stringId.slice(1), 10);
     const total = side === 'L' ? 11 : 10;
-    const threshold = Math.ceil(total / 2);
-    if (num <= threshold) return `${side}${num}`;
+    const mid = Math.ceil(total / 2);
+    if (mode === 'distance') {
+      return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
+    }
+    if (num <= mid) return `${side}${num}`;
     return `${side}${total - num + 1} (far)`;
   }
 

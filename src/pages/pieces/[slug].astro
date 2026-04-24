@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TablatureView from '../../components/TablatureView.astro';
-import NotationToggle from '../../components/NotationToggle.astro';
 import BridgeDiagram from '../../components/BridgeDiagram.astro';
 import TimelineStrip from '../../components/TimelineStrip.astro';
 import Player from '../../components/Player';
@@ -27,7 +26,7 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     <span>{difficulty}</span> · <span>{tempo} BPM</span> · <span>{tags.join(', ')}</span>
   </p>
 
-  <BridgeDiagram />
+  <BridgeDiagram tuning={tuning} />
 
   <Player
     client:only="react"
@@ -36,9 +35,7 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     tempo={tempo}
   />
 
-  <TimelineStrip layers={layers} />
-
-  <NotationToggle />
+  <TimelineStrip layers={layers} tuning={tuning} />
 
   {layers.map((layer, i) => (
     <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>

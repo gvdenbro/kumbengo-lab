@@ -1,6 +1,8 @@
 ---
+interface Props { tuning: string; }
+const { tuning } = Astro.props;
 ---
-<div class="bridge-diagram" aria-label="Kora bridge">
+<div class="bridge-diagram" data-tuning={tuning} aria-label="Kora bridge">
   <div class="bridge-side left">
     {Array.from({length: 11}, (_, i) => (
       <div class="string-dot" data-string={`L${11 - i}`}>
@@ -52,6 +54,33 @@
 </style>
 
 <script>
+  import tuningsRaw from '../data/tunings.yaml';
+  const tunings: Record<string, { strings: Record<string, { note: string }> }> = tuningsRaw as any;
+
+  function bridgeLabel(stringId: string, mode: string, tuningId: string): string {
+    if (mode === 'note') {
+      return tunings[tuningId]?.strings[stringId]?.note ?? stringId;
+    }
+    if (mode === 'distance') {
+      const side = stringId[0];
+      const num = parseInt(stringId.slice(1), 10);
+      const total = side === 'L' ? 11 : 10;
+      const mid = Math.ceil(total / 2);
+      return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
+    }
+    return stringId;
+  }
+
+  document.addEventListener('notation-change', ((e: CustomEvent) => {
+    const diagram = document.querySelector('.bridge-diagram') as HTMLElement;
+    const tuningId = diagram?.dataset.tuning || 'silaba';
+    document.querySelectorAll('.string-dot').forEach(dot => {
+      const id = (dot as HTMLElement).dataset.string!;
+      const label = dot.querySelector('.string-label') as HTMLElement;
+      if (label) label.textContent = bridgeLabel(id, e.detail, tuningId);
+    });
+  }) as EventListener);
+
   document.addEventListener('player-step', ((e: CustomEvent) => {
     document.querySelectorAll('.string-dot').forEach(dot => dot.classList.remove('active'));
     const strings: string[] = e.detail.strings;
@@ -59,9 +88,8 @@
       const dot = document.querySelector(`.string-dot[data-string="${s}"]`);
       if (!dot) return;
       dot.classList.add('active');
-      // Re-trigger animation even if same string
       dot.classList.remove('pluck');
-      void (dot as HTMLElement).offsetWidth; // force reflow
+      void (dot as HTMLElement).offsetWidth;
       dot.classList.add('pluck');
     });
   }) as EventListener);

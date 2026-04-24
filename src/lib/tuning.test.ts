@@ -55,4 +55,28 @@ describe('getStringLabel', () => {
   it('note mode: returns note name for R10', () => {
     expect(getStringLabel('R10', 'note', 'silaba')).toBe('A5');
   });
+
+  it('distance mode: L1 close', () => {
+    expect(getStringLabel('L1', 'distance')).toBe('L⇧1');
+  });
+
+  it('distance mode: L6 close (threshold)', () => {
+    expect(getStringLabel('L6', 'distance')).toBe('L⇧6');
+  });
+
+  it('distance mode: L7 far', () => {
+    expect(getStringLabel('L7', 'distance')).toBe('L⇩5');
+  });
+
+  it('distance mode: L11 far', () => {
+    expect(getStringLabel('L11', 'distance')).toBe('L⇩1');
+  });
+
+  it('distance mode: R1 close', () => {
+    expect(getStringLabel('R1', 'distance')).toBe('R⇧1');
+  });
+
+  it('distance mode: R10 far', () => {
+    expect(getStringLabel('R10', 'distance')).toBe('R⇩1');
+  });
 });

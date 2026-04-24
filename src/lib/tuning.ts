@@ -27,7 +27,7 @@ const RIGHT_COUNT = 10;
 
 export function getStringLabel(
   stringId: string,
-  mode: 'position' | 'note',
+  mode: 'position' | 'note' | 'distance',
   tuningId?: string,
 ): string {
   if (mode === 'note') {
@@ -38,8 +38,15 @@ export function getStringLabel(
   const side = stringId[0] as 'L' | 'R';
   const num = parseInt(stringId.slice(1), 10);
   const total = side === 'L' ? LEFT_COUNT : RIGHT_COUNT;
-  const threshold = Math.ceil(total / 2);
 
+  if (mode === 'distance') {
+    // ⇧ = close to player (low num), ⇩ = far from player (high num)
+    const mid = Math.ceil(total / 2);
+    if (num <= mid) return `${side}⇧${num}`;
+    return `${side}⇩${total - num + 1}`;
+  }
+
+  const threshold = Math.ceil(total / 2);
   if (num <= threshold) return `${side}${num}`;
 
   const fromFar = total - num + 1;
