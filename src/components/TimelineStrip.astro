@@ -10,7 +10,7 @@ function stepStrings(step: Step): string[] {
 ---
 <div class="timeline-strip" data-tuning={tuning} role="region" aria-label="Timeline">
   {layers.map((layer, li) => (
-    <div class="timeline-track" data-layer-track={li} style={li > 0 ? 'display:none' : ''}>
+    <div class="timeline-track" data-layer-track={li} data-active={li === 0 ? 'true' : 'false'} style={li > 0 ? 'display:none' : ''}>
       {layer.steps.map((step, i) => (
         <div class="timeline-step" data-index={i} data-strings={JSON.stringify(stepStrings(step))}>
           <span class="step-beat">{step.t}</span>
@@ -85,15 +85,16 @@ function stepStrings(step: Step): string[] {
   // Switch visible track when layer changes
   document.addEventListener('player-layer', ((e: CustomEvent) => {
     document.querySelectorAll('.timeline-track').forEach((track, i) => {
-      (track as HTMLElement).style.display = i === e.detail.index ? '' : 'none';
+      const active = i === e.detail.index;
+      (track as HTMLElement).style.display = active ? '' : 'none';
+      (track as HTMLElement).dataset.active = String(active);
     });
   }) as EventListener);
 
   // Highlight current step in the active track
   document.addEventListener('player-step', ((e: CustomEvent) => {
     const idx = e.detail.index;
-    const active = document.querySelector('.timeline-track:not([style*="display: none"])') ||
-                   document.querySelector('.timeline-track');
+    const active = document.querySelector('.timeline-track[data-active="true"]');
     if (!active) return;
     const steps = active.querySelectorAll('.timeline-step');
     steps.forEach((step, i) => {

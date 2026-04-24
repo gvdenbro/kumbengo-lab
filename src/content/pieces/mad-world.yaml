@@ -36,8 +36,27 @@ layers:
       - { t: 9.5,  string: R2 }
       - { t: 10,   string: R5 }
       - { t: 10.5, string: R1 }
-
-  - name: Chorus melody
+  - name: Chorus melody start
+    difficulty: beginner
+    # "And I find it kinda funny, I find it kinda sad"
+    steps:
+      # Bar 1: "And I find it kinda"
+      - { t: 0,    string: R1 }
+      - { t: 0.5,  string: R1 }
+      - { t: 1,    string: R2 }
+      - { t: 1.5,  string: R2 }
+      - { t: 2,    string: R3 }
+      - { t: 2.5,  string: R3 }
+      # Bar 2: "funny, I find it kinda"
+      - { t: 3,    string: R7 }
+      - { t: 3.5,  string: R6 }
+      - { t: 4.5,  string: R7 }
+      - { t: 5,    string: R7 }
+      - { t: 5.5,  string: R6 }
+      # Bar 3: "sad ... The dreams in which I'm"
+      - { t: 6,    string: R6 }
+      - { t: 6.5,  string: L8 }
+  - name: Chorus melody full
     difficulty: beginner
     # "And I find it kinda funny, I find it kinda sad"
     steps:
