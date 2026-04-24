@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { repl, pure, silence, fastcat, stack } from '@strudel/core';
-import { webaudioOutput } from '@strudel/webaudio';
-import { samples, initAudioOnFirstClick, getAudioContext } from '@strudel/web';
+import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 
 interface Step {
   t: number;
@@ -25,17 +24,26 @@ function getStepStrings(step: Step): string[] {
   return step.strings ?? (step.string ? [step.string] : []);
 }
 
+// Start loading samples + audio init at module level (same pattern as strudel website)
+let prebaked: Promise<void> | undefined;
+let audioReady: Promise<void> | undefined;
+if (typeof window !== 'undefined') {
+  prebaked = Promise.all([
+    registerSynthSounds(),
+    samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
+  ]).then(() => {});
+  audioReady = initAudioOnFirstClick();
+}
+
 export default function Player({ layers, tuning, tempo }: Props) {
   const replRef = useRef<ReturnType<typeof repl> | null>(null);
   const [playing, setPlaying] = useState(false);
   const [looping, setLooping] = useState(true);
   const [tempoPercent, setTempoPercent] = useState(100);
   const [layerIndex, setLayerIndex] = useState(0);
-  const [ready, setReady] = useState(false);
   const stopTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const audioReady = initAudioOnFirstClick();
     const r = repl({
       defaultOutput: webaudioOutput,
       getTime: () => getAudioContext().currentTime,
@@ -50,13 +58,7 @@ export default function Player({ layers, tuning, tempo }: Props) {
             );
           }
         }, false),
-      beforeStart: () => audioReady,
     });
-    samples(
-      'https://strudel.b-cdn.net/vcsl.json',
-      'https://strudel.b-cdn.net/VCSL/',
-      { prebake: true },
-    ).then(() => setReady(true));
     replRef.current = r;
     return () => { r.stop(); };
   }, []);
@@ -80,14 +82,17 @@ export default function Player({ layers, tuning, tempo }: Props) {
     clearVisuals();
   }, [clearStopTimer, clearVisuals]);
 
-  const buildAndPlay = useCallback(() => {
+  const buildAndPlay = useCallback(async () => {
     const r = replRef.current;
-    if (!r || !ready) return;
+    if (!r) return;
+
+    // Wait for samples + audio context (same as strudel website's beforeEval)
+    await Promise.all([prebaked, audioReady]);
 
     const steps = layers[layerIndex].steps;
     const tempoMul = tempoPercent / 100;
     const lastT = steps[steps.length - 1].t;
-    const totalBeats = lastT + 0.5;
+    const totalBeats = lastT + 1;
     const cps = (tempoMul * tempo) / 60 / totalBeats;
 
     const resolution = 0.5;
@@ -123,7 +128,7 @@ export default function Player({ layers, tuning, tempo }: Props) {
       clearStopTimer();
       stopTimerRef.current = window.setTimeout(stopPlayback, (totalBeats / (tempoMul * tempo / 60)) * 1000 + 200);
     }
-  }, [ready, layerIndex, tempoPercent, layers, tuning, tempo, looping, clearStopTimer, stopPlayback]);
+  }, [layerIndex, tempoPercent, layers, tuning, tempo, looping, clearStopTimer, stopPlayback]);
 
   const handleTempoChange = (value: number) => {
     setTempoPercent(value);
@@ -138,10 +143,10 @@ export default function Player({ layers, tuning, tempo }: Props) {
   const handleLayerChange = (idx: number) => {
     setLayerIndex(idx);
     if (playing) stopPlayback();
-    // Show/hide layer tabs in the DOM
     document.querySelectorAll('.layer-tab').forEach((tab, i) => {
       (tab as HTMLElement).style.display = i === idx ? '' : 'none';
     });
+    document.dispatchEvent(new CustomEvent('player-layer', { detail: { index: idx } }));
   };
 
   const handleLoopChange = (checked: boolean) => {
@@ -179,8 +184,8 @@ export default function Player({ layers, tuning, tempo }: Props) {
         </div>
       )}
       <div className="player-controls">
-        <button onClick={playing ? stopPlayback : buildAndPlay} disabled={!ready}>
-          {!ready ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
+        <button onClick={playing ? stopPlayback : buildAndPlay}>
+          {playing ? '■ Stop' : '▶ Play'}
         </button>
         <label>
           <input

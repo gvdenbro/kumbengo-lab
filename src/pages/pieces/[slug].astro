@@ -46,7 +46,7 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     tempo={tempo}
   />
 
-  <TimelineStrip steps={layers[0].steps} />
+  <TimelineStrip layers={layers} />
 
   <style>
     .print-btn {

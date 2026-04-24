@@ -1,21 +1,24 @@
 ---
 interface Step { t: number; string?: string; strings?: string[]; }
-interface Props { steps: Step[]; }
-const { steps } = Astro.props;
+interface Layer { name: string; difficulty: string; steps: Step[]; }
+interface Props { layers: Layer[]; }
+const { layers } = Astro.props;
 
 function stepStrings(step: Step): string[] {
   return step.strings ?? (step.string ? [step.string] : []);
 }
 ---
 <div class="timeline-strip" role="region" aria-label="Timeline">
-  <div class="timeline-track">
-    {steps.map((step, i) => (
-      <div class="timeline-step" data-index={i}>
-        <span class="step-beat">{step.t}</span>
-        <span class="step-strings">{stepStrings(step).join(', ')}</span>
-      </div>
-    ))}
-  </div>
+  {layers.map((layer, li) => (
+    <div class="timeline-track" data-layer-track={li} style={li > 0 ? 'display:none' : ''}>
+      {layer.steps.map((step, i) => (
+        <div class="timeline-step" data-index={i}>
+          <span class="step-beat">{step.t}</span>
+          <span class="step-strings">{stepStrings(step).join(', ')}</span>
+        </div>
+      ))}
+    </div>
+  ))}
 </div>
 
 <style>
@@ -38,7 +41,7 @@ function stepStrings(step: Step): string[] {
     border-radius: 0.25rem;
     font-size: 0.75rem;
     min-width: 3rem;
-    transition: all 0.15s;
+    transition: background 0.15s, opacity 0.15s;
   }
   .timeline-step.current {
     background: #2563eb;
@@ -52,9 +55,20 @@ function stepStrings(step: Step): string[] {
 </style>
 
 <script>
+  // Switch visible track when layer changes
+  document.addEventListener('player-layer', ((e: CustomEvent) => {
+    document.querySelectorAll('.timeline-track').forEach((track, i) => {
+      (track as HTMLElement).style.display = i === e.detail.index ? '' : 'none';
+    });
+  }) as EventListener);
+
+  // Highlight current step in the active track
   document.addEventListener('player-step', ((e: CustomEvent) => {
     const idx = e.detail.index;
-    const steps = document.querySelectorAll('.timeline-step');
+    const active = document.querySelector('.timeline-track:not([style*="display: none"])') ||
+                   document.querySelector('.timeline-track');
+    if (!active) return;
+    const steps = active.querySelectorAll('.timeline-step');
     steps.forEach((step, i) => {
       step.classList.toggle('current', i === idx);
       step.classList.toggle('past', i < idx);

@@ -26,6 +26,7 @@
     padding: 1rem;
   }
   .bridge-side { display: flex; flex-direction: column; gap: 0.25rem; }
+  .bridge-side.right { margin-top: calc(1 * (2rem + 0.25rem)); }
   .bridge-center { width: 2px; background: #ccc; }
   .string-dot {
     width: 2rem; height: 2rem;
@@ -33,12 +34,19 @@
     border: 2px solid #ccc;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.625rem;
-    transition: all 0.1s;
   }
   .string-dot.active {
     background: #2563eb;
     border-color: #2563eb;
     color: white;
+  }
+  .string-dot.pluck {
+    animation: pluck 0.15s;
+  }
+  @keyframes pluck {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
   }
   @media print { .bridge-diagram { display: none; } }
 </style>
@@ -48,7 +56,13 @@
     document.querySelectorAll('.string-dot').forEach(dot => dot.classList.remove('active'));
     const strings: string[] = e.detail.strings;
     strings.forEach(s => {
-      document.querySelector(`.string-dot[data-string="${s}"]`)?.classList.add('active');
+      const dot = document.querySelector(`.string-dot[data-string="${s}"]`);
+      if (!dot) return;
+      dot.classList.add('active');
+      // Re-trigger animation even if same string
+      dot.classList.remove('pluck');
+      void (dot as HTMLElement).offsetWidth; // force reflow
+      dot.classList.add('pluck');
     });
   }) as EventListener);
 </script>

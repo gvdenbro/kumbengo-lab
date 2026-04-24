@@ -5,27 +5,440 @@ tuning: silaba
 tempo: 88
 tags: [cover, pop]
 
-layers:
-  - name: Simple melody
-    difficulty: beginner
-    steps:
-      - { t: 0,    string: L5 }
-      - { t: 0.5,  string: L6 }
-      - { t: 1,    string: R3 }
-      - { t: 1.5,  string: R4 }
-      - { t: 2,    string: R5 }
-      - { t: 2.5,  string: R4 }
-      - { t: 3,    string: R3 }
-      - { t: 3.5,  string: L6 }
+# Adapted from Gary Jules version (F minor → F major for silaba tuning)
+# Ab→A, Eb→E substitutions to fit the kora's diatonic scale
+# Chord progression: Fm Bb Fm Bb → approx F Bb F Bb on kora
 
-  - name: Full arrangement
+layers:
+  - name: Verse melody
+    difficulty: beginner
+    # "All around me are familiar faces, worn out places, worn out faces"
+    # 4/4 time, 8th note resolution
+    steps:
+      # Bar 1: "All around me are"
+      - { t: 0,    string: R1 }
+      - { t: 0.5,  string: R1 }
+      - { t: 1,    string: R2 }
+      - { t: 1.5,  string: R2 }
+      - { t: 2,    string: R1 }
+      # Bar 2: "familiar faces"
+      - { t: 3,    string: R1 }
+      - { t: 3.5,  string: R3 }
+      - { t: 4,    string: R3 }
+      - { t: 5,    string: R2 }
+      # Bar 3: "Worn out places"
+      - { t: 6,    string: R6 }
+      - { t: 7,    string: R6 }
+      - { t: 7.5,  string: R5 }
+      # Bar 4: "worn out faces"
+      - { t: 8,    string: R6 }
+      - { t: 9,    string: R6 }
+      - { t: 9.5,  string: R2 }
+      - { t: 10,   string: R5 }
+      - { t: 10.5, string: R1 }
+
+  - name: Chorus melody
+    difficulty: beginner
+    # "And I find it kinda funny, I find it kinda sad"
+    steps:
+      # Bar 1: "And I find it kinda"
+      - { t: 0,    string: R1 }
+      - { t: 0.5,  string: R1 }
+      - { t: 1,    string: R2 }
+      - { t: 1.5,  string: R2 }
+      - { t: 2,    string: R3 }
+      - { t: 2.5,  string: R3 }
+      # Bar 2: "funny, I find it kinda"
+      - { t: 3,    string: R7 }
+      - { t: 3.5,  string: R6 }
+      - { t: 4.5,  string: R7 }
+      - { t: 5,    string: R7 }
+      - { t: 5.5,  string: R6 }
+      # Bar 3: "sad ... The dreams in which I'm"
+      - { t: 6,    string: R6 }
+      - { t: 6.5,  string: L8 }
+      - { t: 7.5,  string: R2 }
+      - { t: 8,    string: R2 }
+      - { t: 8.5,  string: R3 }
+      - { t: 9,    string: R3 }
+      # Bar 4: "dying are the best I've ever had"
+      - { t: 9.5,  string: R7 }
+      - { t: 10,   string: R6 }
+      - { t: 10.5, string: R6 }
+      - { t: 11,   string: R7 }
+      - { t: 11.5, string: R7 }
+      - { t: 12,   string: R6 }
+      - { t: 12.5, string: R6 }
+      - { t: 13,   string: L8 }
+
+  - name: Verse with bass
+    difficulty: intermediate
+    # Verse melody with bass notes following Fm→Ab→Eb→Bb adapted as F→A→C→Bb
+    steps:
+      # Bar 1: F bass + "All around me are"
+      - { t: 0,    strings: [L1, R1] }
+      - { t: 0.5,  string: R1 }
+      - { t: 1,    string: R2 }
+      - { t: 1.5,  string: R2 }
+      - { t: 2,    string: R1 }
+      # Bar 2: C bass + "familiar faces"
+      - { t: 3,    strings: [L2, R1] }
+      - { t: 3.5,  string: R3 }
+      - { t: 4,    string: R3 }
+      - { t: 5,    string: R2 }
+      # Bar 3: Bb bass + "Worn out places"
+      - { t: 6,    strings: [L6, R6] }
+      - { t: 7,    string: R6 }
+      - { t: 7.5,  string: R5 }
+      # Bar 4: Bb bass + "worn out faces"
+      - { t: 8,    strings: [L6, R6] }
+      - { t: 9,    string: R6 }
+      - { t: 9.5,  string: R2 }
+      - { t: 10,   string: R5 }
+      - { t: 10.5, string: R1 }
+
+  - name: Full song
     difficulty: intermediate
     steps:
-      - { t: 0,    strings: [L2, L5] }
-      - { t: 0.5,  string: L6 }
-      - { t: 1,    strings: [L1, R3] }
-      - { t: 1.5,  string: R4 }
-      - { t: 2,    strings: [L2, R5] }
-      - { t: 2.5,  string: R4 }
-      - { t: 3,    strings: [L1, R3] }
-      - { t: 3.5,  string: L6 }
+      # === INTRO (bars 1-2) ===
+      - { t: 0,    string: R2 }
+      - { t: 0.5,  string: R3 }
+      - { t: 1,    string: R5 }
+      - { t: 1.5,  string: R2 }
+      - { t: 2,    string: R1 }
+      - { t: 2.5,  string: R5 }
+      - { t: 3,    string: R4 }
+      - { t: 3.5,  string: L7 }
+      - { t: 6,    string: R3 }
+      - { t: 6.5,  string: R5 }
+      - { t: 7,    string: R2 }
+      - { t: 7.5,  string: R1 }
+      - { t: 8,    string: R5 }
+      - { t: 8.5,  string: R2 }
+      - { t: 9,    string: R6 }
+
+      # === VERSE 1 (bars 3-10) ===
+      # "All around me are" (bar 3-4)
+      - { t: 10,   string: R1 }
+      - { t: 10.5, string: R1 }
+      - { t: 11,   string: R2 }
+      - { t: 11.5, string: R2 }
+      - { t: 12,   string: R1 }
+      # "familiar faces" (bar 4)
+      - { t: 13,   string: R1 }
+      - { t: 13.5, string: R3 }
+      - { t: 14,   string: R3 }
+      - { t: 15,   string: R2 }
+      # "Worn out places" (bar 5)
+      - { t: 16,   string: R6 }
+      - { t: 17,   string: R6 }
+      - { t: 17.5, string: R5 }
+      # "worn out faces" (bar 6)
+      - { t: 18,   string: R6 }
+      - { t: 19,   string: R6 }
+      - { t: 19.5, string: R2 }
+      - { t: 20,   string: R5 }
+      - { t: 20.5, string: R1 }
+      # "Bright and early for their" (bar 7-8)
+      - { t: 22,   string: R1 }
+      - { t: 22.5, string: R1 }
+      - { t: 23,   string: R2 }
+      - { t: 23.5, string: R2 }
+      - { t: 24,   string: R1 }
+      # "daily races" (bar 8)
+      - { t: 25,   string: R1 }
+      - { t: 25.5, string: R3 }
+      - { t: 26,   string: R3 }
+      - { t: 27,   string: R2 }
+      # "Going nowhere" (bar 9)
+      - { t: 28,   string: R6 }
+      - { t: 29,   string: R6 }
+      - { t: 29.5, string: R5 }
+      # "going nowhere" (bar 10)
+      - { t: 30,   string: R6 }
+      - { t: 31,   string: R6 }
+      - { t: 31.5, string: R2 }
+      - { t: 32,   string: R5 }
+      - { t: 32.5, string: R1 }
+
+      # === PRE-CHORUS (bars 11-18, same melody pattern) ===
+      # "Their tears are filling up their" (bar 11-12)
+      - { t: 34,   string: R1 }
+      - { t: 35,   string: R2 }
+      - { t: 35.5, string: R2 }
+      - { t: 36,   string: R1 }
+      - { t: 36.5, string: R1 }
+      - { t: 37,   string: R3 }
+      - { t: 37.5, string: R3 }
+      # "glasses" (bar 12)
+      - { t: 38,   string: R3 }
+      - { t: 39,   string: R2 }
+      # "No expression" (bar 13)
+      - { t: 40,   string: R6 }
+      - { t: 41,   string: R6 }
+      - { t: 41.5, string: R5 }
+      # "no expression" (bar 14)
+      - { t: 42,   string: R6 }
+      - { t: 43,   string: R6 }
+      - { t: 43.5, string: R2 }
+      - { t: 44,   string: R5 }
+      - { t: 44.5, string: R1 }
+      # "Hide my head I wanna drown my" (bar 15-16)
+      - { t: 46,   string: R1 }
+      - { t: 46.5, string: R1 }
+      - { t: 47,   string: R2 }
+      - { t: 47.5, string: R2 }
+      - { t: 48,   string: R1 }
+      - { t: 48.5, string: R1 }
+      - { t: 49,   string: R3 }
+      - { t: 49.5, string: R3 }
+      # "sorrow" (bar 16)
+      - { t: 50,   string: R3 }
+      - { t: 51,   string: R2 }
+      # "No tomorrow" (bar 17)
+      - { t: 52,   string: R6 }
+      - { t: 53,   string: R6 }
+      - { t: 53.5, string: R5 }
+      # "no tomorrow" (bar 18)
+      - { t: 54,   string: R6 }
+      - { t: 55,   string: R6 }
+      - { t: 55.5, string: R2 }
+      - { t: 56,   string: R5 }
+      - { t: 56.5, string: R1 }
+
+      # === CHORUS 1 (bars 19-28) ===
+      # "And I find it kinda" (bar 19)
+      - { t: 58,   string: R1 }
+      - { t: 58.5, string: R1 }
+      - { t: 59,   string: R2 }
+      - { t: 59.5, string: R2 }
+      - { t: 60,   string: R3 }
+      - { t: 60.5, string: R3 }
+      # "funny, I find it kinda" (bar 20)
+      - { t: 61,   string: R7 }
+      - { t: 61.5, string: R6 }
+      - { t: 62.5, string: R7 }
+      - { t: 63,   string: R7 }
+      - { t: 63.5, string: R6 }
+      # "sad" (bar 21)
+      - { t: 64,   string: R6 }
+      - { t: 64.5, string: L8 }
+      # "The dreams in which I'm" (bar 22)
+      - { t: 66,   string: R1 }
+      - { t: 67,   string: R2 }
+      - { t: 67.5, string: R2 }
+      - { t: 68,   string: R3 }
+      - { t: 68.5, string: R3 }
+      # "dying are the best I've ever" (bar 23)
+      - { t: 69,   string: R7 }
+      - { t: 69.5, string: R6 }
+      - { t: 70,   string: R6 }
+      - { t: 70.5, string: R7 }
+      - { t: 71,   string: R7 }
+      - { t: 71.5, string: R6 }
+      # "had" (bar 24)
+      - { t: 72,   string: R6 }
+      - { t: 72.5, string: L8 }
+      # "I find it hard to" (bar 25)
+      - { t: 74,   string: R1 }
+      - { t: 74.5, string: R2 }
+      - { t: 75,   string: R2 }
+      - { t: 75.5, string: R3 }
+      - { t: 76,   string: R3 }
+      - { t: 76.5, string: R7 }
+      # "tell you, I find it hard to" (bar 26)
+      - { t: 77,   string: R6 }
+      - { t: 78,   string: R7 }
+      - { t: 78.5, string: R7 }
+      - { t: 79,   string: R6 }
+      - { t: 79.5, string: R6 }
+      # "take" (bar 27)
+      - { t: 80,   string: L8 }
+      # "When people run in circles it's a very very" (bar 27-28)
+      - { t: 82,   string: R1 }
+      - { t: 82.5, string: R2 }
+      - { t: 83,   string: R2 }
+      - { t: 83.5, string: R3 }
+      - { t: 84,   string: R3 }
+      - { t: 84.5, string: R7 }
+      - { t: 85,   string: R6 }
+      - { t: 85.5, string: R6 }
+      - { t: 86,   string: R7 }
+      - { t: 86.5, string: R7 }
+      - { t: 87,   string: R6 }
+      - { t: 87.5, string: R6 }
+      # "Mad world" (bar 29)
+      - { t: 88,   string: R2 }
+      - { t: 88.5, string: R2 }
+      - { t: 89,   string: R5 }
+      - { t: 89.5, string: R5 }
+      - { t: 90,   string: R1 }
+      - { t: 90.5, string: R1 }
+      - { t: 91,   string: R4 }
+      - { t: 91.5, string: L7 }
+      # "Mad world" (bar 30)
+      - { t: 92,   string: R2 }
+      - { t: 92.5, string: R2 }
+      - { t: 93,   string: R5 }
+      - { t: 93.5, string: R5 }
+      - { t: 94,   string: R1 }
+      - { t: 94.5, string: R1 }
+      - { t: 95,   string: R4 }
+      - { t: 95.5, string: R6 }
+
+      # === VERSE 2 (bars 31-38) ===
+      # "Children waiting for the day they feel good"
+      - { t: 98,   string: R1 }
+      - { t: 98.5, string: R1 }
+      - { t: 99,   string: R2 }
+      - { t: 99.5, string: R2 }
+      - { t: 100,  string: R1 }
+      - { t: 100.5, string: R1 }
+      - { t: 101,  string: R3 }
+      - { t: 101.5, string: R3 }
+      - { t: 102,  string: R3 }
+      - { t: 103,  string: R2 }
+      # "Happy birthday, happy birthday"
+      - { t: 104,  string: R6 }
+      - { t: 105,  string: R6 }
+      - { t: 105.5, string: R5 }
+      - { t: 106,  string: R6 }
+      - { t: 107,  string: R6 }
+      - { t: 107.5, string: R2 }
+      - { t: 108,  string: R5 }
+      - { t: 108.5, string: R1 }
+      # "And I feel the way that every child should"
+      - { t: 110,  string: R1 }
+      - { t: 110.5, string: R1 }
+      - { t: 111,  string: R2 }
+      - { t: 111.5, string: R2 }
+      - { t: 112,  string: R1 }
+      - { t: 112.5, string: R1 }
+      - { t: 113,  string: R3 }
+      - { t: 113.5, string: R3 }
+      - { t: 114,  string: R3 }
+      - { t: 115,  string: R2 }
+      # "Sit and listen, sit and listen"
+      - { t: 116,  string: R6 }
+      - { t: 117,  string: R6 }
+      - { t: 117.5, string: R5 }
+      - { t: 118,  string: R6 }
+      - { t: 119,  string: R6 }
+      - { t: 119.5, string: R2 }
+      - { t: 120,  string: R5 }
+      - { t: 120.5, string: R1 }
+
+      # === PRE-CHORUS 2 (bars 39-46) ===
+      # "Went to school and I was very nervous"
+      - { t: 122,  string: R1 }
+      - { t: 123,  string: R2 }
+      - { t: 123.5, string: R2 }
+      - { t: 124,  string: R1 }
+      - { t: 124.5, string: R1 }
+      - { t: 125,  string: R3 }
+      - { t: 125.5, string: R3 }
+      - { t: 126,  string: R3 }
+      - { t: 127,  string: R2 }
+      # "No one knew me, no one knew me"
+      - { t: 128,  string: R6 }
+      - { t: 129,  string: R6 }
+      - { t: 129.5, string: R5 }
+      - { t: 130,  string: R6 }
+      - { t: 131,  string: R6 }
+      - { t: 131.5, string: R2 }
+      - { t: 132,  string: R5 }
+      - { t: 132.5, string: R1 }
+      # "Hello teacher tell me what's my lesson"
+      - { t: 134,  string: R1 }
+      - { t: 134.5, string: R1 }
+      - { t: 135,  string: R2 }
+      - { t: 135.5, string: R2 }
+      - { t: 136,  string: R1 }
+      - { t: 136.5, string: R1 }
+      - { t: 137,  string: R3 }
+      - { t: 137.5, string: R3 }
+      - { t: 138,  string: R3 }
+      - { t: 139,  string: R2 }
+      # "Look right through me, look right through me"
+      - { t: 140,  string: R6 }
+      - { t: 141,  string: R6 }
+      - { t: 141.5, string: R5 }
+      - { t: 142,  string: R6 }
+      - { t: 143,  string: R6 }
+      - { t: 143.5, string: R2 }
+      - { t: 144,  string: R5 }
+      - { t: 144.5, string: R1 }
+
+      # === CHORUS 2 (bars 47-56) ===
+      # "And I find it kinda funny, I find it kinda sad"
+      - { t: 146,  string: R1 }
+      - { t: 146.5, string: R1 }
+      - { t: 147,  string: R2 }
+      - { t: 147.5, string: R2 }
+      - { t: 148,  string: R3 }
+      - { t: 148.5, string: R3 }
+      - { t: 149,  string: R7 }
+      - { t: 149.5, string: R6 }
+      - { t: 150.5, string: R7 }
+      - { t: 151,  string: R7 }
+      - { t: 151.5, string: R6 }
+      - { t: 152,  string: R6 }
+      - { t: 152.5, string: L8 }
+      # "The dreams in which I'm dying are the best I've ever had"
+      - { t: 154,  string: R1 }
+      - { t: 155,  string: R2 }
+      - { t: 155.5, string: R2 }
+      - { t: 156,  string: R3 }
+      - { t: 156.5, string: R3 }
+      - { t: 157,  string: R7 }
+      - { t: 157.5, string: R6 }
+      - { t: 158,  string: R6 }
+      - { t: 158.5, string: R7 }
+      - { t: 159,  string: R7 }
+      - { t: 159.5, string: R6 }
+      - { t: 160,  string: R6 }
+      - { t: 160.5, string: L8 }
+      # "I find it hard to tell you, I find it hard to take"
+      - { t: 162,  string: R1 }
+      - { t: 162.5, string: R2 }
+      - { t: 163,  string: R2 }
+      - { t: 163.5, string: R3 }
+      - { t: 164,  string: R3 }
+      - { t: 164.5, string: R7 }
+      - { t: 165,  string: R6 }
+      - { t: 166,  string: R7 }
+      - { t: 166.5, string: R7 }
+      - { t: 167,  string: R6 }
+      - { t: 167.5, string: R6 }
+      - { t: 168,  string: L8 }
+      # "When people run in circles it's a very very"
+      - { t: 170,  string: R1 }
+      - { t: 170.5, string: R2 }
+      - { t: 171,  string: R2 }
+      - { t: 171.5, string: R3 }
+      - { t: 172,  string: R3 }
+      - { t: 172.5, string: R7 }
+      - { t: 173,  string: R6 }
+      - { t: 173.5, string: R6 }
+      - { t: 174,  string: R7 }
+      - { t: 174.5, string: R7 }
+      - { t: 175,  string: R6 }
+      - { t: 175.5, string: R6 }
+      # "Mad world" (bar 55)
+      - { t: 176,  string: R2 }
+      - { t: 176.5, string: R2 }
+      - { t: 177,  string: R5 }
+      - { t: 177.5, string: R5 }
+      - { t: 178,  string: R1 }
+      - { t: 178.5, string: R1 }
+      - { t: 179,  string: R4 }
+      - { t: 179.5, string: L7 }
+      # "Mad world" (bar 56)
+      - { t: 180,  string: R2 }
+      - { t: 180.5, string: R2 }
+      - { t: 181,  string: R5 }
+      - { t: 181.5, string: R5 }
+      - { t: 182,  string: R1 }
+      - { t: 182.5, string: R1 }
+      - { t: 183,  string: R4 }
+      - { t: 183.5, string: L7 }
