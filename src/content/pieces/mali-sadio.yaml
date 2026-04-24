@@ -1,0 +1,31 @@
+title: Mali Sadio
+slug: mali-sadio
+difficulty: beginner
+tuning: silaba
+tempo: 80
+tags: [traditional, mandinka]
+
+layers:
+  - name: Basic melody
+    difficulty: beginner
+    steps:
+      - { t: 0,    string: R1 }
+      - { t: 0.5,  string: L3 }
+      - { t: 1,    string: R2 }
+      - { t: 1.5,  string: L4 }
+      - { t: 2,    string: R3 }
+      - { t: 2.5,  string: L5 }
+      - { t: 3,    string: R2 }
+      - { t: 3.5,  string: L3 }
+
+  - name: Melody + bass
+    difficulty: intermediate
+    steps:
+      - { t: 0,    strings: [L1, R1] }
+      - { t: 0.5,  string: L3 }
+      - { t: 1,    strings: [L2, R2] }
+      - { t: 1.5,  string: L4 }
+      - { t: 2,    strings: [L1, R3] }
+      - { t: 2.5,  string: L5 }
+      - { t: 3,    strings: [L2, R2] }
+      - { t: 3.5,  string: L3 }

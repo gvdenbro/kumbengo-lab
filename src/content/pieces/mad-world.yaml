@@ -1,0 +1,31 @@
+title: Mad World
+slug: mad-world
+difficulty: beginner
+tuning: silaba
+tempo: 88
+tags: [cover, pop]
+
+layers:
+  - name: Simple melody
+    difficulty: beginner
+    steps:
+      - { t: 0,    string: L5 }
+      - { t: 0.5,  string: L6 }
+      - { t: 1,    string: R3 }
+      - { t: 1.5,  string: R4 }
+      - { t: 2,    string: R5 }
+      - { t: 2.5,  string: R4 }
+      - { t: 3,    string: R3 }
+      - { t: 3.5,  string: L6 }
+
+  - name: Full arrangement
+    difficulty: intermediate
+    steps:
+      - { t: 0,    strings: [L2, L5] }
+      - { t: 0.5,  string: L6 }
+      - { t: 1,    strings: [L1, R3] }
+      - { t: 1.5,  string: R4 }
+      - { t: 2,    strings: [L2, R5] }
+      - { t: 2.5,  string: R4 }
+      - { t: 3,    strings: [L1, R3] }
+      - { t: 3.5,  string: L6 }
