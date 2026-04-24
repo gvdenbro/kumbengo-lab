@@ -5,6 +5,8 @@ import TablatureView from '../../components/TablatureView.astro';
 import NotationToggle from '../../components/NotationToggle.astro';
 import BridgeDiagram from '../../components/BridgeDiagram.astro';
 import TimelineStrip from '../../components/TimelineStrip.astro';
+import Player from '../../components/Player';
+import tuningsRaw from '../../data/tunings.yaml';
 
 export async function getStaticPaths() {
   const pieces = await getCollection('pieces');
@@ -16,6 +18,7 @@ export async function getStaticPaths() {
 
 const { piece } = Astro.props;
 const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
+const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
 ---
 <Base title={title}>
   <a href="/">← Back to pieces</a>
@@ -23,15 +26,6 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
   <p>
     <span>{difficulty}</span> · <span>{tempo} BPM</span> · <span>{tags.join(', ')}</span>
   </p>
-
-  <div id="layer-selector">
-    <label for="layer-select">Layer:</label>
-    <select id="layer-select">
-      {layers.map((layer, i) => (
-        <option value={i}>{layer.name} ({layer.difficulty})</option>
-      ))}
-    </select>
-  </div>
 
   <NotationToggle />
 
@@ -45,164 +39,14 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
 
   <BridgeDiagram />
 
-  <div id="player" data-layers={JSON.stringify(layers)} data-tuning={tuning} data-tempo={tempo}>
-    <button id="play-btn">▶ Play</button>
-    <button id="stop-btn" disabled>■ Stop</button>
-    <label>
-      <input type="checkbox" id="loop-toggle" checked /> Loop
-    </label>
-    <label>
-      Tempo: <input type="range" id="tempo-slider" min="50" max="150" value="100" />
-      <span id="tempo-display">100%</span>
-    </label>
-  </div>
+  <Player
+    client:only="react"
+    layers={layers}
+    tuning={tuningData}
+    tempo={tempo}
+  />
 
   <TimelineStrip steps={layers[0].steps} />
-
-  <script is:inline src="https://unpkg.com/@strudel/web@1.0.3"></script>
-  <script is:inline define:vars={{ tuningsData: JSON.stringify(await import('../../data/tunings.yaml').then(m => m.default)) }}>
-    var tunings = JSON.parse(tuningsData);
-
-    initStrudel({
-      prebake: function() {
-        return samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/');
-      }
-    });
-
-    var el = document.getElementById('player');
-    var pieceLayers = JSON.parse(el.dataset.layers);
-    var tuningId = el.dataset.tuning;
-    var baseTempo = Number(el.dataset.tempo);
-    var playBtn = document.getElementById('play-btn');
-    var stopBtn = document.getElementById('stop-btn');
-    var loopToggle = document.getElementById('loop-toggle');
-    var tempoSlider = document.getElementById('tempo-slider');
-    var tempoDisplay = document.getElementById('tempo-display');
-    var layerSelect = document.getElementById('layer-select');
-    var playing = false;
-    var stopTimeout = null;
-
-    function getStepStrings(step) {
-      return step.strings || (step.string ? [step.string] : []);
-    }
-    function getMidi(s) {
-      var t = tunings[tuningId];
-      return t && t.strings[s] ? t.strings[s].midi : 60;
-    }
-
-    tempoSlider.addEventListener('input', function() {
-      tempoDisplay.textContent = tempoSlider.value + '%';
-      if (playing) { hush(); playing = false; startPlayback(); }
-    });
-
-    function stopPlayback() {
-      playing = false;
-      hush();
-      if (stopTimeout) { clearTimeout(stopTimeout); stopTimeout = null; }
-      playBtn.disabled = false;
-      stopBtn.disabled = true;
-      playBtn.textContent = '▶ Play';
-      document.querySelectorAll('.string-dot').forEach(function(d) { d.classList.remove('active'); });
-      document.querySelectorAll('.timeline-step').forEach(function(d) { d.classList.remove('current', 'past'); });
-    }
-
-    function startPlayback() {
-      if (playing) return;
-      playing = true;
-      playBtn.disabled = true;
-      stopBtn.disabled = false;
-      playBtn.textContent = '⏸ Playing…';
-
-      var idx = layerSelect ? layerSelect.selectedIndex : 0;
-      var steps = pieceLayers[idx].steps;
-      var tempoMul = Number(tempoSlider.value) / 100;
-      var lastT = steps[steps.length - 1].t;
-      var totalBeats = lastT + 0.5;
-
-      // Build mini-notation
-      var resolution = 0.5;
-      var slots = Math.round(totalBeats / resolution);
-      var slotNotes = [];
-      for (var s = 0; s < slots; s++) slotNotes.push('~');
-
-      var slotStepMap = {};
-      for (var i = 0; i < steps.length; i++) {
-        var step = steps[i];
-        var strings = getStepStrings(step);
-        var midiNotes = strings.map(getMidi);
-        var slotIdx = Math.round(step.t / resolution);
-        if (slotIdx < slots) {
-          slotStepMap[slotIdx] = { index: i, strings: strings };
-          slotNotes[slotIdx] = midiNotes.length === 1
-            ? String(midiNotes[0])
-            : '[' + midiNotes.join(',') + ']';
-        }
-      }
-
-      var patStr = slotNotes.join(' ');
-
-      // Default scheduler cps = 0.5 (1 cycle = 2 seconds)
-      // We want 1 cycle = totalBeats / (bpm/60) seconds
-      // _fast factor = desired_cps / default_cps
-      // desired_cps = (bpm * tempoMul / 60) / totalBeats
-      // factor = desired_cps / 0.5 = bpm * tempoMul / 30 / totalBeats
-      var factor = baseTempo * tempoMul / 30 / totalBeats;
-
-      var pat = note(m(patStr))
-        .s('folkharp')
-        ._fast(factor)
-        .onTrigger(function(time, hap) {
-          var frac = hap.whole.begin - Math.floor(hap.whole.begin);
-          var slotIdx = Math.round(frac * slots);
-          if (slotIdx >= slots) slotIdx = 0;
-          var stepInfo = slotStepMap[slotIdx];
-          if (stepInfo) {
-            document.dispatchEvent(new CustomEvent('player-step', {
-              detail: stepInfo
-            }));
-          }
-        }, false);
-
-      pat.play();
-
-      if (!loopToggle.checked) {
-        var cycleSec = 1 / (0.5 * factor);
-        stopTimeout = setTimeout(stopPlayback, cycleSec * 1000 + 200);
-      }
-    }
-
-    loopToggle.addEventListener('change', function() {
-      if (!playing) return;
-      if (!loopToggle.checked) {
-        var idx = layerSelect ? layerSelect.selectedIndex : 0;
-        var steps = pieceLayers[idx].steps;
-        var lastT = steps[steps.length - 1].t;
-        var totalBeats = lastT + 0.5;
-        var tempoMul = Number(tempoSlider.value) / 100;
-        var factor = baseTempo * tempoMul / 30 / totalBeats;
-        var cycleSec = 1 / (0.5 * factor);
-        stopTimeout = setTimeout(stopPlayback, cycleSec * 1000 + 200);
-      } else if (stopTimeout) {
-        clearTimeout(stopTimeout); stopTimeout = null;
-      }
-    });
-
-    playBtn.addEventListener('click', startPlayback);
-    stopBtn.addEventListener('click', stopPlayback);
-    layerSelect && layerSelect.addEventListener('change', function() {
-      if (playing) stopPlayback();
-    });
-  </script>
-
-  <script>
-    const select = document.getElementById('layer-select') as HTMLSelectElement;
-    const tabs = document.querySelectorAll('.layer-tab');
-    select?.addEventListener('change', () => {
-      tabs.forEach((tab, i) => {
-        (tab as HTMLElement).style.display = i === select.selectedIndex ? '' : 'none';
-      });
-    });
-  </script>
 
   <style>
     .print-btn {
