@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { repl, pure, silence, fastcat, stack } from '@strudel/core';
-import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
+import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds, getSampleInfo, soundMap, loadBuffer } from '@strudel/webaudio';
 
 interface Step {
   t: number;
@@ -38,6 +38,7 @@ if (typeof window !== 'undefined') {
 export default function Player({ layers, tuning, tempo }: Props) {
   const replRef = useRef<ReturnType<typeof repl> | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [looping, setLooping] = useState(true);
   const [tempoPercent, setTempoPercent] = useState(100);
   const [layerIndex, setLayerIndex] = useState(0);
@@ -86,10 +87,34 @@ export default function Player({ layers, tuning, tempo }: Props) {
     const r = replRef.current;
     if (!r) return;
 
+    setLoading(true);
+
     // Wait for samples + audio context (same as strudel website's beforeEval)
     await Promise.all([prebaked, audioReady]);
 
+    // Preload the actual audio buffers for notes used in this layer
     const steps = layers[layerIndex].steps;
+    const uniqueMidi = [...new Set(
+      steps.flatMap(s => getStepStrings(s).map(str => tuning[str]?.midi ?? 60))
+    )];
+    const sMap = soundMap.get();
+    const folkharp = sMap.folkharp;
+    if (folkharp?.data?.samples) {
+      const ac = getAudioContext();
+      const sampleData = folkharp.data.samples;
+      const baseUrl = folkharp.data.baseUrl ?? '';
+      const urls = uniqueMidi.map(midi => {
+        try {
+          const info = getSampleInfo({ s: 'folkharp', note: midi, n: 0 }, sampleData);
+          if (!info?.url) return null;
+          return info.url.startsWith('http') ? info.url : baseUrl + '/' + info.url;
+        } catch { return null; }
+      }).filter(Boolean) as string[];
+      await Promise.all(urls.map(url => loadBuffer(url, ac, 'folkharp')));
+    }
+
+    setLoading(false);
+
     const tempoMul = tempoPercent / 100;
     const lastT = steps[steps.length - 1].t;
     const totalBeats = lastT + 1;
@@ -166,7 +191,7 @@ export default function Player({ layers, tuning, tempo }: Props) {
   };
 
   return (
-    <div id="player">
+    <div id="player" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
       {layers.length > 1 && (
         <div id="layer-selector">
           <label htmlFor="layer-select">Layer: </label>
@@ -183,9 +208,9 @@ export default function Player({ layers, tuning, tempo }: Props) {
           </select>
         </div>
       )}
-      <div className="player-controls">
-        <button onClick={playing ? stopPlayback : buildAndPlay}>
-          {playing ? '■ Stop' : '▶ Play'}
+      <div className="player-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button onClick={playing ? stopPlayback : buildAndPlay} disabled={loading}>
+          {loading ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
         </button>
         <label>
           <input

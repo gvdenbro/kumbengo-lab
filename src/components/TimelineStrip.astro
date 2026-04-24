@@ -25,12 +25,15 @@ function stepStrings(step: Step): string[] {
   .timeline-strip {
     overflow-x: auto;
     padding: 0.5rem 0;
+    margin: 1rem auto;
+    max-width: 100%;
     -webkit-overflow-scrolling: touch;
   }
   .timeline-track {
     display: flex;
     gap: 0.25rem;
-    min-width: max-content;
+    width: max-content;
+    margin: 0 auto;
   }
   .timeline-step {
     display: flex;

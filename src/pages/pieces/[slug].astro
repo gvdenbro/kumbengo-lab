@@ -27,16 +27,6 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     <span>{difficulty}</span> · <span>{tempo} BPM</span> · <span>{tags.join(', ')}</span>
   </p>
 
-  <NotationToggle />
-
-  {layers.map((layer, i) => (
-    <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>
-      <TablatureView steps={layer.steps} tuning={tuning} />
-    </div>
-  ))}
-
-  <button onclick="window.print()" class="print-btn">Print tablature</button>
-
   <BridgeDiagram />
 
   <Player
@@ -47,6 +37,16 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
   />
 
   <TimelineStrip layers={layers} />
+
+  <NotationToggle />
+
+  {layers.map((layer, i) => (
+    <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>
+      <TablatureView steps={layer.steps} tuning={tuning} />
+    </div>
+  ))}
+
+  <button onclick="window.print()" class="print-btn">Print tablature</button>
 
   <style>
     .print-btn {
