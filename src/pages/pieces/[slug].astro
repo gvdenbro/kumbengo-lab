@@ -49,6 +49,9 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
     <button id="play-btn">▶ Play</button>
     <button id="stop-btn" disabled>■ Stop</button>
     <label>
+      <input type="checkbox" id="loop-toggle" checked /> Loop
+    </label>
+    <label>
       Tempo: <input type="range" id="tempo-slider" min="50" max="150" value="100" />
       <span id="tempo-display">100%</span>
     </label>
@@ -56,98 +59,138 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
 
   <TimelineStrip steps={layers[0].steps} />
 
-  <script>
-    import { superdough, initAudioOnFirstClick, getAudioContext } from '@strudel/webaudio';
-    import tuningsRaw from '../../data/tunings.yaml';
+  <script is:inline src="https://unpkg.com/@strudel/web@1.0.3"></script>
+  <script is:inline define:vars={{ tuningsData: JSON.stringify(await import('../../data/tunings.yaml').then(m => m.default)) }}>
+    var tunings = JSON.parse(tuningsData);
 
-    const tunings: Record<string, { strings: Record<string, { midi: number }> }> = tuningsRaw as any;
-
-    const el = document.getElementById('player')!;
-    const layers = JSON.parse(el.dataset.layers!);
-    const tuningId = el.dataset.tuning!;
-    const baseTempo = Number(el.dataset.tempo!);
-
-    const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
-    const stopBtn = document.getElementById('stop-btn') as HTMLButtonElement;
-    const tempoSlider = document.getElementById('tempo-slider') as HTMLInputElement;
-    const tempoDisplay = document.getElementById('tempo-display')!;
-    const layerSelect = document.getElementById('layer-select') as HTMLSelectElement;
-
-    let playing = false;
-    let timeouts: number[] = [];
-
-    function getStepStrings(step: any): string[] {
-      return step.strings ?? (step.string ? [step.string] : []);
-    }
-
-    function getMidi(stringId: string): number {
-      return tunings[tuningId]?.strings[stringId]?.midi ?? 60;
-    }
-
-    initAudioOnFirstClick();
-
-    tempoSlider.addEventListener('input', () => {
-      tempoDisplay.textContent = `${tempoSlider.value}%`;
+    initStrudel({
+      prebake: function() {
+        return samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/');
+      }
     });
 
-    function stop() {
+    var el = document.getElementById('player');
+    var pieceLayers = JSON.parse(el.dataset.layers);
+    var tuningId = el.dataset.tuning;
+    var baseTempo = Number(el.dataset.tempo);
+    var playBtn = document.getElementById('play-btn');
+    var stopBtn = document.getElementById('stop-btn');
+    var loopToggle = document.getElementById('loop-toggle');
+    var tempoSlider = document.getElementById('tempo-slider');
+    var tempoDisplay = document.getElementById('tempo-display');
+    var layerSelect = document.getElementById('layer-select');
+    var playing = false;
+    var stopTimeout = null;
+
+    function getStepStrings(step) {
+      return step.strings || (step.string ? [step.string] : []);
+    }
+    function getMidi(s) {
+      var t = tunings[tuningId];
+      return t && t.strings[s] ? t.strings[s].midi : 60;
+    }
+
+    tempoSlider.addEventListener('input', function() {
+      tempoDisplay.textContent = tempoSlider.value + '%';
+      if (playing) { hush(); playing = false; startPlayback(); }
+    });
+
+    function stopPlayback() {
       playing = false;
-      timeouts.forEach(clearTimeout);
-      timeouts = [];
+      hush();
+      if (stopTimeout) { clearTimeout(stopTimeout); stopTimeout = null; }
       playBtn.disabled = false;
       stopBtn.disabled = true;
       playBtn.textContent = '▶ Play';
+      document.querySelectorAll('.string-dot').forEach(function(d) { d.classList.remove('active'); });
+      document.querySelectorAll('.timeline-step').forEach(function(d) { d.classList.remove('current', 'past'); });
     }
 
-    async function play() {
+    function startPlayback() {
       if (playing) return;
       playing = true;
       playBtn.disabled = true;
       stopBtn.disabled = false;
       playBtn.textContent = '⏸ Playing…';
 
-      const ctx = getAudioContext();
-      if (ctx.state === 'suspended') await ctx.resume();
+      var idx = layerSelect ? layerSelect.selectedIndex : 0;
+      var steps = pieceLayers[idx].steps;
+      var tempoMul = Number(tempoSlider.value) / 100;
+      var lastT = steps[steps.length - 1].t;
+      var totalBeats = lastT + 0.5;
 
-      const layerIdx = layerSelect?.selectedIndex ?? 0;
-      const steps = layers[layerIdx].steps;
-      const tempoMul = Number(tempoSlider.value) / 100;
-      const secPerBeat = 60 / (baseTempo * tempoMul);
-      const now = ctx.currentTime + 0.05;
+      // Build mini-notation
+      var resolution = 0.5;
+      var slots = Math.round(totalBeats / resolution);
+      var slotNotes = [];
+      for (var s = 0; s < slots; s++) slotNotes.push('~');
 
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const strings = getStepStrings(step);
-        const beatTime = step.t * secPerBeat;
-        const deadline = now + beatTime;
-        const dur = 0.4 * secPerBeat;
-
-        // Schedule event dispatch for bridge/timeline sync
-        const delayMs = beatTime * 1000;
-        const tid = window.setTimeout(() => {
-          document.dispatchEvent(new CustomEvent('player-step', {
-            detail: { index: i, strings },
-          }));
-        }, delayMs);
-        timeouts.push(tid);
-
-        for (const s of strings) {
-          superdough({ note: getMidi(s), s: 'triangle', gain: 0.4, decay: dur, sustain: 0 }, deadline, dur);
+      var slotStepMap = {};
+      for (var i = 0; i < steps.length; i++) {
+        var step = steps[i];
+        var strings = getStepStrings(step);
+        var midiNotes = strings.map(getMidi);
+        var slotIdx = Math.round(step.t / resolution);
+        if (slotIdx < slots) {
+          slotStepMap[slotIdx] = { index: i, strings: strings };
+          slotNotes[slotIdx] = midiNotes.length === 1
+            ? String(midiNotes[0])
+            : '[' + midiNotes.join(',') + ']';
         }
       }
 
-      // Stop after last step
-      const lastBeat = steps[steps.length - 1].t;
-      const totalMs = (lastBeat * secPerBeat + 1) * 1000;
-      timeouts.push(window.setTimeout(stop, totalMs));
+      var patStr = slotNotes.join(' ');
+
+      // Default scheduler cps = 0.5 (1 cycle = 2 seconds)
+      // We want 1 cycle = totalBeats / (bpm/60) seconds
+      // _fast factor = desired_cps / default_cps
+      // desired_cps = (bpm * tempoMul / 60) / totalBeats
+      // factor = desired_cps / 0.5 = bpm * tempoMul / 30 / totalBeats
+      var factor = baseTempo * tempoMul / 30 / totalBeats;
+
+      var pat = note(m(patStr))
+        .s('folkharp')
+        ._fast(factor)
+        .onTrigger(function(time, hap) {
+          var frac = hap.whole.begin - Math.floor(hap.whole.begin);
+          var slotIdx = Math.round(frac * slots);
+          if (slotIdx >= slots) slotIdx = 0;
+          var stepInfo = slotStepMap[slotIdx];
+          if (stepInfo) {
+            document.dispatchEvent(new CustomEvent('player-step', {
+              detail: stepInfo
+            }));
+          }
+        }, false);
+
+      pat.play();
+
+      if (!loopToggle.checked) {
+        var cycleSec = 1 / (0.5 * factor);
+        stopTimeout = setTimeout(stopPlayback, cycleSec * 1000 + 200);
+      }
     }
 
-    playBtn.addEventListener('click', play);
-    stopBtn.addEventListener('click', stop);
+    loopToggle.addEventListener('change', function() {
+      if (!playing) return;
+      if (!loopToggle.checked) {
+        var idx = layerSelect ? layerSelect.selectedIndex : 0;
+        var steps = pieceLayers[idx].steps;
+        var lastT = steps[steps.length - 1].t;
+        var totalBeats = lastT + 0.5;
+        var tempoMul = Number(tempoSlider.value) / 100;
+        var factor = baseTempo * tempoMul / 30 / totalBeats;
+        var cycleSec = 1 / (0.5 * factor);
+        stopTimeout = setTimeout(stopPlayback, cycleSec * 1000 + 200);
+      } else if (stopTimeout) {
+        clearTimeout(stopTimeout); stopTimeout = null;
+      }
+    });
 
-    // Update player when layer changes
-    layerSelect?.addEventListener('change', () => {
-      if (playing) stop();
+    playBtn.addEventListener('click', startPlayback);
+    stopBtn.addEventListener('click', stopPlayback);
+    layerSelect && layerSelect.addEventListener('change', function() {
+      if (playing) stopPlayback();
     });
   </script>
 
