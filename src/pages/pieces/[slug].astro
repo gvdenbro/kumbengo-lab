@@ -3,6 +3,8 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TablatureView from '../../components/TablatureView.astro';
 import NotationToggle from '../../components/NotationToggle.astro';
+import BridgeDiagram from '../../components/BridgeDiagram.astro';
+import TimelineStrip from '../../components/TimelineStrip.astro';
 
 export async function getStaticPaths() {
   const pieces = await getCollection('pieces');
@@ -41,6 +43,8 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
 
   <button onclick="window.print()" class="print-btn">Print tablature</button>
 
+  <BridgeDiagram />
+
   <div id="player" data-layers={JSON.stringify(layers)} data-tuning={tuning} data-tempo={tempo}>
     <button id="play-btn">▶ Play</button>
     <button id="stop-btn" disabled>■ Stop</button>
@@ -49,6 +53,8 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
       <span id="tempo-display">100%</span>
     </label>
   </div>
+
+  <TimelineStrip steps={layers[0].steps} />
 
   <script>
     import { superdough, initAudioOnFirstClick, getAudioContext } from '@strudel/webaudio';

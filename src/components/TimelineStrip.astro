@@ -1,0 +1,65 @@
+---
+interface Step { t: number; string?: string; strings?: string[]; }
+interface Props { steps: Step[]; }
+const { steps } = Astro.props;
+
+function stepStrings(step: Step): string[] {
+  return step.strings ?? (step.string ? [step.string] : []);
+}
+---
+<div class="timeline-strip" role="region" aria-label="Timeline">
+  <div class="timeline-track">
+    {steps.map((step, i) => (
+      <div class="timeline-step" data-index={i}>
+        <span class="step-beat">{step.t}</span>
+        <span class="step-strings">{stepStrings(step).join(', ')}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .timeline-strip {
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .timeline-track {
+    display: flex;
+    gap: 0.25rem;
+    min-width: max-content;
+  }
+  .timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    min-width: 3rem;
+    transition: all 0.15s;
+  }
+  .timeline-step.current {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+  }
+  .timeline-step.past { opacity: 0.4; }
+  .step-beat { font-size: 0.625rem; color: #888; }
+  .current .step-beat { color: rgba(255,255,255,0.7); }
+  @media print { .timeline-strip { display: none; } }
+</style>
+
+<script>
+  document.addEventListener('player-step', ((e: CustomEvent) => {
+    const idx = e.detail.index;
+    const steps = document.querySelectorAll('.timeline-step');
+    steps.forEach((step, i) => {
+      step.classList.toggle('current', i === idx);
+      step.classList.toggle('past', i < idx);
+    });
+    const current = steps[idx] as HTMLElement;
+    current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }) as EventListener);
+</script>

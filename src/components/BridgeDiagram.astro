@@ -1,0 +1,54 @@
+---
+---
+<div class="bridge-diagram" aria-label="Kora bridge">
+  <div class="bridge-side left">
+    {Array.from({length: 11}, (_, i) => (
+      <div class="string-dot" data-string={`L${11 - i}`}>
+        <span class="string-label">{`L${11 - i}`}</span>
+      </div>
+    ))}
+  </div>
+  <div class="bridge-center"></div>
+  <div class="bridge-side right">
+    {Array.from({length: 10}, (_, i) => (
+      <div class="string-dot" data-string={`R${10 - i}`}>
+        <span class="string-label">{`R${10 - i}`}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .bridge-diagram {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem;
+  }
+  .bridge-side { display: flex; flex-direction: column; gap: 0.25rem; }
+  .bridge-center { width: 2px; background: #ccc; }
+  .string-dot {
+    width: 2rem; height: 2rem;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.625rem;
+    transition: all 0.1s;
+  }
+  .string-dot.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+  }
+  @media print { .bridge-diagram { display: none; } }
+</style>
+
+<script>
+  document.addEventListener('player-step', ((e: CustomEvent) => {
+    document.querySelectorAll('.string-dot').forEach(dot => dot.classList.remove('active'));
+    const strings: string[] = e.detail.strings;
+    strings.forEach(s => {
+      document.querySelector(`.string-dot[data-string="${s}"]`)?.classList.add('active');
+    });
+  }) as EventListener);
+</script>
