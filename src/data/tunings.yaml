@@ -1,0 +1,24 @@
+silaba:
+  name: Silaba (F major)
+  strings:
+    L1:  { note: F2,  midi: 41 }
+    L2:  { note: C3,  midi: 48 }
+    L3:  { note: D3,  midi: 50 }
+    L4:  { note: E3,  midi: 52 }
+    L5:  { note: G3,  midi: 55 }
+    L6:  { note: Bb3, midi: 58 }
+    L7:  { note: D4,  midi: 62 }
+    L8:  { note: F4,  midi: 65 }
+    L9:  { note: A4,  midi: 69 }
+    L10: { note: C5,  midi: 72 }
+    L11: { note: E5,  midi: 76 }
+    R1:  { note: F3,  midi: 53 }
+    R2:  { note: A3,  midi: 57 }
+    R3:  { note: C4,  midi: 60 }
+    R4:  { note: E4,  midi: 64 }
+    R5:  { note: G4,  midi: 67 }
+    R6:  { note: Bb4, midi: 70 }
+    R7:  { note: D5,  midi: 74 }
+    R8:  { note: F5,  midi: 77 }
+    R9:  { note: G5,  midi: 79 }
+    R10: { note: A5,  midi: 81 }
