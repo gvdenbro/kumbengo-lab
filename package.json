@@ -1,0 +1,19 @@
+{
+  "name": "kumbengo-lab",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.2.1",
+    "astro": "^6.1.9"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
+  }
+}
