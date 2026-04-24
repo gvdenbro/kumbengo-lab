@@ -41,6 +41,110 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
 
   <button onclick="window.print()" class="print-btn">Print tablature</button>
 
+  <div id="player" data-layers={JSON.stringify(layers)} data-tuning={tuning} data-tempo={tempo}>
+    <button id="play-btn">▶ Play</button>
+    <button id="stop-btn" disabled>■ Stop</button>
+    <label>
+      Tempo: <input type="range" id="tempo-slider" min="50" max="150" value="100" />
+      <span id="tempo-display">100%</span>
+    </label>
+  </div>
+
+  <script>
+    import { superdough, initAudioOnFirstClick, getAudioContext } from '@strudel/webaudio';
+    import tuningsRaw from '../../data/tunings.yaml';
+
+    const tunings: Record<string, { strings: Record<string, { midi: number }> }> = tuningsRaw as any;
+
+    const el = document.getElementById('player')!;
+    const layers = JSON.parse(el.dataset.layers!);
+    const tuningId = el.dataset.tuning!;
+    const baseTempo = Number(el.dataset.tempo!);
+
+    const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
+    const stopBtn = document.getElementById('stop-btn') as HTMLButtonElement;
+    const tempoSlider = document.getElementById('tempo-slider') as HTMLInputElement;
+    const tempoDisplay = document.getElementById('tempo-display')!;
+    const layerSelect = document.getElementById('layer-select') as HTMLSelectElement;
+
+    let playing = false;
+    let timeouts: number[] = [];
+
+    function getStepStrings(step: any): string[] {
+      return step.strings ?? (step.string ? [step.string] : []);
+    }
+
+    function getMidi(stringId: string): number {
+      return tunings[tuningId]?.strings[stringId]?.midi ?? 60;
+    }
+
+    initAudioOnFirstClick();
+
+    tempoSlider.addEventListener('input', () => {
+      tempoDisplay.textContent = `${tempoSlider.value}%`;
+    });
+
+    function stop() {
+      playing = false;
+      timeouts.forEach(clearTimeout);
+      timeouts = [];
+      playBtn.disabled = false;
+      stopBtn.disabled = true;
+      playBtn.textContent = '▶ Play';
+    }
+
+    async function play() {
+      if (playing) return;
+      playing = true;
+      playBtn.disabled = true;
+      stopBtn.disabled = false;
+      playBtn.textContent = '⏸ Playing…';
+
+      const ctx = getAudioContext();
+      if (ctx.state === 'suspended') await ctx.resume();
+
+      const layerIdx = layerSelect?.selectedIndex ?? 0;
+      const steps = layers[layerIdx].steps;
+      const tempoMul = Number(tempoSlider.value) / 100;
+      const secPerBeat = 60 / (baseTempo * tempoMul);
+      const now = ctx.currentTime + 0.05;
+
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const strings = getStepStrings(step);
+        const beatTime = step.t * secPerBeat;
+        const deadline = now + beatTime;
+        const dur = 0.4 * secPerBeat;
+
+        // Schedule event dispatch for bridge/timeline sync
+        const delayMs = beatTime * 1000;
+        const tid = window.setTimeout(() => {
+          document.dispatchEvent(new CustomEvent('player-step', {
+            detail: { index: i, strings },
+          }));
+        }, delayMs);
+        timeouts.push(tid);
+
+        for (const s of strings) {
+          superdough({ note: getMidi(s), s: 'triangle', gain: 0.4, decay: dur, sustain: 0 }, deadline, dur);
+        }
+      }
+
+      // Stop after last step
+      const lastBeat = steps[steps.length - 1].t;
+      const totalMs = (lastBeat * secPerBeat + 1) * 1000;
+      timeouts.push(window.setTimeout(stop, totalMs));
+    }
+
+    playBtn.addEventListener('click', play);
+    stopBtn.addEventListener('click', stop);
+
+    // Update player when layer changes
+    layerSelect?.addEventListener('change', () => {
+      if (playing) stop();
+    });
+  </script>
+
   <script>
     const select = document.getElementById('layer-select') as HTMLSelectElement;
     const tabs = document.querySelectorAll('.layer-tab');
@@ -58,7 +162,7 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
       cursor: pointer;
     }
     @media print {
-      .print-btn, #layer-selector, a { display: none; }
+      .print-btn, #layer-selector, #player, a, .notation-toggle { display: none; }
     }
   </style>
 </Base>
