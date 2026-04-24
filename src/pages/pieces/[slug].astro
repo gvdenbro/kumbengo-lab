@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TablatureView from '../../components/TablatureView.astro';
+
+export async function getStaticPaths() {
+  const pieces = await getCollection('pieces');
+  return pieces.map((piece) => ({
+    params: { slug: piece.data.slug },
+    props: { piece },
+  }));
+}
+
+const { piece } = Astro.props;
+const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
+---
+<Base title={title}>
+  <a href="/">← Back to pieces</a>
+  <h1>{title}</h1>
+  <p>
+    <span>{difficulty}</span> · <span>{tempo} BPM</span> · <span>{tags.join(', ')}</span>
+  </p>
+
+  <div id="layer-selector">
+    <label for="layer-select">Layer:</label>
+    <select id="layer-select">
+      {layers.map((layer, i) => (
+        <option value={i}>{layer.name} ({layer.difficulty})</option>
+      ))}
+    </select>
+  </div>
+
+  {layers.map((layer, i) => (
+    <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>
+      <TablatureView steps={layer.steps} tuning={tuning} />
+    </div>
+  ))}
+
+  <button onclick="window.print()" class="print-btn">Print tablature</button>
+
+  <script>
+    const select = document.getElementById('layer-select') as HTMLSelectElement;
+    const tabs = document.querySelectorAll('.layer-tab');
+    select?.addEventListener('change', () => {
+      tabs.forEach((tab, i) => {
+        (tab as HTMLElement).style.display = i === select.selectedIndex ? '' : 'none';
+      });
+    });
+  </script>
+
+  <style>
+    .print-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    @media print {
+      .print-btn, #layer-selector, a { display: none; }
+    }
+  </style>
+</Base>

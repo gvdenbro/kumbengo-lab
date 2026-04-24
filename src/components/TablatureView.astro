@@ -1,0 +1,58 @@
+---
+interface Step {
+  t: number;
+  string?: string;
+  strings?: string[];
+}
+interface Props {
+  steps: Step[];
+  tuning: string;
+}
+const { steps, tuning } = Astro.props;
+
+function stepStrings(step: Step): string[] {
+  return step.strings ?? (step.string ? [step.string] : []);
+}
+---
+<div class="tablature" data-tuning={tuning}>
+  <table>
+    <thead>
+      <tr>
+        <th>Beat</th>
+        <th>Left</th>
+        <th>Right</th>
+      </tr>
+    </thead>
+    <tbody>
+      {steps.map((step) => {
+        const strings = stepStrings(step);
+        const left = strings.filter(s => s.startsWith('L'));
+        const right = strings.filter(s => s.startsWith('R'));
+        return (
+          <tr data-beat={step.t}>
+            <td>{step.t}</td>
+            <td class="note-cell" data-strings={JSON.stringify(left)}>{left.join(', ') || '—'}</td>
+            <td class="note-cell" data-strings={JSON.stringify(right)}>{right.join(', ') || '—'}</td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .tablature table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .tablature th, .tablature td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid #e5e5e5;
+    text-align: center;
+  }
+  .tablature th { font-size: 0.75rem; color: #888; }
+  @media print {
+    .tablature { break-inside: avoid; }
+  }
+</style>
