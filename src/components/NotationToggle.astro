@@ -1,0 +1,36 @@
+---
+---
+<div class="notation-toggle">
+  <label>
+    <input type="radio" name="notation" value="position" checked /> String position
+  </label>
+  <label>
+    <input type="radio" name="notation" value="note" /> Note name
+  </label>
+</div>
+
+<script>
+  const radios = document.querySelectorAll('input[name="notation"]');
+  const saved = localStorage.getItem('notation-mode');
+  if (saved) {
+    radios.forEach((r) => {
+      (r as HTMLInputElement).checked = (r as HTMLInputElement).value === saved;
+    });
+  }
+  radios.forEach((r) => {
+    r.addEventListener('change', (e) => {
+      const mode = (e.target as HTMLInputElement).value;
+      localStorage.setItem('notation-mode', mode);
+      document.dispatchEvent(new CustomEvent('notation-change', { detail: mode }));
+    });
+  });
+  // Fire initial event
+  const initial = saved || 'position';
+  document.dispatchEvent(new CustomEvent('notation-change', { detail: initial }));
+</script>
+
+<style>
+  .notation-toggle { margin: 0.5rem 0; font-size: 0.875rem; }
+  .notation-toggle label { margin-right: 1rem; }
+  @media print { .notation-toggle { display: none; } }
+</style>

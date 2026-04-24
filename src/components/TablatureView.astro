@@ -56,3 +56,32 @@ function stepStrings(step: Step): string[] {
     .tablature { break-inside: avoid; }
   }
 </style>
+
+<script>
+  import tuningsRaw from '../data/tunings.yaml';
+
+  const tunings: Record<string, { strings: Record<string, { note: string }> }> = tuningsRaw as any;
+
+  function getLabel(stringId: string, mode: string, tuningId: string): string {
+    if (mode === 'note') return tunings[tuningId]?.strings[stringId]?.note ?? stringId;
+    const side = stringId[0];
+    const num = parseInt(stringId.slice(1), 10);
+    const total = side === 'L' ? 11 : 10;
+    const threshold = Math.ceil(total / 2);
+    if (num <= threshold) return `${side}${num}`;
+    return `${side}${total - num + 1} (far)`;
+  }
+
+  document.addEventListener('notation-change', ((e: CustomEvent) => {
+    const mode = e.detail;
+    document.querySelectorAll('.tablature').forEach((tab) => {
+      const tuning = (tab as HTMLElement).dataset.tuning!;
+      tab.querySelectorAll('.note-cell').forEach((cell) => {
+        const strings: string[] = JSON.parse((cell as HTMLElement).dataset.strings || '[]');
+        (cell as HTMLElement).textContent = strings.length
+          ? strings.map(s => getLabel(s, mode, tuning)).join(', ')
+          : '—';
+      });
+    });
+  }) as EventListener);
+</script>

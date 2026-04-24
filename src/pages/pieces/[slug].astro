@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TablatureView from '../../components/TablatureView.astro';
+import NotationToggle from '../../components/NotationToggle.astro';
 
 export async function getStaticPaths() {
   const pieces = await getCollection('pieces');
@@ -29,6 +30,8 @@ const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
       ))}
     </select>
   </div>
+
+  <NotationToggle />
 
   {layers.map((layer, i) => (
     <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>
