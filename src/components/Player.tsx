@@ -219,7 +219,7 @@ export default function Player({ layers, tuning, tempo }: Props) {
     <div id="player" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
       {layers.length > 1 && (
         <div id="layer-selector">
-          <label htmlFor="layer-select">Layer: </label>
+          <label htmlFor="layer-select">Arrangement: </label>
           <select
             id="layer-select"
             value={layerIndex}
