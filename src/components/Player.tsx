@@ -70,25 +70,6 @@ export default function Player({ layers, tuning, tempo }: Props) {
     document.dispatchEvent(new CustomEvent('notation-change', { detail: mode }));
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
-      if (e.key === ' ') {
-        e.preventDefault();
-        playing ? stopPlayback() : buildAndPlay();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handleTempoChange(Math.max(50, tempoPercent - 5));
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        handleTempoChange(Math.min(150, tempoPercent + 5));
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [playing, tempoPercent, buildAndPlay, stopPlayback]);
-
   const clearStopTimer = useCallback(() => {
     if (stopTimerRef.current != null) {
       clearTimeout(stopTimerRef.current);
@@ -214,6 +195,25 @@ export default function Player({ layers, tuning, tempo }: Props) {
       }
     }
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
+      if (e.key === ' ') {
+        e.preventDefault();
+        playing ? stopPlayback() : buildAndPlay();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleTempoChange(Math.max(50, tempoPercent - 5));
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleTempoChange(Math.min(150, tempoPercent + 5));
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [playing, tempoPercent, buildAndPlay, stopPlayback]);
 
   return (
     <div id="player" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
