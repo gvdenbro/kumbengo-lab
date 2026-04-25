@@ -46,13 +46,11 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
   <button onclick="window.print()" class="print-btn">Print tablature</button>
 
   <style>
-    .print-btn {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-    }
+    .print-btn { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+  </style>
+  <style is:global>
     @media print {
-      .print-btn, #layer-selector, #player, a, .notation-toggle { display: none; }
+      .print-btn, #player, .bridge-diagram, .timeline-strip, a { display: none !important; }
     }
   </style>
 </Base>
