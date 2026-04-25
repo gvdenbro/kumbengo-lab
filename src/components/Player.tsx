@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { repl, pure, silence, fastcat, stack } from '@strudel/core';
 import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds, getSampleInfo, soundMap, loadBuffer } from '@strudel/webaudio';
-
-interface Step {
-  t: number;
-  string?: string;
-  strings?: string[];
-}
+import { getStepStrings, type Step } from '../lib/piece';
+import { getTotalBeats, getCps, getPlaybackDurationMs, buildSlotMap, getMidiNotes } from '../lib/player-logic';
 
 interface Layer {
   name: string;
@@ -20,10 +16,6 @@ interface Props {
   tempo: number;
 }
 
-function getStepStrings(step: Step): string[] {
-  return step.strings ?? (step.string ? [step.string] : []);
-}
-
 // Start loading samples + audio init at module level (same pattern as strudel website)
 let prebaked: Promise<void> | undefined;
 let audioReady: Promise<void> | undefined;
@@ -31,8 +23,8 @@ if (typeof window !== 'undefined') {
   prebaked = Promise.all([
     registerSynthSounds(),
     samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
-  ]).then(() => {});
-  audioReady = initAudioOnFirstClick();
+  ]).then(() => {}).catch(err => console.error('Sample preload failed:', err));
+  audioReady = initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
 }
 
 export default function Player({ layers, tuning, tempo }: Props) {
@@ -64,7 +56,6 @@ export default function Player({ layers, tuning, tempo }: Props) {
     return () => { r.stop(); };
   }, []);
 
-  // Fire initial notation event so bridge/tablature labels update
   useEffect(() => {
     const mode = localStorage.getItem('notation-mode') || 'position';
     document.dispatchEvent(new CustomEvent('notation-change', { detail: mode }));
@@ -94,82 +85,73 @@ export default function Player({ layers, tuning, tempo }: Props) {
     if (!r) return;
 
     setLoading(true);
+    try {
+      await Promise.all([prebaked, audioReady]);
 
-    // Wait for samples + audio context (same as strudel website's beforeEval)
-    await Promise.all([prebaked, audioReady]);
-
-    // Preload the actual audio buffers for notes used in this layer
-    const steps = layers[layerIndex].steps;
-    const uniqueMidi = [...new Set(
-      steps.flatMap(s => getStepStrings(s).map(str => tuning[str]?.midi ?? 60))
-    )];
-    const sMap = soundMap.get();
-    const folkharp = sMap.folkharp;
-    if (folkharp?.data?.samples) {
-      const ac = getAudioContext();
-      const sampleData = folkharp.data.samples;
-      const baseUrl = folkharp.data.baseUrl ?? '';
-      const urls = uniqueMidi.map(midi => {
-        try {
-          const info = getSampleInfo({ s: 'folkharp', note: midi, n: 0 }, sampleData);
-          if (!info?.url) return null;
-          return info.url.startsWith('http') ? info.url : baseUrl + '/' + info.url;
-        } catch { return null; }
-      }).filter(Boolean) as string[];
-      await Promise.all(urls.map(url => loadBuffer(url, ac, 'folkharp')));
-    }
-
-    setLoading(false);
-
-    const tempoMul = tempoPercent / 100;
-    const lastT = steps[steps.length - 1].t;
-    const totalBeats = lastT + 1;
-    const cps = (tempoMul * tempo) / 60 / totalBeats;
-
-    const resolution = 0.5;
-    const slots = Math.round(totalBeats / resolution);
-    const stepMap = new Map<number, { index: number; strings: string[] }>();
-    for (let i = 0; i < steps.length; i++) {
-      stepMap.set(Math.round(steps[i].t / resolution), {
-        index: i,
-        strings: getStepStrings(steps[i]),
-      });
-    }
-
-    const slotPatterns = [];
-    for (let s = 0; s < slots; s++) {
-      const info = stepMap.get(s);
-      if (!info) { slotPatterns.push(silence); continue; }
-      const midiNotes = info.strings.map(str => tuning[str]?.midi ?? 60);
-      const base = { s: 'folkharp', _stepIndex: info.index, _strings: info.strings };
-      if (midiNotes.length === 1) {
-        slotPatterns.push(pure({ note: midiNotes[0], ...base }));
-      } else {
-        slotPatterns.push(stack(...midiNotes.map(n => pure({ note: n, ...base }))));
+      const steps = layers[layerIndex].steps;
+      const uniqueMidi = [...new Set(
+        steps.flatMap(s => getMidiNotes(getStepStrings(s), tuning))
+      )];
+      const sMap = soundMap.get();
+      const folkharp = sMap.folkharp;
+      if (folkharp?.data?.samples) {
+        const ac = getAudioContext();
+        const sampleData = folkharp.data.samples;
+        const baseUrl = folkharp.data.baseUrl ?? '';
+        const urls = uniqueMidi.map(midi => {
+          try {
+            const info = getSampleInfo({ s: 'folkharp', note: midi, n: 0 }, sampleData);
+            if (!info?.url) return null;
+            return info.url.startsWith('http') ? info.url : baseUrl + '/' + info.url;
+          } catch { return null; }
+        }).filter(Boolean) as string[];
+        await Promise.all(urls.map(url => loadBuffer(url, ac, 'folkharp')));
       }
-    }
 
-    const pattern = fastcat(...slotPatterns);
-    r.setCps(cps);
-    r.setPattern(pattern, true);
-    r.start();
-    setPlaying(true);
+      setLoading(false);
 
-    if (!looping) {
-      clearStopTimer();
-      stopTimerRef.current = window.setTimeout(stopPlayback, (totalBeats / (tempoMul * tempo / 60)) * 1000 + 200);
+      const totalBeats = getTotalBeats(steps);
+      const cps = getCps(tempo, tempoPercent, totalBeats);
+      const { slots, slotMap } = buildSlotMap(steps);
+
+      const slotPatterns = [];
+      for (let s = 0; s < slots; s++) {
+        const info = slotMap.get(s);
+        if (!info) { slotPatterns.push(silence); continue; }
+        const midiNotes = getMidiNotes(info.strings, tuning);
+        const base = { s: 'folkharp', _stepIndex: info.index, _strings: info.strings };
+        if (midiNotes.length === 1) {
+          slotPatterns.push(pure({ note: midiNotes[0], ...base }));
+        } else {
+          slotPatterns.push(stack(...midiNotes.map(n => pure({ note: n, ...base }))));
+        }
+      }
+
+      const pattern = fastcat(...slotPatterns);
+      r.setCps(cps);
+      r.setPattern(pattern, true);
+      r.start();
+      setPlaying(true);
+
+      if (!looping) {
+        clearStopTimer();
+        stopTimerRef.current = window.setTimeout(stopPlayback, getPlaybackDurationMs(totalBeats, tempo, tempoPercent) + 200);
+      }
+    } catch (err) {
+      console.error('Playback failed:', err);
+      setLoading(false);
+      setPlaying(false);
     }
   }, [layerIndex, tempoPercent, layers, tuning, tempo, looping, clearStopTimer, stopPlayback]);
 
-  const handleTempoChange = (value: number) => {
+  const handleTempoChange = useCallback((value: number) => {
     setTempoPercent(value);
     if (playing && replRef.current) {
       const steps = layers[layerIndex].steps;
-      const lastT = steps[steps.length - 1].t;
-      const totalBeats = lastT + 0.5;
-      replRef.current.setCps((value / 100 * tempo) / 60 / totalBeats);
+      const totalBeats = getTotalBeats(steps);
+      replRef.current.setCps(getCps(tempo, value, totalBeats));
     }
-  };
+  }, [playing, layerIndex, layers, tempo]);
 
   const handleLayerChange = (idx: number) => {
     setLayerIndex(idx);
@@ -185,18 +167,15 @@ export default function Player({ layers, tuning, tempo }: Props) {
     if (playing) {
       if (!checked) {
         const steps = layers[layerIndex].steps;
-        const lastT = steps[steps.length - 1].t;
-        const totalBeats = lastT + 0.5;
-        const tempoMul = tempoPercent / 100;
+        const totalBeats = getTotalBeats(steps);
         clearStopTimer();
-        stopTimerRef.current = window.setTimeout(stopPlayback, (totalBeats / (tempoMul * tempo / 60)) * 1000 + 200);
+        stopTimerRef.current = window.setTimeout(stopPlayback, getPlaybackDurationMs(totalBeats, tempo, tempoPercent) + 200);
       } else {
         clearStopTimer();
       }
     }
   };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).matches('input, select, textarea')) return;
@@ -213,7 +192,9 @@ export default function Player({ layers, tuning, tempo }: Props) {
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [playing, tempoPercent, buildAndPlay, stopPlayback]);
+  }, [playing, tempoPercent, buildAndPlay, stopPlayback, handleTempoChange]);
+
+  const playLabel = loading ? 'Loading' : playing ? 'Stop' : 'Play';
 
   return (
     <div id="player" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
@@ -234,7 +215,11 @@ export default function Player({ layers, tuning, tempo }: Props) {
         </div>
       )}
       <div className="player-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button onClick={playing ? stopPlayback : buildAndPlay} disabled={loading}>
+        <button
+          onClick={playing ? stopPlayback : buildAndPlay}
+          disabled={loading}
+          aria-label={playLabel}
+        >
           {loading ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
         </button>
         <label>
@@ -253,6 +238,7 @@ export default function Player({ layers, tuning, tempo }: Props) {
             max={150}
             value={tempoPercent}
             onChange={e => handleTempoChange(Number(e.target.value))}
+            aria-valuetext={`${tempoPercent}% of original tempo`}
           />
           <span>{tempoPercent}%</span>
         </label>

@@ -1,5 +1,7 @@
 import tuningsRaw from '../data/tunings.yaml';
 
+export { getStringLabel } from './labels';
+
 export interface StringInfo {
   note: string;
   midi: number;
@@ -19,36 +21,7 @@ export function getTuning(id: string): Tuning {
 }
 
 export function getMidiNote(tuningId: string, stringId: string): number {
-  return getTuning(tuningId).strings[stringId].midi;
-}
-
-const LEFT_COUNT = 11;
-const RIGHT_COUNT = 10;
-
-export function getStringLabel(
-  stringId: string,
-  mode: 'position' | 'note' | 'distance',
-  tuningId?: string,
-): string {
-  if (mode === 'note') {
-    if (!tuningId) throw new Error('tuningId required for note mode');
-    return getTuning(tuningId).strings[stringId].note;
-  }
-
-  const side = stringId[0] as 'L' | 'R';
-  const num = parseInt(stringId.slice(1), 10);
-  const total = side === 'L' ? LEFT_COUNT : RIGHT_COUNT;
-
-  if (mode === 'distance') {
-    // ⇧ = close to player (low num), ⇩ = far from player (high num)
-    const mid = Math.ceil(total / 2);
-    if (num <= mid) return `${side}⇧${num}`;
-    return `${side}⇩${total - num + 1}`;
-  }
-
-  const threshold = Math.ceil(total / 2);
-  if (num <= threshold) return `${side}${num}`;
-
-  const fromFar = total - num + 1;
-  return `${side}${fromFar} (far)`;
+  const info = getTuning(tuningId).strings[stringId];
+  if (!info) throw new Error(`Unknown string "${stringId}" in tuning "${tuningId}"`);
+  return info.midi;
 }

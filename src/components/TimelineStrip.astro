@@ -1,20 +1,16 @@
 ---
-interface Step { t: number; string?: string; strings?: string[]; }
+import { getStepStrings, type Step } from '../lib/piece';
 interface Layer { name: string; difficulty: string; steps: Step[]; }
 interface Props { layers: Layer[]; tuning: string; }
 const { layers, tuning } = Astro.props;
-
-function stepStrings(step: Step): string[] {
-  return step.strings ?? (step.string ? [step.string] : []);
-}
 ---
 <div class="timeline-strip" data-tuning={tuning} role="region" aria-label="Timeline">
   {layers.map((layer, li) => (
     <div class="timeline-track" data-layer-track={li} data-active={li === 0 ? 'true' : 'false'} style={li > 0 ? 'display:none' : ''}>
       {layer.steps.map((step, i) => (
-        <div class="timeline-step" data-index={i} data-strings={JSON.stringify(stepStrings(step))}>
+        <div class="timeline-step" data-index={i} data-strings={JSON.stringify(getStepStrings(step))}>
           <span class="step-beat">{step.t}</span>
-          <span class="step-strings">{stepStrings(step).join(', ')}</span>
+          <span class="step-strings">{getStepStrings(step).join(', ')}</span>
         </div>
       ))}
     </div>
@@ -58,31 +54,17 @@ function stepStrings(step: Step): string[] {
 </style>
 
 <script>
-  import tuningsRaw from '../data/tunings.yaml';
-  const tunings: Record<string, { strings: Record<string, { note: string }> }> = tuningsRaw as any;
-
-  function timelineLabel(stringId: string, mode: string, tuningId: string): string {
-    if (mode === 'note') return tunings[tuningId]?.strings[stringId]?.note ?? stringId;
-    if (mode === 'distance') {
-      const side = stringId[0];
-      const num = parseInt(stringId.slice(1), 10);
-      const total = side === 'L' ? 11 : 10;
-      const mid = Math.ceil(total / 2);
-      return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
-    }
-    return stringId;
-  }
+  import { getStringLabel } from '../lib/labels';
 
   document.addEventListener('notation-change', ((e: CustomEvent) => {
     const tuningId = (document.querySelector('.timeline-strip') as HTMLElement)?.dataset.tuning || 'silaba';
     document.querySelectorAll('.timeline-step').forEach(step => {
       const strings: string[] = JSON.parse((step as HTMLElement).dataset.strings || '[]');
       const label = step.querySelector('.step-strings') as HTMLElement;
-      if (label) label.textContent = strings.map(s => timelineLabel(s, e.detail, tuningId)).join(', ');
+      if (label) label.textContent = strings.map(s => getStringLabel(s, e.detail, tuningId)).join(', ');
     });
   }) as EventListener);
 
-  // Switch visible track when layer changes
   document.addEventListener('player-layer', ((e: CustomEvent) => {
     document.querySelectorAll('.timeline-track').forEach((track, i) => {
       const active = i === e.detail.index;
@@ -91,7 +73,6 @@ function stepStrings(step: Step): string[] {
     });
   }) as EventListener);
 
-  // Highlight current step in the active track
   document.addEventListener('player-step', ((e: CustomEvent) => {
     const idx = e.detail.index;
     const active = document.querySelector('.timeline-track[data-active="true"]');

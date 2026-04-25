@@ -54,22 +54,7 @@ const { tuning } = Astro.props;
 </style>
 
 <script>
-  import tuningsRaw from '../data/tunings.yaml';
-  const tunings: Record<string, { strings: Record<string, { note: string }> }> = tuningsRaw as any;
-
-  function bridgeLabel(stringId: string, mode: string, tuningId: string): string {
-    if (mode === 'note') {
-      return tunings[tuningId]?.strings[stringId]?.note ?? stringId;
-    }
-    if (mode === 'distance') {
-      const side = stringId[0];
-      const num = parseInt(stringId.slice(1), 10);
-      const total = side === 'L' ? 11 : 10;
-      const mid = Math.ceil(total / 2);
-      return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
-    }
-    return stringId;
-  }
+  import { getStringLabel } from '../lib/labels';
 
   document.addEventListener('notation-change', ((e: CustomEvent) => {
     const diagram = document.querySelector('.bridge-diagram') as HTMLElement;
@@ -77,7 +62,7 @@ const { tuning } = Astro.props;
     document.querySelectorAll('.string-dot').forEach(dot => {
       const id = (dot as HTMLElement).dataset.string!;
       const label = dot.querySelector('.string-label') as HTMLElement;
-      if (label) label.textContent = bridgeLabel(id, e.detail, tuningId);
+      if (label) label.textContent = getStringLabel(id, e.detail, tuningId);
     });
   }) as EventListener);
 
