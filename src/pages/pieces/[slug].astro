@@ -23,7 +23,7 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
   <a href="/">← Back to pieces</a>
   <h1>{title}</h1>
   <p>
-    <span>{difficulty}</span> · <span>{tempo} BPM</span> · <span>{tags.join(', ')}</span>
+    <small>{difficulty} · {tempo} BPM · {tags.join(', ')}</small>
   </p>
 
   <BridgeDiagram tuning={tuning} />
@@ -43,14 +43,12 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     </div>
   ))}
 
-  <button onclick="window.print()" class="print-btn">Print tablature</button>
+  <button class="outline" onclick="window.print()">Print tablature</button>
 
-  <style>
-    .print-btn { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
-  </style>
   <style is:global>
     @media print {
-      .print-btn, #player, .bridge-diagram, .timeline-strip, a { display: none !important; }
+      #player, astro-island, .bridge-diagram, .timeline-strip,
+      nav, a[href="/"], button.outline { display: none !important; }
     }
   </style>
 </Base>

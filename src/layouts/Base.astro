@@ -3,31 +3,23 @@ interface Props { title: string; }
 const { title } = Astro.props;
 ---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title} — Kumbengo Lab</title>
   <style is:global>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; }
-    body {
-      font-family: system-ui, sans-serif;
-      line-height: 1.6;
-      max-width: 48rem;
-      margin: 0 auto;
-      padding: 1rem;
-      color: #1a1a1a;
-      background: #fafaf8;
-    }
-    a { color: #2563eb; }
+    @import "@picocss/pico/css/pico.min.css";
   </style>
 </head>
 <body>
-  <header>
-    <a href="/"><strong>Kumbengo Lab</strong></a>
-    <p>Learn the kora, one piece at a time</p>
-  </header>
-  <main>
+  <main class="container">
+    <header>
+      <nav>
+        <ul><li><a href="/"><strong>Kumbengo Lab</strong></a></li></ul>
+      </nav>
+      <p><small>Learn the kora, one piece at a time</small></p>
+    </header>
     <slot />
   </main>
 </body>
