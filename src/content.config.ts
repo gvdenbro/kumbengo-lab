@@ -28,7 +28,6 @@ const pieces = defineCollection({
   loader: glob({ pattern: '**/*.yaml', base: './src/content/pieces' }),
   schema: z.object({
     title: z.string(),
-    slug: z.string(),
     difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
     tuning: z.enum(knownTunings),
     tempo: z.number(),

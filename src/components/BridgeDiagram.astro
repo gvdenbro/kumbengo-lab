@@ -18,9 +18,15 @@ const { tuning } = Astro.props;
       </div>
     ))}
   </div>
+  <span id="bridge-live" class="sr-only" aria-live="polite"></span>
 </div>
 
 <style>
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
   .bridge-diagram {
     display: flex;
     justify-content: center;
@@ -77,5 +83,7 @@ const { tuning } = Astro.props;
       void (dot as HTMLElement).offsetWidth;
       dot.classList.add('pluck');
     });
+    const live = document.getElementById('bridge-live');
+    if (live) live.textContent = strings.join(', ');
   }) as EventListener);
 </script>

@@ -10,7 +10,7 @@ import tuningsRaw from '../../data/tunings.yaml';
 export async function getStaticPaths() {
   const pieces = await getCollection('pieces');
   return pieces.map((piece) => ({
-    params: { slug: piece.data.slug },
+    params: { slug: piece.id },
     props: { piece },
   }));
 }
