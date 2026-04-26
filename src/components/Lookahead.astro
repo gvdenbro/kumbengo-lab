@@ -1,20 +1,44 @@
 ---
 import { getStepStrings, type Step } from '../lib/piece';
 interface Arrangement { name: string; difficulty: string; steps: Step[]; }
-interface Props { arrangements: Arrangement[]; tuning: string; lookahead?: number; }
-const { arrangements, tuning, lookahead = 5 } = Astro.props;
+interface Props { arrangements: Arrangement[]; tuning: string; lookaheadBeats?: number; }
+const { arrangements, tuning, lookaheadBeats = 3 } = Astro.props;
+
+const BASE_REM = 2;
+const MAX_REM = 6;
+const DEFAULT_GAP = 0.5;
+
+function getGap(steps: Step[], i: number): number {
+  if (i < steps.length - 1) return steps[i + 1].t - steps[i].t;
+  return DEFAULT_GAP;
+}
+
+function gapToHeight(gap: number, minGap: number): string {
+  const scale = gap / Math.max(minGap, 0.25);
+  const rem = Math.min(BASE_REM * scale, MAX_REM);
+  return `${rem}rem`;
+}
 ---
-<div class="lookahead" data-tuning={tuning} data-lookahead={lookahead} role="region" aria-label="Upcoming notes">
-  {arrangements.map((arr, ai) => (
-    <ol class="lookahead-track" data-arrangement-track={ai} data-active={ai === 0 ? 'true' : 'false'} style={ai > 0 ? 'display:none' : ''}>
-      {arr.steps.map((step, i) => (
-        <li class="lookahead-item" data-index={i} data-strings={JSON.stringify(getStepStrings(step))}>
-          <span class="lookahead-strings">{getStepStrings(step).join(', ')}</span>
-          <span class="lookahead-beat">{step.t}</span>
-        </li>
-      ))}
-    </ol>
-  ))}
+<div class="lookahead" data-tuning={tuning} data-lookahead-beats={lookaheadBeats} role="region" aria-label="Upcoming notes">
+  {arrangements.map((arr, ai) => {
+    const minGap = Math.min(...arr.steps.map((_, i) => getGap(arr.steps, i)));
+    return (
+      <ol class="lookahead-track" data-arrangement-track={ai} data-active={ai === 0 ? 'true' : 'false'} style={ai > 0 ? 'display:none' : ''}>
+        {arr.steps.map((step, i) => (
+          <li
+            class="lookahead-item"
+            data-index={i}
+            data-beat={step.t}
+            data-strings={JSON.stringify(getStepStrings(step))}
+            style={`min-height:${gapToHeight(getGap(arr.steps, i), minGap)}`}
+          >
+            <span class="lookahead-strings">{getStepStrings(step).join(', ')}</span>
+            <span class="lookahead-beat">{step.t}</span>
+          </li>
+        ))}
+      </ol>
+    );
+  })}
 </div>
 
 <style>
@@ -27,13 +51,13 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
   }
   .lookahead-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.35rem 0.6rem;
+    padding: 0 0.6rem;
     border: 1px solid var(--pico-muted-border-color);
     border-radius: 0.25rem;
     font-size: 0.8rem;
@@ -55,7 +79,7 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
   @media print { .lookahead { display: none; } }
   @media (max-width: 480px) {
     .lookahead { min-width: 4rem; }
-    .lookahead-item { padding: 0.2rem 0.4rem; font-size: 0.65rem; }
+    .lookahead-item { padding: 0 0.4rem; font-size: 0.65rem; }
     .lookahead-beat { font-size: 0.5rem; }
   }
 </style>
@@ -63,19 +87,20 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
 <script>
   import { getStringLabel } from '../lib/labels';
 
-  const LOOKAHEAD_COUNT = Number(document.querySelector('.lookahead')?.getAttribute('data-lookahead') ?? 5);
+  const LOOKAHEAD_BEATS = 2;
 
   function updateVisibility(currentIndex: number) {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
     if (!track) return;
     const items = track.querySelectorAll('.lookahead-item');
+    const beats = Array.from(items).map(el => Number((el as HTMLElement).dataset.beat));
+    const startBeat = currentIndex < 0 ? beats[0] ?? 0 : beats[currentIndex] ?? 0;
+
     items.forEach((item, i) => {
       const el = item as HTMLElement;
+      const beat = beats[i];
       el.classList.toggle('current', i === currentIndex);
-      if (currentIndex < 0) {
-        // Before playback: show first batch
-        el.classList.toggle('hidden', i > LOOKAHEAD_COUNT);
-      } else if (i < currentIndex || i > currentIndex + LOOKAHEAD_COUNT) {
+      if (i < currentIndex || beat > startBeat + LOOKAHEAD_BEATS) {
         el.classList.add('hidden');
       } else {
         el.classList.remove('hidden');
@@ -83,7 +108,6 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
     });
   }
 
-  // Sync arrangement from select on load
   const arrSel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
   if (arrSel && Number(arrSel.value) !== 0) {
     document.querySelectorAll('.lookahead-track').forEach((track, i) => {

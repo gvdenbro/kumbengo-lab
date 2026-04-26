@@ -8,21 +8,21 @@ arrangements:
 - name: Intro
   difficulty: beginner
   steps:
-  - t: 0
+  - t: 0.0
     string: R7
-  - t: 0.5
-    string: R7
-  - t: 1
+  - t: 1.0
     string: R7
   - t: 1.5
-    string: L10
-  - t: 2
-    string: R6
-  - t: 2.5
-    string: L9
+    string: R7
   - t: 3
     string: L10
-  - t: 3.5
-    string: R6
   - t: 4
+    string: R6
+  - t: 4.5
+    string: L9
+  - t: 6
+    string: L10
+  - t: 7
+    string: R6
+  - t: 7.5
     string: L9
