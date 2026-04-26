@@ -24,24 +24,24 @@ describe('getMidiNote', () => {
 });
 
 describe('getStringLabel', () => {
-  it('position mode: L1 stays L1 (close)', () => {
+  it('position mode: L1 stays L1', () => {
     expect(getStringLabel('L1', 'position')).toBe('L1');
   });
 
-  it('position mode: L11 becomes L1 (far)', () => {
-    expect(getStringLabel('L11', 'position')).toBe('L1 (far)');
+  it('position mode: L11 stays L11', () => {
+    expect(getStringLabel('L11', 'position')).toBe('L11');
   });
 
-  it('position mode: L6 stays L6 (threshold)', () => {
+  it('position mode: L6 stays L6', () => {
     expect(getStringLabel('L6', 'position')).toBe('L6');
   });
 
-  it('position mode: L7 flips to L5 (far)', () => {
-    expect(getStringLabel('L7', 'position')).toBe('L5 (far)');
+  it('position mode: L7 stays L7', () => {
+    expect(getStringLabel('L7', 'position')).toBe('L7');
   });
 
-  it('position mode: R6 flips to R5 (far)', () => {
-    expect(getStringLabel('R6', 'position')).toBe('R5 (far)');
+  it('position mode: R6 stays R6', () => {
+    expect(getStringLabel('R6', 'position')).toBe('R6');
   });
 
   it('position mode: R5 stays R5', () => {
