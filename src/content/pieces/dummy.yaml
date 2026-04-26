@@ -26,3 +26,128 @@ arrangements:
     string: R6
   - t: 7.5
     string: L9
+- name: tets
+  difficulty: beginner
+  steps:
+  - t: 0.0
+    string: R1
+  - t: 1.0
+    string: R1
+  - t: 1.5
+    string: R1
+  - t: 3.0
+    string: R1
+  - t: 4.0
+    string: R1
+  - t: 4.5
+    string: R1
+  - t: 6.0
+    string: R1
+  - t: 7.0
+    string: R1
+  - t: 7.5
+    string: R1
+  - t: 8.5
+    string: R1
+  - t: 10.0
+    string: R1
+  - t: 10.5
+    string: R1
+  - t: 12.0
+    string: R1
+  - t: 13.0
+    string: R1
+  - t: 13.5
+    string: R1
+  - t: 14.0
+    string: R1
+  - t: 15.0
+    string: R1
+  - t: 16.0
+    string: R1
+  - t: 17.5
+    string: R1
+  - t: 18.5
+    string: R1
+  - t: 19.0
+    string: R1
+  - t: 20.0
+    string: R1
+  - t: 21.5
+    string: R1
+  - t: 22.0
+    string: R1
+  - t: 23.5
+    string: R1
+  - t: 25.0
+    string: R1
+  - t: 26.5
+    string: R1
+  - t: 28.0
+    string: R1
+  - t: 29.5
+    string: R1
+  - t: 31.0
+    string: R1
+  - t: 31.5
+    string: R1
+  - t: 35.5
+    string: R1
+  - t: 36.0
+    string: R1
+  - t: 36.5
+    string: R1
+  - t: 37.5
+    string: R1
+  - t: 38.5
+    string: R1
+  - t: 40.5
+    string: R1
+  - t: 41.0
+    string: R1
+  - t: 42.0
+    string: R1
+  - t: 43.0
+    string: R1
+  - t: 44.0
+    string: R1
+  - t: 44.5
+    string: R1
+  - t: 46.5
+    string: R1
+  - t: 48.0
+    string: R1
+  - t: 49.5
+    string: R1
+  - t: 51.0
+    string: R1
+  - t: 52.5
+    string: R1
+  - t: 54.0
+    string: R1
+  - t: 54.5
+    string: R1
+  - t: 58.0
+    string: R1
+  - t: 58.5
+    string: R1
+  - t: 59.0
+    string: R1
+  - t: 60.0
+    string: R1
+  - t: 60.5
+    string: R1
+  - t: 61.5
+    string: R1
+  - t: 63.0
+    string: R1
+  - t: 64.0
+    string: R1
+  - t: 64.5
+    string: R1
+  - t: 65.5
+    string: R1
+  - t: 67.0
+    string: R1
+  - t: 67.5
+    string: R1
