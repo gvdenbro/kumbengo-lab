@@ -141,6 +141,7 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
 
       r.setCps(cps);
       r.setPattern(fastcat(...slotPatterns), true);
+      await getAudioContext().resume();
       r.start();
       patternBuiltRef.current = true;
       setState('playing');
