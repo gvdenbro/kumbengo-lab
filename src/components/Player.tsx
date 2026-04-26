@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Component, type ReactNode } from 'react';
 import { repl, pure, silence, fastcat, stack } from '@strudel/core';
 import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds, getSampleInfo, soundMap, loadBuffer } from '@strudel/webaudio';
 import { getStepStrings, type Step } from '../lib/piece';
@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
   audioReady = initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
 }
 
-export default function Player({ arrangements, tuning, tempo }: Props) {
+function PlayerInner({ arrangements, tuning, tempo }: Props) {
   const replRef = useRef<ReturnType<typeof repl> | null>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -160,7 +160,7 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
     }
   }, [playing, arrangementIndex, arrangements, tempo]);
 
-  const handleLoopChange = (checked: boolean) => {
+  const handleLoopChange = useCallback((checked: boolean) => {
     setLooping(checked);
     if (playing) {
       if (!checked) {
@@ -172,7 +172,7 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
         clearStopTimer();
       }
     }
-  };
+  }, [playing, arrangementIndex, arrangements, tempo, tempoPercent, clearStopTimer, stopPlayback]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -225,4 +225,17 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
       </label>
     </div>
   );
+}
+
+class PlayerErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) return <p>Player failed to load. Try refreshing the page.</p>;
+    return this.props.children;
+  }
+}
+
+export default function Player(props: Props) {
+  return <PlayerErrorBoundary><PlayerInner {...props} /></PlayerErrorBoundary>;
 }

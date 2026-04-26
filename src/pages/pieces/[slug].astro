@@ -5,7 +5,7 @@ import TablatureView from '../../components/TablatureView.astro';
 import BridgeDiagram from '../../components/BridgeDiagram.astro';
 import Lookahead from '../../components/Lookahead.astro';
 import Player from '../../components/Player';
-import tuningsRaw from '../../data/tunings.yaml';
+import { getTuning } from '../../lib/tuning';
 
 export async function getStaticPaths() {
   const pieces = await getCollection('pieces');
@@ -17,7 +17,7 @@ export async function getStaticPaths() {
 
 const { piece } = Astro.props;
 const { title, difficulty, tuning, tempo, tags, arrangements } = piece.data;
-const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
+const tuningData = getTuning(tuning).strings;
 ---
 <Base title={title} showNotation>
   <a href="/">← Back to pieces</a>

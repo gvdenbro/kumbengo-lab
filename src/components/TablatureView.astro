@@ -40,10 +40,10 @@ const { steps, tuning } = Astro.props;
   }
   .tablature th, .tablature td {
     padding: 0.25rem 0.5rem;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--pico-muted-border-color);
     text-align: center;
   }
-  .tablature th { font-size: 0.75rem; color: #888; }
+  .tablature th { font-size: 0.75rem; color: var(--pico-muted-color); }
   @media print {
     .tablature { break-inside: avoid; }
   }

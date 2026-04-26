@@ -1,6 +1,6 @@
 # Kumbengo Lab
 
-Learn the kora, one piece at a time. A static site for browsing kora pieces, viewing printable tablature, and playing back pieces interactively with a bridge diagram and timeline.
+Learn the kora, one piece at a time. A static site for browsing kora pieces, viewing printable tablature, and playing back pieces interactively with a bridge diagram and lookahead display.
 
 ## Getting started
 
@@ -21,17 +21,16 @@ npm run dev    # http://localhost:4321
 
 ## Adding a piece
 
-Create a YAML file in `src/content/pieces/`:
+Create a YAML file in `src/content/pieces/`. The filename becomes the URL slug (e.g., `my-piece.yaml` → `/pieces/my-piece/`).
 
 ```yaml
 title: My Piece
-slug: my-piece
 difficulty: beginner    # beginner | intermediate | advanced
 tuning: silaba
 tempo: 90
 tags: [traditional]
 
-layers:
+arrangements:
   - name: Melody only
     difficulty: beginner
     steps:
@@ -40,11 +39,11 @@ layers:
       - { t: 1,   strings: [L1, L5] }  # multiple strings on one beat
 ```
 
-Each step has a beat time `t` and either `string` (single) or `strings` (array).
+Each step has a beat time `t` and either `string` (single) or `strings` (array). String IDs are `L1`–`L11` (left hand) and `R1`–`R10` (right hand).
 
 ## Tech stack
 
-Astro 6, TypeScript, superdough (Web Audio), Vitest. Deployed to Cloudflare Pages.
+Astro 6, TypeScript, Pico CSS, superdough (Web Audio), Vitest. Deployed to Cloudflare Pages.
 
 ## License
 

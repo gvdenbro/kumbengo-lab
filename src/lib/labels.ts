@@ -1,6 +1,4 @@
-import tuningsRaw from '../data/tunings.yaml';
-
-const tunings: Record<string, { strings: Record<string, { note: string }> }> = tuningsRaw as any;
+import { getTuning } from './tuning';
 
 export function getStringLabel(
   stringId: string,
@@ -8,7 +6,8 @@ export function getStringLabel(
   tuningId?: string,
 ): string {
   if (mode === 'note') {
-    return tunings[tuningId!]?.strings[stringId]?.note ?? stringId;
+    if (!tuningId) throw new Error('tuningId required for note mode');
+    return getTuning(tuningId).strings[stringId]?.note ?? stringId;
   }
 
   if (mode === 'distance') {
@@ -19,6 +18,5 @@ export function getStringLabel(
     return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
   }
 
-  // position mode
   return stringId;
 }
