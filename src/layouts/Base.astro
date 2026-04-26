@@ -10,6 +10,9 @@ const { title, showNotation = false } = Astro.props;
   <title>{title} — Kumbengo Lab</title>
   <style is:global>
     @import "@picocss/pico/css/pico.amber.min.css";
+    @media (max-width: 480px) {
+      #notation-select { font-size: 0.75rem; padding: 0.25rem 0.5rem !important; background-image: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -20,7 +23,7 @@ const { title, showNotation = false } = Astro.props;
         {showNotation && (
           <ul>
             <li>
-              <select id="notation-select" aria-label="Notation style">
+              <select id="notation-select" aria-label="Notation style" style="font-size:0.875rem;width:auto;">
                 <option value="position">String (L1, R2)</option>
                 <option value="note">Note (C4, F3)</option>
                 <option value="distance">Near/Far (⇧⇩)</option>
