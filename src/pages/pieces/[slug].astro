@@ -77,11 +77,10 @@ const tuningData = getTuning(tuning).strings;
       align-items: center;
     }
     @media (max-width: 480px) {
-      h1 { font-size: 1.25rem; }
+      h1 { font-size: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
       details { display: none; }
       select { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
       .piece-meta { display: none; }
-      .play-area { justify-content: flex-start; }
       #player button { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
       #player label { font-size: 0.75rem; }
       #player { gap: 0.5rem; margin: 0.5rem 0; }

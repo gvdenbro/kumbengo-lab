@@ -53,6 +53,11 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
   }
   .current .lookahead-beat { opacity: 0.8; }
   @media print { .lookahead { display: none; } }
+  @media (max-width: 480px) {
+    .lookahead { min-width: 4rem; }
+    .lookahead-item { padding: 0.2rem 0.4rem; font-size: 0.65rem; }
+    .lookahead-beat { font-size: 0.5rem; }
+  }
 </style>
 
 <script>
