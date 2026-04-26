@@ -56,11 +56,6 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
     return () => { r.stop(); };
   }, []);
 
-  useEffect(() => {
-    const mode = localStorage.getItem('notation-mode') || 'position';
-    document.dispatchEvent(new CustomEvent('notation-change', { detail: mode }));
-  }, []);
-
   const clearStopTimer = useCallback(() => {
     if (stopTimerRef.current != null) {
       clearTimeout(stopTimerRef.current);
@@ -241,22 +236,6 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
             aria-valuetext={`${tempoPercent}% of original tempo`}
           />
           <span>{tempoPercent}%</span>
-        </label>
-        <label>
-          Notation:{' '}
-          <select
-            defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('notation-mode') || 'position' : 'position'}
-            onChange={e => {
-              const mode = e.target.value;
-              localStorage.setItem('notation-mode', mode);
-              document.dispatchEvent(new CustomEvent('notation-change', { detail: mode }));
-            }}
-            style={{ fontSize: '0.875rem' }}
-          >
-            <option value="position">String (L1, R2)</option>
-            <option value="note">Note (C4, F3)</option>
-            <option value="distance">Near/Far (⇧⇩)</option>
-          </select>
         </label>
       </div>
     </div>

@@ -1,6 +1,6 @@
 ---
-interface Props { title: string; }
-const { title } = Astro.props;
+interface Props { title: string; showNotation?: boolean; }
+const { title, showNotation = false } = Astro.props;
 ---
 <!doctype html>
 <html lang="en" data-theme="light">
@@ -17,10 +17,32 @@ const { title } = Astro.props;
     <header>
       <nav>
         <ul><li><a href="/"><strong>Kumbengo Lab</strong></a></li></ul>
+        {showNotation && (
+          <ul>
+            <li>
+              <select id="notation-select" aria-label="Notation style">
+                <option value="position">String (L1, R2)</option>
+                <option value="note">Note (C4, F3)</option>
+                <option value="distance">Near/Far (⇧⇩)</option>
+              </select>
+            </li>
+          </ul>
+        )}
       </nav>
-      <p><small>Learn the kora, one piece at a time</small></p>
     </header>
     <slot />
   </main>
 </body>
+<script>
+  const sel = document.getElementById('notation-select') as HTMLSelectElement | null;
+  if (sel) {
+    const saved = localStorage.getItem('notation-mode') || 'position';
+    sel.value = saved;
+    document.dispatchEvent(new CustomEvent('notation-change', { detail: saved }));
+    sel.addEventListener('change', () => {
+      localStorage.setItem('notation-mode', sel.value);
+      document.dispatchEvent(new CustomEvent('notation-change', { detail: sel.value }));
+    });
+  }
+</script>
 </html>
