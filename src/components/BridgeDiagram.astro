@@ -57,6 +57,12 @@ const { tuning } = Astro.props;
     100% { transform: scale(1); }
   }
   @media print { .bridge-diagram { display: none; } }
+  @media (max-width: 480px) {
+    .bridge-diagram { gap: 1rem; padding: 0.25rem; }
+    .bridge-side { gap: 0.125rem; }
+    .bridge-side.right { margin-top: calc(1.25rem + 0.125rem); }
+    .string-dot { width: 1.25rem; height: 1.25rem; font-size: 0.5rem; border-width: 1px; }
+  }
 </style>
 
 <script>
