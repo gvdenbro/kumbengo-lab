@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TablatureView from '../../components/TablatureView.astro';
 import BridgeDiagram from '../../components/BridgeDiagram.astro';
-import TimelineStrip from '../../components/TimelineStrip.astro';
+import Lookahead from '../../components/Lookahead.astro';
 import Player from '../../components/Player';
 import tuningsRaw from '../../data/tunings.yaml';
 
@@ -35,7 +35,10 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     <small>{difficulty} · {tempo} BPM · {tags.join(', ')}</small>
   </p>
 
-  <BridgeDiagram tuning={tuning} />
+  <div class="play-area">
+    <BridgeDiagram tuning={tuning} />
+    <Lookahead arrangements={arrangements} tuning={tuning} />
+  </div>
 
   <Player
     client:only="react"
@@ -43,8 +46,6 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     tuning={tuningData}
     tempo={tempo}
   />
-
-  <TimelineStrip arrangements={arrangements} tuning={tuning} />
 
   <details>
     <summary>Show tablature</summary>
@@ -56,9 +57,18 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
     <button class="outline" onclick="window.print()">Print tablature</button>
   </details>
 
+  <style>
+    .play-area {
+      display: flex;
+      position: relative;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
   <style is:global>
+    .lookahead { position: absolute; right: 0; }
     @media print {
-      #player, astro-island, .bridge-diagram, .timeline-strip,
+      #player, astro-island, .bridge-diagram, .lookahead, .play-area,
       nav, a[href="/"], button.outline, #arrangement-select, summary { display: none !important; }
       details { display: block !important; }
       details > * { display: block !important; }

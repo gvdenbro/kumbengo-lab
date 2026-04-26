@@ -1,0 +1,102 @@
+---
+import { getStepStrings, type Step } from '../lib/piece';
+interface Arrangement { name: string; difficulty: string; steps: Step[]; }
+interface Props { arrangements: Arrangement[]; tuning: string; lookahead?: number; }
+const { arrangements, tuning, lookahead = 5 } = Astro.props;
+---
+<div class="lookahead" data-tuning={tuning} data-lookahead={lookahead} role="region" aria-label="Upcoming notes">
+  {arrangements.map((arr, ai) => (
+    <ol class="lookahead-track" data-arrangement-track={ai} data-active={ai === 0 ? 'true' : 'false'} style={ai > 0 ? 'display:none' : ''}>
+      {arr.steps.map((step, i) => (
+        <li class="lookahead-item" data-index={i} data-strings={JSON.stringify(getStepStrings(step))}>
+          <span class="lookahead-strings">{getStepStrings(step).join(', ')}</span>
+          <span class="lookahead-beat">{step.t}</span>
+        </li>
+      ))}
+    </ol>
+  ))}
+</div>
+
+<style>
+  .lookahead {
+    min-width: 6rem;
+  }
+  .lookahead-track {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .lookahead-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+  .lookahead-item.current {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    border-color: var(--pico-primary-border);
+    font-weight: bold;
+  }
+  .lookahead-item.hidden { display: none; }
+  .lookahead-beat {
+    font-size: 0.625rem;
+    opacity: 0.6;
+    margin-left: 0.5rem;
+  }
+  .current .lookahead-beat { opacity: 0.8; }
+  @media print { .lookahead { display: none; } }
+</style>
+
+<script>
+  import { getStringLabel } from '../lib/labels';
+
+  const LOOKAHEAD_COUNT = Number(document.querySelector('.lookahead')?.getAttribute('data-lookahead') ?? 5);
+
+  function updateVisibility(currentIndex: number) {
+    const track = document.querySelector('.lookahead-track[data-active="true"]');
+    if (!track) return;
+    const items = track.querySelectorAll('.lookahead-item');
+    items.forEach((item, i) => {
+      const el = item as HTMLElement;
+      el.classList.toggle('current', i === currentIndex);
+      if (i < currentIndex || i > currentIndex + LOOKAHEAD_COUNT) {
+        el.classList.add('hidden');
+      } else {
+        el.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Show first N on load
+  updateVisibility(-1);
+
+  document.addEventListener('notation-change', ((e: CustomEvent) => {
+    const tuningId = (document.querySelector('.lookahead') as HTMLElement)?.dataset.tuning || 'silaba';
+    document.querySelectorAll('.lookahead-item').forEach(item => {
+      const strings: string[] = JSON.parse((item as HTMLElement).dataset.strings || '[]');
+      const label = item.querySelector('.lookahead-strings') as HTMLElement;
+      if (label) label.textContent = strings.map(s => getStringLabel(s, e.detail, tuningId)).join(', ');
+    });
+  }) as EventListener);
+
+  document.addEventListener('player-arrangement', ((e: CustomEvent) => {
+    document.querySelectorAll('.lookahead-track').forEach((track, i) => {
+      const active = i === e.detail.index;
+      (track as HTMLElement).style.display = active ? '' : 'none';
+      (track as HTMLElement).dataset.active = String(active);
+    });
+    updateVisibility(-1);
+  }) as EventListener);
+
+  document.addEventListener('player-step', ((e: CustomEvent) => {
+    updateVisibility(e.detail.index);
+  }) as EventListener);
+</script>
