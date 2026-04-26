@@ -26,13 +26,15 @@ if (typeof window !== 'undefined') {
   audioReady = initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
 }
 
+type PlayerState = 'stopped' | 'loading' | 'playing' | 'paused';
+
 function PlayerInner({ arrangements, tuning, tempo }: Props) {
   const replRef = useRef<ReturnType<typeof repl> | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [state, setState] = useState<PlayerState>('stopped');
   const [looping, setLooping] = useState(true);
   const [tempoPercent, setTempoPercent] = useState(100);
   const [arrangementIndex, setArrangementIndex] = useState(0);
+  const patternBuiltRef = useRef(false);
   const stopTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -55,14 +57,15 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
     return () => { r.stop(); };
   }, []);
 
-  // Listen for arrangement changes from the page-level selector
   useEffect(() => {
+    const sel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
+    if (sel) setArrangementIndex(Number(sel.value));
     const onArrangementChange = ((e: CustomEvent) => {
       setArrangementIndex(e.detail.index);
-      if (replRef.current) {
-        replRef.current.stop();
-        setPlaying(false);
-      }
+      replRef.current?.stop();
+      patternBuiltRef.current = false;
+      setState('stopped');
+      clearVisuals();
     }) as EventListener;
     document.addEventListener('player-arrangement', onArrangementChange);
     return () => document.removeEventListener('player-arrangement', onArrangementChange);
@@ -77,21 +80,25 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
 
   const clearVisuals = useCallback(() => {
     document.querySelectorAll('.string-dot').forEach(d => d.classList.remove('active'));
-    document.querySelectorAll('.timeline-step').forEach(d => d.classList.remove('current', 'past'));
+    document.querySelectorAll('.lookahead-item').forEach(d => d.classList.remove('current'));
   }, []);
 
-  const stopPlayback = useCallback(() => {
-    replRef.current?.stop();
+  const scheduleStop = useCallback((steps: Step[]) => {
     clearStopTimer();
-    setPlaying(false);
-    clearVisuals();
-  }, [clearStopTimer, clearVisuals]);
+    const totalBeats = getTotalBeats(steps);
+    stopTimerRef.current = window.setTimeout(() => {
+      replRef.current?.stop();
+      patternBuiltRef.current = false;
+      setState('stopped');
+      clearVisuals();
+    }, getPlaybackDurationMs(totalBeats, tempo, tempoPercent) + 200);
+  }, [tempo, tempoPercent, clearStopTimer, clearVisuals]);
 
   const buildAndPlay = useCallback(async () => {
     const r = replRef.current;
     if (!r) return;
 
-    setLoading(true);
+    setState('loading');
     try {
       await Promise.all([prebaked, audioReady]);
 
@@ -115,8 +122,6 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
         await Promise.all(urls.map(url => loadBuffer(url, ac, 'folkharp')));
       }
 
-      setLoading(false);
-
       const totalBeats = getTotalBeats(steps);
       const cps = getCps(tempo, tempoPercent, totalBeats);
       const { slots, slotMap } = buildSlotMap(steps);
@@ -134,52 +139,75 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
         }
       }
 
-      const pattern = fastcat(...slotPatterns);
       r.setCps(cps);
-      r.setPattern(pattern, true);
+      r.setPattern(fastcat(...slotPatterns), true);
       r.start();
-      setPlaying(true);
+      patternBuiltRef.current = true;
+      setState('playing');
 
-      if (!looping) {
-        clearStopTimer();
-        stopTimerRef.current = window.setTimeout(stopPlayback, getPlaybackDurationMs(totalBeats, tempo, tempoPercent) + 200);
-      }
+      if (!looping) scheduleStop(steps);
     } catch (err) {
       console.error('Playback failed:', err);
-      setLoading(false);
-      setPlaying(false);
+      setState('stopped');
     }
-  }, [arrangementIndex, tempoPercent, arrangements, tuning, tempo, looping, clearStopTimer, stopPlayback]);
+  }, [arrangementIndex, tempoPercent, arrangements, tuning, tempo, looping, scheduleStop]);
+
+  const pause = useCallback(() => {
+    replRef.current?.pause();
+    getAudioContext().suspend();
+    clearStopTimer();
+    setState('paused');
+  }, [clearStopTimer]);
+
+  const resume = useCallback(() => {
+    getAudioContext().resume();
+    replRef.current?.start();
+    setState('playing');
+    if (!looping) {
+      scheduleStop(arrangements[arrangementIndex].steps);
+    }
+  }, [looping, arrangementIndex, arrangements, scheduleStop]);
+
+  const restart = useCallback(() => {
+    replRef.current?.stop();
+    patternBuiltRef.current = false;
+    clearStopTimer();
+    clearVisuals();
+    setState('stopped');
+  }, [clearStopTimer, clearVisuals]);
+
+  const togglePlayPause = useCallback(() => {
+    if (state === 'playing') pause();
+    else if (state === 'paused') resume();
+    else buildAndPlay();
+  }, [state, pause, resume, buildAndPlay]);
 
   const handleTempoChange = useCallback((value: number) => {
     setTempoPercent(value);
-    if (playing && replRef.current) {
+    if ((state === 'playing' || state === 'paused') && replRef.current) {
       const steps = arrangements[arrangementIndex].steps;
       const totalBeats = getTotalBeats(steps);
       replRef.current.setCps(getCps(tempo, value, totalBeats));
     }
-  }, [playing, arrangementIndex, arrangements, tempo]);
+  }, [state, arrangementIndex, arrangements, tempo]);
 
   const handleLoopChange = useCallback((checked: boolean) => {
     setLooping(checked);
-    if (playing) {
+    if (state === 'playing') {
       if (!checked) {
-        const steps = arrangements[arrangementIndex].steps;
-        const totalBeats = getTotalBeats(steps);
-        clearStopTimer();
-        stopTimerRef.current = window.setTimeout(stopPlayback, getPlaybackDurationMs(totalBeats, tempo, tempoPercent) + 200);
+        scheduleStop(arrangements[arrangementIndex].steps);
       } else {
         clearStopTimer();
       }
     }
-  }, [playing, arrangementIndex, arrangements, tempo, tempoPercent, clearStopTimer, stopPlayback]);
+  }, [state, arrangementIndex, arrangements, scheduleStop, clearStopTimer]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).matches('input, select, textarea')) return;
       if (e.key === ' ') {
         e.preventDefault();
-        playing ? stopPlayback() : buildAndPlay();
+        togglePlayPause();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         handleTempoChange(Math.max(50, tempoPercent - 5));
@@ -190,18 +218,22 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [playing, tempoPercent, buildAndPlay, stopPlayback, handleTempoChange]);
+  }, [tempoPercent, togglePlayPause, handleTempoChange]);
 
-  const playLabel = loading ? 'Loading' : playing ? 'Stop' : 'Play';
+  const playLabel = state === 'loading' ? 'Loading' : state === 'playing' ? 'Pause' : 'Play';
+  const isActive = state === 'playing' || state === 'paused';
 
   return (
     <div id="player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', margin: '1rem 0' }}>
+      <button onClick={restart} aria-label="Restart" className="outline secondary" disabled={!isActive} style={{ padding: '0.5rem 0.75rem' }}>
+        ⏮
+      </button>
       <button
-        onClick={playing ? stopPlayback : buildAndPlay}
-        disabled={loading}
+        onClick={togglePlayPause}
+        disabled={state === 'loading'}
         aria-label={playLabel}
       >
-        {loading ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
+        {state === 'loading' ? '⏳' : state === 'playing' ? '⏸' : '▶'}
       </button>
       <label>
         <input
