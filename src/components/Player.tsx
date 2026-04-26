@@ -16,7 +16,6 @@ interface Props {
   tempo: number;
 }
 
-// Start loading samples + audio init at module level (same pattern as strudel website)
 let prebaked: Promise<void> | undefined;
 let audioReady: Promise<void> | undefined;
 if (typeof window !== 'undefined') {
@@ -54,6 +53,19 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
     });
     replRef.current = r;
     return () => { r.stop(); };
+  }, []);
+
+  // Listen for arrangement changes from the page-level selector
+  useEffect(() => {
+    const onArrangementChange = ((e: CustomEvent) => {
+      setArrangementIndex(e.detail.index);
+      if (replRef.current) {
+        replRef.current.stop();
+        setPlaying(false);
+      }
+    }) as EventListener;
+    document.addEventListener('player-arrangement', onArrangementChange);
+    return () => document.removeEventListener('player-arrangement', onArrangementChange);
   }, []);
 
   const clearStopTimer = useCallback(() => {
@@ -148,15 +160,6 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
     }
   }, [playing, arrangementIndex, arrangements, tempo]);
 
-  const handleArrangementChange = (idx: number) => {
-    setArrangementIndex(idx);
-    if (playing) stopPlayback();
-    document.querySelectorAll('.arrangement-tab').forEach((tab, i) => {
-      (tab as HTMLElement).style.display = i === idx ? '' : 'none';
-    });
-    document.dispatchEvent(new CustomEvent('player-arrangement', { detail: { index: idx } }));
-  };
-
   const handleLoopChange = (checked: boolean) => {
     setLooping(checked);
     if (playing) {
@@ -192,52 +195,34 @@ export default function Player({ arrangements, tuning, tempo }: Props) {
   const playLabel = loading ? 'Loading' : playing ? 'Stop' : 'Play';
 
   return (
-    <div id="player" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
-      {arrangements.length > 1 && (
-        <div id="arrangement-selector">
-          <label htmlFor="arrangement-select">Arrangement: </label>
-          <select
-            id="arrangement-select"
-            value={arrangementIndex}
-            onChange={e => handleArrangementChange(Number(e.target.value))}
-          >
-            {arrangements.map((arr, i) => (
-              <option key={i} value={i}>
-                {arr.name} ({arr.difficulty})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-      <div className="player-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button
-          onClick={playing ? stopPlayback : buildAndPlay}
-          disabled={loading}
-          aria-label={playLabel}
-        >
-          {loading ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
-        </button>
-        <label>
-          <input
-            type="checkbox"
-            checked={looping}
-            onChange={e => handleLoopChange(e.target.checked)}
-          />{' '}
-          Loop
-        </label>
-        <label>
-          Tempo:{' '}
-          <input
-            type="range"
-            min={50}
-            max={150}
-            value={tempoPercent}
-            onChange={e => handleTempoChange(Number(e.target.value))}
-            aria-valuetext={`${tempoPercent}% of original tempo`}
-          />
-          <span>{tempoPercent}%</span>
-        </label>
-      </div>
+    <div id="player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', margin: '1rem 0' }}>
+      <button
+        onClick={playing ? stopPlayback : buildAndPlay}
+        disabled={loading}
+        aria-label={playLabel}
+      >
+        {loading ? '⏳ Loading…' : playing ? '■ Stop' : '▶ Play'}
+      </button>
+      <label>
+        <input
+          type="checkbox"
+          checked={looping}
+          onChange={e => handleLoopChange(e.target.checked)}
+        />{' '}
+        Loop
+      </label>
+      <label>
+        Tempo:{' '}
+        <input
+          type="range"
+          min={50}
+          max={150}
+          value={tempoPercent}
+          onChange={e => handleTempoChange(Number(e.target.value))}
+          aria-valuetext={`${tempoPercent}% of original tempo`}
+        />
+        <span>{tempoPercent}%</span>
+      </label>
     </div>
   );
 }

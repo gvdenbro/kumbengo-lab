@@ -21,7 +21,16 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
 ---
 <Base title={title} showNotation>
   <a href="/">← Back to pieces</a>
-  <h1>{title}</h1>
+  <hgroup>
+    <h1 style="display:inline">{title}</h1>
+    {arrangements.length > 1 && (
+      <select id="arrangement-select" style="display:inline-block;width:auto;margin-left:0.75rem;vertical-align:middle;">
+        {arrangements.map((arr, i) => (
+          <option value={i}>{arr.name} ({arr.difficulty})</option>
+        ))}
+      </select>
+    )}
+  </hgroup>
   <p>
     <small>{difficulty} · {tempo} BPM · {tags.join(', ')}</small>
   </p>
@@ -48,7 +57,20 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
   <style is:global>
     @media print {
       #player, astro-island, .bridge-diagram, .timeline-strip,
-      nav, a[href="/"], button.outline { display: none !important; }
+      nav, a[href="/"], button.outline, #arrangement-select { display: none !important; }
     }
   </style>
 </Base>
+
+<script>
+  const sel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
+  if (sel) {
+    sel.addEventListener('change', () => {
+      const idx = Number(sel.value);
+      document.querySelectorAll('.arrangement-tab').forEach((tab, i) => {
+        (tab as HTMLElement).style.display = i === idx ? '' : 'none';
+      });
+      document.dispatchEvent(new CustomEvent('player-arrangement', { detail: { index: idx } }));
+    });
+  }
+</script>
