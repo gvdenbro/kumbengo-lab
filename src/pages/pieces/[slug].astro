@@ -46,18 +46,22 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
 
   <TimelineStrip arrangements={arrangements} tuning={tuning} />
 
-  {arrangements.map((arr, i) => (
-    <div class="arrangement-tab" data-arrangement={i} style={i > 0 ? 'display:none' : ''}>
-      <TablatureView steps={arr.steps} tuning={tuning} />
-    </div>
-  ))}
-
-  <button class="outline" onclick="window.print()">Print tablature</button>
+  <details>
+    <summary>Show tablature</summary>
+    {arrangements.map((arr, i) => (
+      <div class="arrangement-tab" data-arrangement={i} style={i > 0 ? 'display:none' : ''}>
+        <TablatureView steps={arr.steps} tuning={tuning} />
+      </div>
+    ))}
+    <button class="outline" onclick="window.print()">Print tablature</button>
+  </details>
 
   <style is:global>
     @media print {
       #player, astro-island, .bridge-diagram, .timeline-strip,
-      nav, a[href="/"], button.outline, #arrangement-select { display: none !important; }
+      nav, a[href="/"], button.outline, #arrangement-select, summary { display: none !important; }
+      details { display: block !important; }
+      details > * { display: block !important; }
     }
   </style>
 </Base>
