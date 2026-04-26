@@ -1,0 +1,19 @@
+title: Dummy
+difficulty: intermediate
+tuning: silaba
+tempo: 90
+tags: [traditional]
+
+arrangements:
+  - name: Intro
+    difficulty: beginner
+    steps:
+      - { t: 0,    string: R7 }
+      - { t: 0.5,  string: R7 }
+      - { t: 1,    string: R7 }
+      - { t: 1.5,  string: L10 }
+      - { t: 2,    string: R6 }
+      - { t: 2.5,  string: L9 }
+      - { t: 3,    string: L10 }
+      - { t: 3.5,  string: R6 }
+      - { t: 4,  string: L9 }
