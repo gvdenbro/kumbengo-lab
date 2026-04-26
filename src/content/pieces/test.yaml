@@ -8,7 +8,7 @@ tags: [test]
 # <c3 d3> alternates per cycle: cycle 1 = C3, cycle 2 = D3
 # 16 weight units over 2 cycles, each unit = 0.5 beats
 
-layers:
+arrangements:
   - name: Full pattern
     difficulty: beginner
     steps:

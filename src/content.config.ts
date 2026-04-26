@@ -16,7 +16,7 @@ const stepSchema = z.object({
   message: 'Use string or strings, not both',
 });
 
-const layerSchema = z.object({
+const arrangementSchema = z.object({
   name: z.string(),
   difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
   steps: z.array(stepSchema),
@@ -32,7 +32,7 @@ const pieces = defineCollection({
     tuning: z.enum(knownTunings),
     tempo: z.number(),
     tags: z.array(z.string()),
-    layers: z.array(layerSchema).min(1),
+    arrangements: z.array(arrangementSchema).min(1),
   }),
 });
 

@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { piece } = Astro.props;
-const { title, difficulty, tuning, tempo, tags, layers } = piece.data;
+const { title, difficulty, tuning, tempo, tags, arrangements } = piece.data;
 const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
 ---
 <Base title={title}>
@@ -30,16 +30,16 @@ const tuningData = (tuningsRaw as any)[tuning]?.strings ?? {};
 
   <Player
     client:only="react"
-    layers={layers}
+    arrangements={arrangements}
     tuning={tuningData}
     tempo={tempo}
   />
 
-  <TimelineStrip layers={layers} tuning={tuning} />
+  <TimelineStrip arrangements={arrangements} tuning={tuning} />
 
-  {layers.map((layer, i) => (
-    <div class="layer-tab" data-layer={i} style={i > 0 ? 'display:none' : ''}>
-      <TablatureView steps={layer.steps} tuning={tuning} />
+  {arrangements.map((arr, i) => (
+    <div class="arrangement-tab" data-arrangement={i} style={i > 0 ? 'display:none' : ''}>
+      <TablatureView steps={arr.steps} tuning={tuning} />
     </div>
   ))}
 

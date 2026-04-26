@@ -4,7 +4,7 @@ tuning: silaba
 tempo: 90
 tags: [traditional, mandinka]
 
-layers:
+arrangements:
   - name: Melody only
     difficulty: beginner
     steps:

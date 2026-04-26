@@ -8,7 +8,7 @@ tags: [cover, pop]
 # Ab→A, Eb→E substitutions to fit the kora's diatonic scale
 # Chord progression: Fm Bb Fm Bb → approx F Bb F Bb on kora
 
-layers:
+arrangements:
   - name: Verse melody
     difficulty: beginner
     # "All around me are familiar faces, worn out places, worn out faces"

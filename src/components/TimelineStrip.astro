@@ -1,13 +1,13 @@
 ---
 import { getStepStrings, type Step } from '../lib/piece';
-interface Layer { name: string; difficulty: string; steps: Step[]; }
-interface Props { layers: Layer[]; tuning: string; }
-const { layers, tuning } = Astro.props;
+interface Arrangement { name: string; difficulty: string; steps: Step[]; }
+interface Props { arrangements: Arrangement[]; tuning: string; }
+const { arrangements, tuning } = Astro.props;
 ---
 <div class="timeline-strip" data-tuning={tuning} role="region" aria-label="Timeline">
-  {layers.map((layer, li) => (
-    <div class="timeline-track" data-layer-track={li} data-active={li === 0 ? 'true' : 'false'} style={li > 0 ? 'display:none' : ''}>
-      {layer.steps.map((step, i) => (
+  {arrangements.map((arr, ai) => (
+    <div class="timeline-track" data-arrangement-track={ai} data-active={ai === 0 ? 'true' : 'false'} style={ai > 0 ? 'display:none' : ''}>
+      {arr.steps.map((step, i) => (
         <div class="timeline-step" data-index={i} data-strings={JSON.stringify(getStepStrings(step))}>
           <span class="step-beat">{step.t}</span>
           <span class="step-strings">{getStepStrings(step).join(', ')}</span>
@@ -65,7 +65,7 @@ const { layers, tuning } = Astro.props;
     });
   }) as EventListener);
 
-  document.addEventListener('player-layer', ((e: CustomEvent) => {
+  document.addEventListener('player-arrangement', ((e: CustomEvent) => {
     document.querySelectorAll('.timeline-track').forEach((track, i) => {
       const active = i === e.detail.index;
       (track as HTMLElement).style.display = active ? '' : 'none';
