@@ -67,7 +67,10 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
     items.forEach((item, i) => {
       const el = item as HTMLElement;
       el.classList.toggle('current', i === currentIndex);
-      if (i < currentIndex || i > currentIndex + LOOKAHEAD_COUNT) {
+      if (currentIndex < 0) {
+        // Before playback: show first batch
+        el.classList.toggle('hidden', i > LOOKAHEAD_COUNT);
+      } else if (i < currentIndex || i > currentIndex + LOOKAHEAD_COUNT) {
         el.classList.add('hidden');
       } else {
         el.classList.remove('hidden');
@@ -75,7 +78,16 @@ const { arrangements, tuning, lookahead = 5 } = Astro.props;
     });
   }
 
-  // Show first N on load
+  // Sync arrangement from select on load
+  const arrSel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
+  if (arrSel && Number(arrSel.value) !== 0) {
+    document.querySelectorAll('.lookahead-track').forEach((track, i) => {
+      const active = i === Number(arrSel.value);
+      (track as HTMLElement).style.display = active ? '' : 'none';
+      (track as HTMLElement).dataset.active = String(active);
+    });
+  }
+
   updateVisibility(-1);
 
   document.addEventListener('notation-change', ((e: CustomEvent) => {
