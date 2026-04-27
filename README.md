@@ -34,12 +34,12 @@ arrangements:
   - name: Melody only
     difficulty: beginner
     steps:
-      - { t: 0,   string: L4 }
-      - { t: 0.5, string: R2 }
-      - { t: 1,   strings: [L1, L5] }  # multiple strings on one beat
+      - { d: 0.5, string: L4 }
+      - { d: 0.5, string: R2 }
+      - { d: 1,   strings: [L1, L5] }  # multiple strings on one beat
 ```
 
-Each step has a beat time `t` and either `string` (single) or `strings` (array). String IDs are `L1`–`L11` (left hand) and `R1`–`R10` (right hand).
+Each step has a duration `d` (beats until next event) and either `string` (single) or `strings` (array). Steps with `d` but no string are rests. YAML anchors/aliases can reuse step sequences across arrangements. String IDs are `L1`–`L11` (left hand) and `R1`–`R10` (right hand).
 
 ## Tech stack
 
@@ -47,7 +47,6 @@ Astro 6, TypeScript, Pico CSS, superdough (Web Audio), Vitest. Deployed to Cloud
 
 ## TODO
 
-- **Relative beat timing** — Steps currently use absolute beat timestamps (`t: 0`, `t: 0.5`, …). Switch to relative durations so pieces are easier to author, reorder, and insert into.
 - **Tempo control rethink** — The tempo slider is functional but crude. Analyze alternatives (tap tempo, BPM number input, preset speed buttons like 50%/75%/100%, or a combination).
 - **Kora sound sample** — Replace the VCSL `folkharp` with an actual kora sample. No free, openly-licensed kora multisample pack exists today; options include recording one, commissioning samples, or sourcing from a rights-cleared library.
 - **Arrangement from a real recording** — Transcribe an arrangement from an actual kora performance recording, rather than composing arrangements from scratch.
