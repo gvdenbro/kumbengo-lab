@@ -150,14 +150,16 @@ def build_steps(note_events, tempo: float, resolution: float, min_velocity: floa
     if skipped:
         print(f"   → Skipped {skipped} events (below velocity threshold or out of kora range)")
 
-    # Build step list sorted by beat
+    # Build step list sorted by beat, using relative durations
+    sorted_beats = sorted(beat_map.keys())
     steps = []
-    for beat in sorted(beat_map.keys()):
+    for i, beat in enumerate(sorted_beats):
+        d = round(sorted_beats[i + 1] - beat, 4) if i < len(sorted_beats) - 1 else 1
         strings = beat_map[beat]
         if len(strings) == 1:
-            steps.append({"t": beat, "string": strings[0]})
+            steps.append({"d": d, "string": strings[0]})
         else:
-            steps.append({"t": beat, "strings": strings})
+            steps.append({"d": d, "strings": strings})
 
     print(f"   → {len(steps)} steps in arrangement")
     return steps
@@ -192,11 +194,11 @@ def emit_yaml(
 
 
 # ---------------------------------------------------------------------------
-# Custom YAML representer: compact step format like { t: 0, string: L4 }
+# Custom YAML representer: compact step format like { d: 1, string: L4 }
 # ---------------------------------------------------------------------------
 def _represent_step(dumper, data):
     """Represent a step dict in flow style (single line)."""
-    if set(data.keys()) <= {"t", "string", "strings"}:
+    if set(data.keys()) <= {"d", "string", "strings"}:
         return dumper.represent_mapping("tag:yaml.org,2002:map", data, flow_style=True)
     return dumper.represent_mapping("tag:yaml.org,2002:map", data)
 
