@@ -2,7 +2,7 @@ import { getStepStrings, type Step } from './piece';
 
 export function getTotalBeats(steps: Step[]): number {
   if (steps.length === 0) return 0;
-  return steps[steps.length - 1].t + 1;
+  return steps.reduce((sum, s) => sum + s.d, 0);
 }
 
 export function getCps(tempo: number, tempoPercent: number, totalBeats: number): number {
@@ -25,11 +25,15 @@ export function buildSlotMap(
   const totalBeats = getTotalBeats(steps);
   const slots = Math.round(totalBeats / resolution);
   const slotMap = new Map<number, SlotInfo>();
+  let t = 0;
   for (let i = 0; i < steps.length; i++) {
-    slotMap.set(Math.round(steps[i].t / resolution), {
-      index: i,
-      strings: getStepStrings(steps[i]),
-    });
+    if (steps[i].string || steps[i].strings) {
+      slotMap.set(Math.round(t / resolution), {
+        index: i,
+        strings: getStepStrings(steps[i]),
+      });
+    }
+    t += steps[i].d;
   }
   return { slots, slotMap };
 }
