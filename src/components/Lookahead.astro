@@ -6,11 +6,8 @@ const { arrangements, tuning, lookaheadBeats = 3 } = Astro.props;
 
 const BASE_REM = 2;
 const MAX_REM = 6;
-const DEFAULT_GAP = 0.5;
-
 function getGap(steps: Step[], i: number): number {
-  if (i < steps.length - 1) return steps[i + 1].t - steps[i].t;
-  return DEFAULT_GAP;
+  return steps[i].d;
 }
 
 function gapToHeight(gap: number, minGap: number): string {
@@ -28,12 +25,11 @@ function gapToHeight(gap: number, minGap: number): string {
           <li
             class="lookahead-item"
             data-index={i}
-            data-beat={step.t}
+            data-d={step.d}
             data-strings={JSON.stringify(getStepStrings(step))}
             style={`min-height:${gapToHeight(getGap(arr.steps, i), minGap)}`}
           >
             <span class="lookahead-strings">{getStepStrings(step).join(', ')}</span>
-            <span class="lookahead-beat">{step.t}</span>
           </li>
         ))}
       </ol>
@@ -70,17 +66,10 @@ function gapToHeight(gap: number, minGap: number): string {
     font-weight: bold;
   }
   .lookahead-item.hidden { display: none; }
-  .lookahead-beat {
-    font-size: 0.625rem;
-    opacity: 0.6;
-    margin-left: 0.5rem;
-  }
-  .current .lookahead-beat { opacity: 0.8; }
   @media print { .lookahead { display: none; } }
   @media (max-width: 480px) {
     .lookahead { min-width: 4rem; }
     .lookahead-item { padding: 0 0.4rem; font-size: 0.65rem; }
-    .lookahead-beat { font-size: 0.5rem; }
   }
 </style>
 
@@ -93,17 +82,21 @@ function gapToHeight(gap: number, minGap: number): string {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
     if (!track) return;
     const items = track.querySelectorAll('.lookahead-item');
-    const beats = Array.from(items).map(el => Number((el as HTMLElement).dataset.beat));
-    const startBeat = currentIndex < 0 ? beats[0] ?? 0 : beats[currentIndex] ?? 0;
+    const durations = Array.from(items).map(el => Number((el as HTMLElement).dataset.d));
 
     items.forEach((item, i) => {
       const el = item as HTMLElement;
-      const beat = beats[i];
       el.classList.toggle('current', i === currentIndex);
-      if (i < currentIndex || beat > startBeat + LOOKAHEAD_BEATS) {
+      if (i < currentIndex) {
         el.classList.add('hidden');
       } else {
-        el.classList.remove('hidden');
+        let beatsAhead = 0;
+        for (let j = Math.max(0, currentIndex); j < i; j++) beatsAhead += durations[j];
+        if (beatsAhead > LOOKAHEAD_BEATS) {
+          el.classList.add('hidden');
+        } else {
+          el.classList.remove('hidden');
+        }
       }
     });
   }
