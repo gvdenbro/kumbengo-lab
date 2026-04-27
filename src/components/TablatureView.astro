@@ -10,7 +10,7 @@ const { steps, tuning } = Astro.props;
   <table>
     <thead>
       <tr>
-        <th>Beat</th>
+        <th>Duration</th>
         <th>Left</th>
         <th>Right</th>
       </tr>
@@ -21,8 +21,8 @@ const { steps, tuning } = Astro.props;
         const left = strings.filter(s => s.startsWith('L'));
         const right = strings.filter(s => s.startsWith('R'));
         return (
-          <tr data-beat={step.t}>
-            <td>{step.t}</td>
+          <tr>
+            <td>{step.d}</td>
             <td class="note-cell" data-strings={JSON.stringify(left)}>{left.join(', ') || '—'}</td>
             <td class="note-cell" data-strings={JSON.stringify(right)}>{right.join(', ') || '—'}</td>
           </tr>
