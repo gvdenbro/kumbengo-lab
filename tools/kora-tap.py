@@ -157,7 +157,10 @@ def main():
     default_string = prompt("Default string for all notes", "R1")
 
     # Build arrangement
-    steps = [{"t": b, "string": default_string} for b in beats]
+    steps = []
+    for i, b in enumerate(beats):
+        d = round(beats[i + 1] - b, 4) if i < len(beats) - 1 else 1
+        steps.append({"d": d, "string": default_string})
     arrangement = {"name": name, "difficulty": difficulty, "steps": steps}
 
     if "arrangements" not in piece:
