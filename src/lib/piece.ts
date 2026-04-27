@@ -1,5 +1,5 @@
 export interface Step {
-  t: number;
+  d: number;
   string?: string;
   strings?: string[];
 }
