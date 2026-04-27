@@ -45,6 +45,13 @@ Each step has a beat time `t` and either `string` (single) or `strings` (array).
 
 Astro 6, TypeScript, Pico CSS, superdough (Web Audio), Vitest. Deployed to Cloudflare Pages.
 
+## TODO
+
+- **Relative beat timing** — Steps currently use absolute beat timestamps (`t: 0`, `t: 0.5`, …). Switch to relative durations so pieces are easier to author, reorder, and insert into.
+- **Tempo control rethink** — The tempo slider is functional but crude. Analyze alternatives (tap tempo, BPM number input, preset speed buttons like 50%/75%/100%, or a combination).
+- **Kora sound sample** — Replace the VCSL `folkharp` with an actual kora sample. No free, openly-licensed kora multisample pack exists today; options include recording one, commissioning samples, or sourcing from a rights-cleared library.
+- **Arrangement from a real recording** — Transcribe an arrangement from an actual kora performance recording, rather than composing arrangements from scratch.
+
 ## License
 
 AGPL-3.0
