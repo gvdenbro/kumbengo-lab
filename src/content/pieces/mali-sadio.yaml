@@ -2,29 +2,29 @@ title: Mali Sadio
 difficulty: beginner
 tuning: silaba
 tempo: 80
-tags: [traditional, mandinka]
-
+tags:
+- traditional
+- mandinka
 arrangements:
-  - name: Basic melody
-    difficulty: beginner
-    steps:
-      - { t: 0,    string: R1 }
-      - { t: 0.5,  string: L3 }
-      - { t: 1,    string: R2 }
-      - { t: 1.5,  string: L4 }
-      - { t: 2,    string: R3 }
-      - { t: 2.5,  string: L5 }
-      - { t: 3,    string: R2 }
-      - { t: 3.5,  string: L3 }
-
-  - name: Melody + bass
-    difficulty: intermediate
-    steps:
-      - { t: 0,    strings: [L1, R1] }
-      - { t: 0.5,  string: L3 }
-      - { t: 1,    strings: [L2, R2] }
-      - { t: 1.5,  string: L4 }
-      - { t: 2,    strings: [L1, R3] }
-      - { t: 2.5,  string: L5 }
-      - { t: 3,    strings: [L2, R2] }
-      - { t: 3.5,  string: L3 }
+- name: Basic melody
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: L3}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: L4}
+  - {d: 0.5, string: R3}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, string: R2}
+  - {d: 1, string: L3}
+- name: Melody + bass
+  difficulty: intermediate
+  steps:
+  - {d: 0.5, strings: [L1, R1]}
+  - {d: 0.5, string: L3}
+  - {d: 0.5, strings: [L2, R2]}
+  - {d: 0.5, string: L4}
+  - {d: 0.5, strings: [L1, R3]}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, strings: [L2, R2]}
+  - {d: 1, string: L3}

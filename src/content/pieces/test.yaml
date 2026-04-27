@@ -2,23 +2,17 @@ title: Test
 difficulty: beginner
 tuning: silaba
 tempo: 80
-tags: [test]
-
-# Transcribed from: note("[[<c3 d3>, a3]@3 a3 <c3 d3>@2 f2@2 [<c3 d3>, a3]@3 a3 <c3 d3>@2 f2@2]/2")
-# <c3 d3> alternates per cycle: cycle 1 = C3, cycle 2 = D3
-# 16 weight units over 2 cycles, each unit = 0.5 beats
-
+tags:
+- test
 arrangements:
-  - name: Full pattern
-    difficulty: beginner
-    steps:
-      # Cycle 1 (c3 variant)
-      - { t: 0,   strings: [L2, R2] }   # [c3, a3]@3
-      - { t: 1.5, string: R2 }          # a3
-      - { t: 2,   string: L2 }          # c3@2
-      - { t: 3,   string: L1 }          # f2@2
-      # Cycle 2 (d3 variant)
-      - { t: 4,   strings: [L3, R2] }   # [d3, a3]@3
-      - { t: 5.5, string: R2 }          # a3
-      - { t: 6,   string: L3 }          # d3@2
-      - { t: 7,   string: L1 }          # f2@2
+- name: Full pattern
+  difficulty: beginner
+  steps:
+  - {d: 1.5, strings: [L2, R2]}
+  - {d: 0.5, string: R2}
+  - {d: 1, string: L2}
+  - {d: 1, string: L1}
+  - {d: 1.5, strings: [L3, R2]}
+  - {d: 0.5, string: R2}
+  - {d: 1, string: L3}
+  - {d: 1, string: L1}
