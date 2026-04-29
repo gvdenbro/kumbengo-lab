@@ -187,6 +187,46 @@ def build_steps(note_events, tempo: float, resolution: float, min_velocity: floa
     return steps
 
 
+def _represent_step(dumper, data):
+    """Represent a step dict in flow style (single line)."""
+    if set(data.keys()) <= {"d", "string", "strings"}:
+        return dumper.represent_mapping("tag:yaml.org,2002:map", data, flow_style=True)
+    return dumper.represent_mapping("tag:yaml.org,2002:map", data)
+
+
+yaml.add_representer(dict, _represent_step)
+
+
+def write_piece(
+    steps: list[dict],
+    output_path: Path,
+    title: str,
+    tempo: int,
+    difficulty: str,
+    arrangement_name: str,
+    tags: list[str],
+) -> None:
+    """Write the piece YAML file."""
+    piece = {
+        "title": title,
+        "difficulty": difficulty,
+        "tuning": "silaba",
+        "tempo": tempo,
+        "tags": tags,
+        "arrangements": [
+            {
+                "name": arrangement_name,
+                "difficulty": difficulty,
+                "steps": steps,
+            }
+        ],
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        yaml.dump(piece, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
     parser.add_argument("input", type=Path, help="Input audio or video file")
@@ -260,8 +300,11 @@ def main():
         print("No kora notes detected. Try lowering --min-velocity.", file=sys.stderr)
         sys.exit(1)
 
-    # TODO: write output
-    print("\nOutput step not yet implemented.")
+    # Write output
+    tags = [t.strip() for t in args.tags.split(",")]
+    write_piece(steps, output_path, title, tempo, args.difficulty, args.arrangement, tags)
+    print(f"\n✓ Written to {output_path}")
+    print(f"  {len(steps)} steps, tempo={tempo} BPM")
 
 
 if __name__ == "__main__":
