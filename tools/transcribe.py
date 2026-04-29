@@ -6,6 +6,10 @@
 #     "librosa",
 #     "pyyaml",
 # ]
+#
+# [tool.uv]
+# extra-index-url = ["https://download.pytorch.org/whl/cpu"]
+# override-dependencies = ["torch==2.6.0+cpu", "torchaudio==2.6.0+cpu"]
 # ///
 """Transcribe a kora recording (audio or video) to a Kumbengo Lab piece YAML.
 
