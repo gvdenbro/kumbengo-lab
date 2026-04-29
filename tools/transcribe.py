@@ -26,6 +26,42 @@ import yaml
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 PIECES_DIR = Path("src/content/pieces")
 
+SILABA_STRINGS = {
+    41: "L1",   # F2
+    48: "L2",   # C3
+    50: "L3",   # D3
+    52: "L4",   # E3
+    53: "R1",   # F3
+    55: "L5",   # G3
+    57: "R2",   # A3
+    58: "L6",   # Bb3
+    60: "R3",   # C4
+    62: "L7",   # D4
+    64: "R4",   # E4
+    65: "L8",   # F4
+    67: "R5",   # G4
+    69: "L9",   # A4
+    70: "R6",   # Bb4
+    72: "L10",  # C5
+    74: "R7",   # D5
+    76: "L11",  # E5
+    77: "R8",   # F5
+    79: "R9",   # G5
+    81: "R10",  # A5
+}
+
+KORA_MIDI_NOTES = sorted(SILABA_STRINGS.keys())
+
+
+def snap_midi_to_kora(midi: int) -> str | None:
+    """Map a MIDI note to the nearest kora string. Returns None if too far."""
+    if midi in SILABA_STRINGS:
+        return SILABA_STRINGS[midi]
+    closest = min(KORA_MIDI_NOTES, key=lambda k: abs(k - midi))
+    if abs(closest - midi) <= 1:
+        return SILABA_STRINGS[closest]
+    return None
+
 
 def title_from_stem(stem: str) -> str:
     """Convert filename stem to title: dashes/underscores to spaces, title-cased."""
@@ -93,6 +129,20 @@ def confirm_tempo(estimated: float) -> int:
         return rounded
 
 
+def detect_notes(audio_path: Path):
+    """Run Basic Pitch and return note events."""
+    print("[3/4] Detecting notes with Basic Pitch...")
+    from basic_pitch.inference import predict
+
+    _model_output, _midi_data, note_events = predict(
+        str(audio_path),
+        minimum_frequency=85.0,
+        maximum_frequency=900.0,
+    )
+    print(f"   → Detected {len(note_events)} raw note events")
+    return note_events
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
     parser.add_argument("input", type=Path, help="Input audio or video file")
@@ -156,8 +206,11 @@ def main():
         tempo = confirm_tempo(estimated)
     print()
 
-    # TODO: steps 3-4
-    print("Remaining pipeline steps not yet implemented.")
+    # Step 3: Note detection
+    note_events = detect_notes(audio)
+
+    # TODO: step 4
+    print("\nRemaining pipeline steps not yet implemented.")
 
 
 if __name__ == "__main__":
