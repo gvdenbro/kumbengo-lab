@@ -1,5 +1,5 @@
 import pytest
-from transcribe import title_from_stem, VIDEO_EXTENSIONS, snap_midi_to_kora
+from transcribe import title_from_stem, VIDEO_EXTENSIONS, snap_midi_to_kora, quantize, build_steps
 
 
 class TestTitleFromStem:
@@ -42,3 +42,48 @@ class TestSnapMidiToKora:
 
     def test_highest_kora_note(self):
         assert snap_midi_to_kora(81) == "R10"  # A5
+
+
+class TestQuantize:
+    def test_exact_beat(self):
+        assert quantize(1.0, 120, 0.5) == 2.0
+
+    def test_snaps_to_half_beat(self):
+        assert quantize(0.3, 120, 0.5) == 0.5
+
+    def test_snaps_to_whole_beat(self):
+        assert quantize(0.48, 120, 0.5) == 1.0
+
+    def test_zero(self):
+        assert quantize(0.0, 90, 0.5) == 0.0
+
+
+class TestBuildSteps:
+    def test_basic(self):
+        events = [
+            (0.0, 0.5, 60, 0.8),   # C4 = R3
+            (0.25, 1.0, 57, 0.7),  # A3 = R2 at 0.25s → beat 0.5
+        ]
+        steps = build_steps(events, tempo=120, resolution=0.5, min_velocity=0.3)
+        assert steps == [
+            {"d": 0.5, "string": "R3"},
+            {"d": 1, "string": "R2"},
+        ]
+
+    def test_filters_low_velocity(self):
+        events = [
+            (0.0, 0.5, 60, 0.1),   # below threshold
+            (0.5, 1.0, 57, 0.7),
+        ]
+        steps = build_steps(events, tempo=120, resolution=0.5, min_velocity=0.3)
+        assert len(steps) == 1
+        assert steps[0]["string"] == "R2"
+
+    def test_simultaneous_notes(self):
+        events = [
+            (0.0, 0.5, 60, 0.8),   # R3
+            (0.0, 0.5, 41, 0.8),   # L1
+        ]
+        steps = build_steps(events, tempo=120, resolution=0.5, min_velocity=0.3)
+        assert len(steps) == 1
+        assert set(steps[0]["strings"]) == {"R3", "L1"}

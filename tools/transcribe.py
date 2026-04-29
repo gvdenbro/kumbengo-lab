@@ -143,6 +143,50 @@ def detect_notes(audio_path: Path):
     return note_events
 
 
+def quantize(time_s: float, tempo: float, resolution: float) -> float:
+    """Snap a time in seconds to the nearest beat grid position."""
+    beat = time_s * tempo / 60.0
+    return round(round(beat / resolution) * resolution, 4)
+
+
+def build_steps(note_events, tempo: float, resolution: float, min_velocity: float) -> list[dict]:
+    """Convert note events to quantized kora steps with relative durations."""
+    print("[4/4] Quantizing and building steps...")
+
+    beat_map: dict[float, list[str]] = {}
+    skipped = 0
+
+    for event in note_events:
+        onset_s, _end_s, midi, amplitude = event[:4]
+        if amplitude < min_velocity:
+            skipped += 1
+            continue
+        string_id = snap_midi_to_kora(round(midi))
+        if string_id is None:
+            skipped += 1
+            continue
+        beat = quantize(onset_s, tempo, resolution)
+        beat_map.setdefault(beat, [])
+        if string_id not in beat_map[beat]:
+            beat_map[beat].append(string_id)
+
+    if skipped:
+        print(f"   → Skipped {skipped} events (below threshold or out of range)")
+
+    sorted_beats = sorted(beat_map.keys())
+    steps = []
+    for i, beat in enumerate(sorted_beats):
+        d = round(sorted_beats[i + 1] - beat, 4) if i < len(sorted_beats) - 1 else 1
+        strings = beat_map[beat]
+        if len(strings) == 1:
+            steps.append({"d": d, "string": strings[0]})
+        else:
+            steps.append({"d": d, "strings": strings})
+
+    print(f"   → {len(steps)} steps in arrangement")
+    return steps
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
     parser.add_argument("input", type=Path, help="Input audio or video file")
@@ -209,8 +253,15 @@ def main():
     # Step 3: Note detection
     note_events = detect_notes(audio)
 
-    # TODO: step 4
-    print("\nRemaining pipeline steps not yet implemented.")
+    # Step 4: Build steps
+    steps = build_steps(note_events, tempo, args.resolution, args.min_velocity)
+
+    if not steps:
+        print("No kora notes detected. Try lowering --min-velocity.", file=sys.stderr)
+        sys.exit(1)
+
+    # TODO: write output
+    print("\nOutput step not yet implemented.")
 
 
 if __name__ == "__main__":
