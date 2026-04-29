@@ -50,6 +50,28 @@ def extract_audio(video_path: Path, output_dir: Path) -> Path:
     return out
 
 
+def separate(audio_path: Path, output_dir: Path) -> Path:
+    """Run Demucs source separation, return path to isolated 'other' stem."""
+    print("[1/4] Separating sources with Demucs...")
+    subprocess.run(
+        [sys.executable, "-m", "demucs", "-o", str(output_dir), str(audio_path)],
+        check=True,
+    )
+    stem_name = audio_path.stem
+    other = output_dir / "htdemucs" / stem_name / "other.wav"
+    if not other.exists():
+        for d in (output_dir / "htdemucs").iterdir():
+            candidate = d / "other.wav"
+            if candidate.exists():
+                other = candidate
+                break
+    if not other.exists():
+        print("   Warning: could not find separated stem, using original audio")
+        return audio_path
+    print(f"   → Isolated kora: {other}")
+    return other
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
     parser.add_argument("input", type=Path, help="Input audio or video file")
@@ -86,8 +108,24 @@ def main():
     print(f"Title: {title}")
     print(f"Output: {output_path}\n")
 
-    # TODO: implement pipeline steps
-    print("Pipeline not yet implemented.")
+    tmp = Path(tempfile.mkdtemp(prefix="kora-transcribe-"))
+
+    # Step 0: Extract audio from video if needed
+    if is_video:
+        print("[0/4] Extracting audio from video...")
+        audio = extract_audio(args.input, tmp)
+        print(f"   → {audio}")
+    else:
+        audio = args.input
+
+    # Step 1: Source separation
+    if not args.no_separate:
+        audio = separate(audio, tmp)
+    else:
+        print("[1/4] Skipping source separation")
+
+    # TODO: steps 2-4
+    print("\nRemaining pipeline steps not yet implemented.")
 
 
 if __name__ == "__main__":
