@@ -72,6 +72,27 @@ def separate(audio_path: Path, output_dir: Path) -> Path:
     return other
 
 
+def detect_tempo(audio_path: Path) -> float:
+    """Estimate tempo using librosa."""
+    import librosa
+    y, sr = librosa.load(str(audio_path), sr=44100)
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    return float(tempo[0]) if hasattr(tempo, '__len__') else float(tempo)
+
+
+def confirm_tempo(estimated: float) -> int:
+    """Show estimated tempo, let user confirm or override."""
+    rounded = round(estimated)
+    response = input(f"Tempo [{rounded}]: ").strip()
+    if not response:
+        return rounded
+    try:
+        return int(response)
+    except ValueError:
+        print(f"   Invalid input, using {rounded}")
+        return rounded
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
     parser.add_argument("input", type=Path, help="Input audio or video file")
@@ -124,8 +145,19 @@ def main():
     else:
         print("[1/4] Skipping source separation")
 
-    # TODO: steps 2-4
-    print("\nRemaining pipeline steps not yet implemented.")
+    # Step 2: Tempo detection
+    if args.tempo:
+        tempo = args.tempo
+        print(f"[2/4] Using provided tempo: {tempo} BPM")
+    else:
+        print("[2/4] Detecting tempo...")
+        estimated = detect_tempo(audio)
+        print(f"   → Estimated: {round(estimated)} BPM\n")
+        tempo = confirm_tempo(estimated)
+    print()
+
+    # TODO: steps 3-4
+    print("Remaining pipeline steps not yet implemented.")
 
 
 if __name__ == "__main__":
