@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { repl, pure, silence, fastcat } from '@strudel/core';
-import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
+import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
+import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
@@ -45,13 +45,6 @@ export default function Transcriber() {
   const loopStartRef = useRef(0);
   const tapsRef = useRef<number[]>([]);
   const speedRef = useRef(speed);
-  const replRef = useRef<ReturnType<typeof repl> | null>(null);
-
-  useEffect(() => {
-    const r = repl({ defaultOutput: webaudioOutput, getTime: () => getAudioContext().currentTime });
-    replRef.current = r;
-    return () => { r.stop(); };
-  }, []);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -112,41 +105,19 @@ export default function Transcriber() {
   }, [getCtx, steps]);
 
   const playAssignedNotes = useCallback(async (overrideAssignments?: (string | null)[]) => {
-    const r = replRef.current;
-    if (!r) return;
     await prebaked;
-    await getAudioContext().resume();
+    const ctx = getAudioContext();
+    await ctx.resume();
     const a = overrideAssignments || assignments;
     const end = currentStep + 1;
-    // Use resolution-based slots like Player.tsx
-    const resolution = 0.5;
-    const totalD = steps.slice(0, end).reduce((s, st) => s + st.d, 0);
-    const slots = Math.round(totalD / resolution);
-    if (slots === 0) return;
-    const slotPatterns = [];
-    let t = 0;
-    let stepIdx = 0;
-    for (let s = 0; s < slots; s++) {
-      const slotTime = s * resolution;
-      // Check if a step starts at this slot
-      if (stepIdx < end && Math.abs(t - slotTime) < resolution / 2) {
-        const str = a[stepIdx];
-        if (str) {
-          slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
-        } else {
-          slotPatterns.push(silence);
-        }
-        t += steps[stepIdx].d;
-        stepIdx++;
-      } else {
-        slotPatterns.push(silence);
+    let time = ctx.currentTime + 0.05;
+    for (let i = 0; i < end; i++) {
+      const str = a[i];
+      if (str) {
+        superdough({ s: 'folkharp', note: TUNING[str] ?? 60 }, time, steps[i].d);
       }
+      time += steps[i].d;
     }
-    const cps = 1 / totalD;
-    r.setCps(cps);
-    r.setPattern(fastcat(...slotPatterns), true);
-    r.start();
-    setTimeout(() => r.stop(), totalD * 1000 + 200);
   }, [assignments, currentStep, steps]);
 
   const playAssigned = useCallback(() => playAssignedNotes(), [playAssignedNotes]);
