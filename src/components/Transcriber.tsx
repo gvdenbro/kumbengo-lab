@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 
 type Phase = 'load' | 'rhythm' | 'assign';
 
@@ -7,11 +8,14 @@ export default function Transcriber() {
   const [dragOver, setDragOver] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [playing, setPlaying] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [steps, setSteps] = useState<{ d: number }[]>([]);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const loopStartRef = useRef(0);
   const tapsRef = useRef<number[]>([]);
+  const speedRef = useRef(speed);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -46,12 +50,34 @@ export default function Transcriber() {
     sourceRef.current?.stop();
     sourceRef.current = null;
     setPlaying(false);
+    const dur = bufferRef.current!.duration;
+    const clusters = clusterTaps(tapsRef.current, 0.08);
+    const result = clustersToSteps(clusters, dur);
+    setSteps(result);
   }, []);
+
+  // Keep speedRef in sync
+  useEffect(() => { speedRef.current = speed; }, [speed]);
 
   // Update playback rate live when speed changes
   useEffect(() => {
     if (sourceRef.current) sourceRef.current.playbackRate.value = speed;
   }, [speed]);
+
+  // Spacebar tap capture
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || !sourceRef.current || !ctxRef.current) return;
+      e.preventDefault();
+      const elapsed = (ctxRef.current.currentTime - loopStartRef.current) * speedRef.current;
+      const dur = bufferRef.current!.duration;
+      const pos = elapsed % dur;
+      tapsRef.current.push(pos);
+      setTapCount(tapsRef.current.length);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   if (phase === 'load') {
     return (
@@ -83,7 +109,10 @@ export default function Transcriber() {
         ) : (
           <button onClick={stopPlayback}>⏹ Stop</button>
         )}
-        {playing && <p style={{ marginTop: '0.5rem' }}>Taps: {tapsRef.current.length} (press spacebar)</p>}
+        <p style={{ marginTop: '0.5rem' }}>Taps: {tapCount}</p>
+        {!playing && steps.length > 0 && (
+          <p>Steps extracted: {steps.length}</p>
+        )}
       </div>
     );
   }
