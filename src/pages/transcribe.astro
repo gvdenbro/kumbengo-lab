@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro';
+import Transcriber from '../components/Transcriber.tsx';
+---
+<Base title="Transcribe">
+  <h1>Transcribe</h1>
+  <Transcriber client:only="react" />
+</Base>
