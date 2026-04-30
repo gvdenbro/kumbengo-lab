@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { repl, pure, silence, fastcat } from '@strudel/core';
+import { getAudioContext, webaudioOutput, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
@@ -9,7 +11,14 @@ const TUNING: Record<string, number> = {
   R1:53,R2:57,R3:60,R4:64,R5:67,R6:70,R7:74,R8:77,R9:79,R10:81,
 };
 
-function midiToFreq(midi: number) { return 440 * 2 ** ((midi - 69) / 12); }
+let prebaked: Promise<void> | undefined;
+if (typeof window !== 'undefined') {
+  prebaked = Promise.all([
+    registerSynthSounds(),
+    samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
+  ]).then(() => {}).catch(err => console.error('Sample preload failed:', err));
+  initAudioOnFirstClick().catch(() => {});
+}
 
 function buildYaml(steps: { d: number }[], assignments: (string | null)[]): string {
   const lines = steps.map((step, i) => {
@@ -36,6 +45,13 @@ export default function Transcriber() {
   const loopStartRef = useRef(0);
   const tapsRef = useRef<number[]>([]);
   const speedRef = useRef(speed);
+  const replRef = useRef<ReturnType<typeof repl> | null>(null);
+
+  useEffect(() => {
+    const r = repl({ defaultOutput: webaudioOutput, getTime: () => getAudioContext().currentTime });
+    replRef.current = r;
+    return () => { r.stop(); };
+  }, []);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -95,26 +111,29 @@ export default function Transcriber() {
     });
   }, [getCtx, steps]);
 
-  const playAssigned = useCallback(() => {
-    const ctx = getCtx();
-    ctx.resume();
-    let time = ctx.currentTime;
+  const playAssigned = useCallback(async () => {
+    const r = replRef.current;
+    if (!r) return;
+    await prebaked;
+    await getAudioContext().resume();
+    // Build pattern from assigned steps up to currentStep
+    const slotPatterns = [];
     for (let i = 0; i <= currentStep; i++) {
       const str = assignments[i];
       if (str) {
-        const freq = midiToFreq(TUNING[str] ?? 60);
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.4, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(time);
-        osc.stop(time + 0.3);
+        slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
+      } else {
+        slotPatterns.push(silence);
       }
-      time += steps[i].d;
     }
-  }, [getCtx, assignments, currentStep, steps]);
+    if (slotPatterns.length === 0) return;
+    const totalD = steps.slice(0, currentStep + 1).reduce((s, st) => s + st.d, 0);
+    r.setCps(1 / totalD);
+    r.setPattern(fastcat(...slotPatterns), true);
+    r.start();
+    // Stop after one cycle
+    setTimeout(() => r.stop(), totalD * 1000 + 200);
+  }, [assignments, currentStep, steps]);
 
   const playOriginalAudio = useCallback(() => {
     const ctx = getCtx();
@@ -133,29 +152,29 @@ export default function Transcriber() {
       next[currentStep] = id;
       return next;
     });
-    // Play assigned notes after a tick (so state updates first)
-    setTimeout(() => {
-      const ctx = getCtx();
-      ctx.resume();
-      let time = ctx.currentTime;
+    // Play assigned notes using folkharp
+    (async () => {
+      const r = replRef.current;
+      if (!r) return;
+      await prebaked;
+      await getAudioContext().resume();
+      const slotPatterns = [];
       for (let i = 0; i <= currentStep; i++) {
         const str = i === currentStep ? id : assignments[i];
         if (str) {
-          const freq = midiToFreq(TUNING[str] ?? 60);
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0.4, time);
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
-          osc.connect(gain).connect(ctx.destination);
-          osc.start(time);
-          osc.stop(time + 0.3);
+          slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
+        } else {
+          slotPatterns.push(silence);
         }
-        time += steps[i].d;
       }
-    }, 0);
+      const totalD = steps.slice(0, currentStep + 1).reduce((s, st) => s + st.d, 0);
+      r.setCps(1 / totalD);
+      r.setPattern(fastcat(...slotPatterns), true);
+      r.start();
+      setTimeout(() => r.stop(), totalD * 1000 + 200);
+    })();
     if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
-  }, [currentStep, steps, assignments, getCtx]);
+  }, [currentStep, steps, assignments]);
 
   const copyYaml = useCallback(() => {
     navigator.clipboard.writeText(buildYaml(steps, assignments));
