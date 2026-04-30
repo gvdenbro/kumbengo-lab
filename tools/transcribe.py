@@ -153,11 +153,12 @@ def quantize(time_s: float, tempo: float, resolution: float) -> float:
     return round(round(beat / resolution) * resolution, 4)
 
 
-def build_steps(note_events, tempo: float, resolution: float, min_velocity: float) -> list[dict]:
+def build_steps(note_events, tempo: float, resolution: float, min_velocity: float, monophonic: bool = False) -> list[dict]:
     """Convert note events to quantized kora steps with relative durations."""
     print("[4/4] Quantizing and building steps...")
 
-    beat_map: dict[float, list[str]] = {}
+    STRING_TO_MIDI = {v: k for k, v in SILABA_STRINGS.items()}
+    beat_map: dict[float, list[tuple[str, float]]] = {}
     skipped = 0
 
     for event in note_events:
@@ -171,8 +172,8 @@ def build_steps(note_events, tempo: float, resolution: float, min_velocity: floa
             continue
         beat = quantize(onset_s, tempo, resolution)
         beat_map.setdefault(beat, [])
-        if string_id not in beat_map[beat]:
-            beat_map[beat].append(string_id)
+        if not any(s == string_id for s, _ in beat_map[beat]):
+            beat_map[beat].append((string_id, amplitude))
 
     if skipped:
         print(f"   → Skipped {skipped} events (below threshold or out of range)")
@@ -181,11 +182,18 @@ def build_steps(note_events, tempo: float, resolution: float, min_velocity: floa
     steps = []
     for i, beat in enumerate(sorted_beats):
         d = round(sorted_beats[i + 1] - beat, 4) if i < len(sorted_beats) - 1 else 1
-        strings = beat_map[beat]
-        if len(strings) == 1:
-            steps.append({"d": d, "string": strings[0]})
+        if monophonic:
+            # Keep loudest note within one octave of the lowest detected
+            lowest_midi = min(STRING_TO_MIDI[s] for s, _ in beat_map[beat])
+            candidates = [(s, a) for s, a in beat_map[beat] if STRING_TO_MIDI[s] - lowest_midi <= 12]
+            best = max(candidates, key=lambda x: x[1])[0]
+            steps.append({"d": d, "string": best})
         else:
-            steps.append({"d": d, "strings": strings})
+            strings = [s for s, _ in beat_map[beat]]
+            if len(strings) == 1:
+                steps.append({"d": d, "string": strings[0]})
+            else:
+                steps.append({"d": d, "strings": strings})
 
     print(f"   → {len(steps)} steps in arrangement")
     return steps
@@ -237,6 +245,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--title", help="Piece title (default: from filename)")
     parser.add_argument("--tempo", type=int, help="BPM (skip auto-detection)")
     parser.add_argument("--no-separate", action="store_true", help="Skip Demucs source separation")
+    parser.add_argument("--monophonic", action="store_true", help="Keep only lowest note per beat (filter harmonics)")
     parser.add_argument("--resolution", type=float, default=0.5, help="Beat grid resolution (default: 0.5)")
     parser.add_argument("--min-velocity", type=float, default=0.3, help="Min note amplitude 0-1 (default: 0.3)")
     parser.add_argument("--difficulty", default="beginner", choices=["beginner", "intermediate", "advanced"])
@@ -256,8 +265,9 @@ def main():
     output_path = PIECES_DIR / f"{args.input.stem}.yaml"
 
     if output_path.exists():
-        print(f"Error: {output_path} already exists", file=sys.stderr)
-        sys.exit(1)
+        response = input(f"{output_path} already exists. Overwrite? [y/N]: ").strip().lower()
+        if response != "y":
+            sys.exit(1)
 
     is_video = args.input.suffix.lower() in VIDEO_EXTENSIONS
     if is_video:
@@ -298,7 +308,7 @@ def main():
     note_events = detect_notes(audio)
 
     # Step 4: Build steps
-    steps = build_steps(note_events, tempo, args.resolution, args.min_velocity)
+    steps = build_steps(note_events, tempo, args.resolution, args.min_velocity, args.monophonic)
 
     if not steps:
         print("No kora notes detected. Try lowering --min-velocity.", file=sys.stderr)
