@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
+import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
@@ -10,6 +11,8 @@ export default function Transcriber() {
   const [playing, setPlaying] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [steps, setSteps] = useState<{ d: number }[]>([]);
+  const [assignments, setAssignments] = useState<(string | null)[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -147,11 +150,56 @@ export default function Transcriber() {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={playClicks}>🔊 Play rhythm</button>
           <button className="outline" onClick={retry}>↩ Retry</button>
-          <button onClick={() => setPhase('assign')}>✓ Confirm</button>
+          <button onClick={() => { setAssignments(Array(steps.length).fill(null)); setCurrentStep(0); setPhase('assign'); }}>✓ Confirm</button>
         </div>
       </div>
     );
   }
 
-  return <p>Phase: {phase}</p>;
+  const assignString = useCallback((id: string) => {
+    setAssignments(prev => {
+      const next = [...prev];
+      next[currentStep] = id;
+      return next;
+    });
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
+  }, [currentStep, steps.length]);
+
+  if (phase === 'assign') {
+    return (
+      <div>
+        <p>Click a string on the bridge diagram for step {currentStep + 1}/{steps.length}</p>
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          <div>
+            <BridgeDiagramInteractive onStringClick={assignString} />
+          </div>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {steps.map((step, i) => (
+                <li
+                  key={i}
+                  onClick={() => setCurrentStep(i)}
+                  style={{
+                    padding: '0.25rem 0.5rem', cursor: 'pointer',
+                    background: i === currentStep ? 'var(--pico-primary-background)' : undefined,
+                    color: i === currentStep ? 'var(--pico-primary-inverse)' : undefined,
+                    borderRadius: '0.25rem', marginBottom: '0.125rem',
+                  }}
+                >
+                  {i + 1}. d={step.d.toFixed(2)} → {assignments[i] || '—'}
+                </li>
+              ))}
+            </ol>
+            {currentStep > 0 && (
+              <button className="outline" style={{ marginTop: '0.5rem' }} onClick={() => setCurrentStep(currentStep - 1)}>
+                ← Back
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
