@@ -210,12 +210,11 @@ yaml.add_representer(dict, _represent_step)
 
 
 def write_piece(
-    steps: list[dict],
+    arrangements: list[dict],
     output_path: Path,
     title: str,
     tempo: int,
     difficulty: str,
-    arrangement_name: str,
     tags: list[str],
 ) -> None:
     """Write the piece YAML file."""
@@ -225,13 +224,7 @@ def write_piece(
         "tuning": "silaba",
         "tempo": tempo,
         "tags": tags,
-        "arrangements": [
-            {
-                "name": arrangement_name,
-                "difficulty": difficulty,
-                "steps": steps,
-            }
-        ],
+        "arrangements": arrangements,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -241,7 +234,7 @@ def write_piece(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Transcribe a kora recording to piece YAML")
-    parser.add_argument("input", type=Path, help="Input audio or video file")
+    parser.add_argument("input", type=Path, nargs="+", help="Input audio or video file(s)")
     parser.add_argument("--title", help="Piece title (default: from filename)")
     parser.add_argument("--tempo", type=int, help="BPM (skip auto-detection)")
     parser.add_argument("--no-separate", action="store_true", help="Skip Demucs source separation")
@@ -257,68 +250,84 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
-    if not args.input.exists():
-        print(f"Error: {args.input} not found", file=sys.stderr)
-        sys.exit(1)
+    for f in args.input:
+        if not f.exists():
+            print(f"Error: {f} not found", file=sys.stderr)
+            sys.exit(1)
 
-    title = args.title or title_from_stem(args.input.stem)
-    output_path = PIECES_DIR / f"{args.input.stem}.yaml"
+    first = args.input[0]
+    title = args.title or title_from_stem(first.stem)
+    output_path = PIECES_DIR / f"{first.stem}.yaml"
 
     if output_path.exists():
         response = input(f"{output_path} already exists. Overwrite? [y/N]: ").strip().lower()
         if response != "y":
             sys.exit(1)
 
-    is_video = args.input.suffix.lower() in VIDEO_EXTENSIONS
-    if is_video:
+    # Check ffmpeg if any input is video
+    if any(f.suffix.lower() in VIDEO_EXTENSIONS for f in args.input):
         check_ffmpeg()
 
-    print(f"Transcribing: {args.input}")
     print(f"Title: {title}")
-    print(f"Output: {output_path}\n")
+    print(f"Output: {output_path}")
+    print(f"Inputs: {len(args.input)} file(s)\n")
 
-    tmp = Path(tempfile.mkdtemp(prefix="kora-transcribe-"))
+    arrangements = []
+    for idx, input_file in enumerate(args.input, 1):
+        if len(args.input) > 1:
+            arr_name = args.arrangement if len(args.input) == 1 else f"{args.arrangement} {idx}"
+            print(f"━━━ Arrangement {idx}: {input_file.name} ━━━\n")
+        else:
+            arr_name = args.arrangement
 
-    # Step 0: Extract audio from video if needed
-    if is_video:
-        print("[0/4] Extracting audio from video...")
-        audio = extract_audio(args.input, tmp)
-        print(f"   → {audio}")
-    else:
-        audio = args.input
+        tmp = Path(tempfile.mkdtemp(prefix="kora-transcribe-"))
+        is_video = input_file.suffix.lower() in VIDEO_EXTENSIONS
 
-    # Step 1: Source separation
-    if not args.no_separate:
-        audio = separate(audio, tmp)
-    else:
-        print("[1/4] Skipping source separation")
+        # Step 0: Extract audio from video if needed
+        if is_video:
+            print("[0/4] Extracting audio from video...")
+            audio = extract_audio(input_file, tmp)
+            print(f"   → {audio}")
+        else:
+            audio = input_file
 
-    # Step 2: Tempo detection
-    if args.tempo:
-        tempo = args.tempo
-        print(f"[2/4] Using provided tempo: {tempo} BPM")
-    else:
-        print("[2/4] Detecting tempo...")
-        estimated = detect_tempo(audio)
-        print(f"   → Estimated: {round(estimated)} BPM\n")
-        tempo = confirm_tempo(estimated)
-    print()
+        # Step 1: Source separation
+        if not args.no_separate:
+            audio = separate(audio, tmp)
+        else:
+            print("[1/4] Skipping source separation")
 
-    # Step 3: Note detection
-    note_events = detect_notes(audio)
+        # Step 2: Tempo detection
+        if args.tempo:
+            tempo = args.tempo
+            print(f"[2/4] Using provided tempo: {tempo} BPM")
+        else:
+            print("[2/4] Detecting tempo...")
+            estimated = detect_tempo(audio)
+            print(f"   → Estimated: {round(estimated)} BPM\n")
+            tempo = confirm_tempo(estimated)
+        print()
 
-    # Step 4: Build steps
-    steps = build_steps(note_events, tempo, args.resolution, args.min_velocity, args.monophonic)
+        # Step 3: Note detection
+        note_events = detect_notes(audio)
 
-    if not steps:
-        print("No kora notes detected. Try lowering --min-velocity.", file=sys.stderr)
+        # Step 4: Build steps
+        steps = build_steps(note_events, tempo, args.resolution, args.min_velocity, args.monophonic)
+
+        if not steps:
+            print(f"Warning: no notes detected in {input_file.name}, skipping", file=sys.stderr)
+            continue
+
+        arrangements.append({"name": arr_name, "difficulty": args.difficulty, "steps": steps})
+
+    if not arrangements:
+        print("No arrangements produced.", file=sys.stderr)
         sys.exit(1)
 
-    # Write output
     tags = [t.strip() for t in args.tags.split(",")]
-    write_piece(steps, output_path, title, tempo, args.difficulty, args.arrangement, tags)
+    write_piece(arrangements, output_path, title, tempo, args.difficulty, tags)
     print(f"\n✓ Written to {output_path}")
-    print(f"  {len(steps)} steps, tempo={tempo} BPM")
+    print(f"  {len(arrangements)} arrangement(s), tempo={tempo} BPM")
 
 
 if __name__ == "__main__":
