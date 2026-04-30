@@ -248,6 +248,7 @@ export default function Transcriber() {
               )}
               <button className="outline" onClick={playAssigned}>🔊 Play assigned</button>
               <button className="outline secondary" onClick={playOriginalAudio}>🎵 Play audio</button>
+              <button className="outline secondary" onClick={retry}>↩ Re-tap rhythm</button>
             </div>
           </div>
         </div>
