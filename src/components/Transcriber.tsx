@@ -4,6 +4,14 @@ import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
+// Silaba tuning MIDI values (hardcoded — transcriber is tuning-agnostic for now)
+const TUNING: Record<string, number> = {
+  L1:41,L2:48,L3:50,L4:52,L5:55,L6:58,L7:62,L8:65,L9:69,L10:72,L11:76,
+  R1:53,R2:57,R3:60,R4:64,R5:67,R6:70,R7:74,R8:77,R9:79,R10:81,
+};
+
+function midiToFreq(midi: number) { return 440 * 2 ** ((midi - 69) / 12); }
+
 export default function Transcriber() {
   const [phase, setPhase] = useState<Phase>('load');
   const [dragOver, setDragOver] = useState(false);
@@ -19,7 +27,6 @@ export default function Transcriber() {
   const loopStartRef = useRef(0);
   const tapsRef = useRef<number[]>([]);
   const speedRef = useRef(speed);
-  const clickTimersRef = useRef<number[]>([]);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -79,29 +86,84 @@ export default function Transcriber() {
     });
   }, [getCtx, steps]);
 
+  const playAssigned = useCallback(() => {
+    const ctx = getCtx();
+    ctx.resume();
+    let time = ctx.currentTime;
+    for (let i = 0; i <= currentStep; i++) {
+      const str = assignments[i];
+      if (str) {
+        const freq = midiToFreq(TUNING[str] ?? 60);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.3);
+      }
+      time += steps[i].d;
+    }
+  }, [getCtx, assignments, currentStep, steps]);
+
+  const playOriginalAudio = useCallback(() => {
+    const ctx = getCtx();
+    const buf = bufferRef.current;
+    if (!buf) return;
+    ctx.resume();
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+  }, [getCtx]);
+
+  const assignString = useCallback((id: string) => {
+    setAssignments(prev => {
+      const next = [...prev];
+      next[currentStep] = id;
+      return next;
+    });
+    // Play assigned notes after a tick (so state updates first)
+    setTimeout(() => {
+      const ctx = getCtx();
+      ctx.resume();
+      let time = ctx.currentTime;
+      for (let i = 0; i <= currentStep; i++) {
+        const str = i === currentStep ? id : assignments[i];
+        if (str) {
+          const freq = midiToFreq(TUNING[str] ?? 60);
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.4, time);
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(time);
+          osc.stop(time + 0.3);
+        }
+        time += steps[i].d;
+      }
+    }, 0);
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
+  }, [currentStep, steps, assignments, getCtx]);
+
   const retry = useCallback(() => {
     setSteps([]);
     setTapCount(0);
     setPhase('rhythm');
   }, []);
 
-  // Keep speedRef in sync
   useEffect(() => { speedRef.current = speed; }, [speed]);
+  useEffect(() => { if (sourceRef.current) sourceRef.current.playbackRate.value = speed; }, [speed]);
 
-  // Update playback rate live
-  useEffect(() => {
-    if (sourceRef.current) sourceRef.current.playbackRate.value = speed;
-  }, [speed]);
-
-  // Spacebar tap capture
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || !sourceRef.current || !ctxRef.current) return;
       e.preventDefault();
       const elapsed = (ctxRef.current.currentTime - loopStartRef.current) * speedRef.current;
       const dur = bufferRef.current!.duration;
-      const pos = elapsed % dur;
-      tapsRef.current.push(pos);
+      tapsRef.current.push(elapsed % dur);
       setTapCount(tapsRef.current.length);
     };
     document.addEventListener('keydown', onKey);
@@ -156,19 +218,10 @@ export default function Transcriber() {
     );
   }
 
-  const assignString = useCallback((id: string) => {
-    setAssignments(prev => {
-      const next = [...prev];
-      next[currentStep] = id;
-      return next;
-    });
-    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
-  }, [currentStep, steps.length]);
-
   if (phase === 'assign') {
     return (
       <div>
-        <p>Click a string on the bridge diagram for step {currentStep + 1}/{steps.length}</p>
+        <p>Click a string for step {currentStep + 1}/{steps.length}</p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
             <BridgeDiagramInteractive onStringClick={assignString} />
@@ -190,11 +243,13 @@ export default function Transcriber() {
                 </li>
               ))}
             </ol>
-            {currentStep > 0 && (
-              <button className="outline" style={{ marginTop: '0.5rem' }} onClick={() => setCurrentStep(currentStep - 1)}>
-                ← Back
-              </button>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              {currentStep > 0 && (
+                <button className="outline" onClick={() => setCurrentStep(currentStep - 1)}>← Back</button>
+              )}
+              <button className="outline" onClick={playAssigned}>🔊 Play assigned</button>
+              <button className="outline secondary" onClick={playOriginalAudio}>🎵 Play audio</button>
+            </div>
           </div>
         </div>
       </div>
