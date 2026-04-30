@@ -4,13 +4,21 @@ import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
-// Silaba tuning MIDI values (hardcoded — transcriber is tuning-agnostic for now)
 const TUNING: Record<string, number> = {
   L1:41,L2:48,L3:50,L4:52,L5:55,L6:58,L7:62,L8:65,L9:69,L10:72,L11:76,
   R1:53,R2:57,R3:60,R4:64,R5:67,R6:70,R7:74,R8:77,R9:79,R10:81,
 };
 
 function midiToFreq(midi: number) { return 440 * 2 ** ((midi - 69) / 12); }
+
+function buildYaml(steps: { d: number }[], assignments: (string | null)[]): string {
+  const lines = steps.map((step, i) => {
+    const str = assignments[i];
+    if (str) return `  - {d: ${step.d}, string: ${str}}`;
+    return `  - {d: ${step.d}}`;
+  });
+  return `steps:\n${lines.join('\n')}`;
+}
 
 export default function Transcriber() {
   const [phase, setPhase] = useState<Phase>('load');
@@ -21,6 +29,7 @@ export default function Transcriber() {
   const [steps, setSteps] = useState<{ d: number }[]>([]);
   const [assignments, setAssignments] = useState<(string | null)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [copied, setCopied] = useState(false);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -148,6 +157,12 @@ export default function Transcriber() {
     if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
   }, [currentStep, steps, assignments, getCtx]);
 
+  const copyYaml = useCallback(() => {
+    navigator.clipboard.writeText(buildYaml(steps, assignments));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [steps, assignments]);
+
   const retry = useCallback(() => {
     setSteps([]);
     setTapCount(0);
@@ -252,6 +267,10 @@ export default function Transcriber() {
             </div>
           </div>
         </div>
+        <details open style={{ marginTop: '1rem' }}>
+          <summary>YAML preview <button className="outline" style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={copyYaml}>{copied ? '✓ Copied!' : '📋 Copy'}</button></summary>
+          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>{buildYaml(steps, assignments)}</pre>
+        </details>
       </div>
     );
   }
