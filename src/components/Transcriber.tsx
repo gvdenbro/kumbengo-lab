@@ -111,29 +111,45 @@ export default function Transcriber() {
     });
   }, [getCtx, steps]);
 
-  const playAssigned = useCallback(async () => {
+  const playAssignedNotes = useCallback(async (overrideAssignments?: (string | null)[]) => {
     const r = replRef.current;
     if (!r) return;
     await prebaked;
     await getAudioContext().resume();
-    // Build pattern from assigned steps up to currentStep
+    const a = overrideAssignments || assignments;
+    const end = currentStep + 1;
+    // Use resolution-based slots like Player.tsx
+    const resolution = 0.5;
+    const totalD = steps.slice(0, end).reduce((s, st) => s + st.d, 0);
+    const slots = Math.round(totalD / resolution);
+    if (slots === 0) return;
     const slotPatterns = [];
-    for (let i = 0; i <= currentStep; i++) {
-      const str = assignments[i];
-      if (str) {
-        slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
+    let t = 0;
+    let stepIdx = 0;
+    for (let s = 0; s < slots; s++) {
+      const slotTime = s * resolution;
+      // Check if a step starts at this slot
+      if (stepIdx < end && Math.abs(t - slotTime) < resolution / 2) {
+        const str = a[stepIdx];
+        if (str) {
+          slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
+        } else {
+          slotPatterns.push(silence);
+        }
+        t += steps[stepIdx].d;
+        stepIdx++;
       } else {
         slotPatterns.push(silence);
       }
     }
-    if (slotPatterns.length === 0) return;
-    const totalD = steps.slice(0, currentStep + 1).reduce((s, st) => s + st.d, 0);
-    r.setCps(1 / totalD);
+    const cps = 1 / totalD;
+    r.setCps(cps);
     r.setPattern(fastcat(...slotPatterns), true);
     r.start();
-    // Stop after one cycle
     setTimeout(() => r.stop(), totalD * 1000 + 200);
   }, [assignments, currentStep, steps]);
+
+  const playAssigned = useCallback(() => playAssignedNotes(), [playAssignedNotes]);
 
   const playOriginalAudio = useCallback(() => {
     const ctx = getCtx();
@@ -147,34 +163,12 @@ export default function Transcriber() {
   }, [getCtx]);
 
   const assignString = useCallback((id: string) => {
-    setAssignments(prev => {
-      const next = [...prev];
-      next[currentStep] = id;
-      return next;
-    });
-    // Play assigned notes using folkharp
-    (async () => {
-      const r = replRef.current;
-      if (!r) return;
-      await prebaked;
-      await getAudioContext().resume();
-      const slotPatterns = [];
-      for (let i = 0; i <= currentStep; i++) {
-        const str = i === currentStep ? id : assignments[i];
-        if (str) {
-          slotPatterns.push(pure({ s: 'folkharp', note: TUNING[str] ?? 60 }));
-        } else {
-          slotPatterns.push(silence);
-        }
-      }
-      const totalD = steps.slice(0, currentStep + 1).reduce((s, st) => s + st.d, 0);
-      r.setCps(1 / totalD);
-      r.setPattern(fastcat(...slotPatterns), true);
-      r.start();
-      setTimeout(() => r.stop(), totalD * 1000 + 200);
-    })();
+    const newAssignments = [...assignments];
+    newAssignments[currentStep] = id;
+    setAssignments(newAssignments);
+    playAssignedNotes(newAssignments);
     if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
-  }, [currentStep, steps, assignments]);
+  }, [currentStep, steps, assignments, playAssignedNotes]);
 
   const copyYaml = useCallback(() => {
     navigator.clipboard.writeText(buildYaml(steps, assignments));
