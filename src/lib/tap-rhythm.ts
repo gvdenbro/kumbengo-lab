@@ -25,12 +25,13 @@ export function clustersToSteps(clusters: TapCluster[], loopDuration: number): {
   if (clusters.length === 0) return [];
   const steps: { d: number }[] = [];
   for (let i = 0; i < clusters.length - 1; i++) {
-    steps.push({ d: clusters[i + 1].onset - clusters[i].onset });
+    steps.push({ d: round2(clusters[i + 1].onset - clusters[i].onset) });
   }
-  // Last step wraps around
-  steps.push({ d: loopDuration - clusters[clusters.length - 1].onset + clusters[0].onset });
+  steps.push({ d: round2(loopDuration - clusters[clusters.length - 1].onset + clusters[0].onset) });
   return steps;
 }
+
+function round2(n: number): number { return Math.round(n * 100) / 100; }
 
 function median(arr: number[]): number {
   const s = [...arr].sort((a, b) => a - b);
