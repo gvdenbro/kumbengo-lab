@@ -205,7 +205,9 @@ export default function Transcriber({ tuning }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.code === 'Backspace') {
         e.preventDefault();
-        setAssignments(prev => { const next = [...prev]; next[currentStep] = null; return next; });
+        setSteps(prev => prev.filter((_, i) => i !== currentStep));
+        setAssignments(prev => prev.filter((_, i) => i !== currentStep));
+        if (currentStep >= steps.length - 1 && currentStep > 0) setCurrentStep(currentStep - 1);
       }
       if ((e.target as HTMLElement).matches('input, select, textarea')) return;
       if (e.key === 'ArrowDown' && currentStep < steps.length - 1) {
