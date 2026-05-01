@@ -12,7 +12,8 @@ export function getStringLabel(stringId: string, notation: string, tuningId: str
     const num = parseInt(stringId.slice(1));
     const max = side === 'L' ? 11 : 10;
     const mid = Math.ceil(max / 2);
-    return num <= mid ? '⇩' : '⇧';
+    const arrow = num <= mid ? '⇩' : '⇧';
+    return `${arrow}${num}`;
   }
   return stringId;
 }
