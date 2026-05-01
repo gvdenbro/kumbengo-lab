@@ -299,6 +299,7 @@ export default function Transcriber({ tuning }: Props) {
               {currentStep > 0 && (
                 <button className="outline" onClick={() => setCurrentStep(currentStep - 1)}>← Back</button>
               )}
+              <button className="outline secondary" onClick={() => setAssignments(prev => { const next = [...prev]; next[currentStep] = null; return next; })}>✕ Clear</button>
               <button className="outline" onClick={playAssigned}>🔊 Play assigned</button>
               <button className="outline secondary" onClick={playOriginalAudio}>🎵 Play audio</button>
               <button className="outline secondary" onClick={retry}>↩ Re-tap rhythm</button>
