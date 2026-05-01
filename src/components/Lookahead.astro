@@ -1,0 +1,136 @@
+---
+import { getStepStrings, type Step } from '../lib/piece';
+interface Arrangement { name: string; steps: Step[]; }
+interface Props { arrangements: Arrangement[]; tuning: string; lookaheadBeats?: number; }
+const { arrangements, tuning, lookaheadBeats = 3 } = Astro.props;
+
+const BASE_REM = 2;
+const MAX_REM = 6;
+function getGap(steps: Step[], i: number): number {
+  return steps[i].d;
+}
+
+function gapToHeight(gap: number, minGap: number): string {
+  const scale = gap / Math.max(minGap, 0.25);
+  const rem = Math.min(BASE_REM * scale, MAX_REM);
+  return `${rem}rem`;
+}
+---
+<div class="lookahead" data-tuning={tuning} data-lookahead-beats={lookaheadBeats} role="region" aria-label="Upcoming notes">
+  {arrangements.map((arr, ai) => {
+    const minGap = Math.min(...arr.steps.map((_, i) => getGap(arr.steps, i)));
+    return (
+      <ol class="lookahead-track" data-arrangement-track={ai} data-active={ai === 0 ? 'true' : 'false'} style={ai > 0 ? 'display:none' : ''}>
+        {arr.steps.map((step, i) => (
+          <li
+            class="lookahead-item"
+            data-index={i}
+            data-d={step.d}
+            data-strings={JSON.stringify(getStepStrings(step))}
+            style={`min-height:${gapToHeight(getGap(arr.steps, i), minGap)}`}
+          >
+            <span class="lookahead-strings">{getStepStrings(step).join(', ')}</span>
+          </li>
+        ))}
+      </ol>
+    );
+  })}
+</div>
+
+<style>
+  .lookahead {
+    min-width: 6rem;
+  }
+  .lookahead-track {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+  .lookahead-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.6rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+  .lookahead-item.current {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    border-color: var(--pico-primary-border);
+    font-weight: bold;
+  }
+  .lookahead-item.hidden { display: none; }
+  @media print { .lookahead { display: none; } }
+  @media (max-width: 480px) {
+    .lookahead { min-width: 4rem; }
+    .lookahead-item { padding: 0 0.4rem; font-size: 0.65rem; }
+  }
+</style>
+
+<script>
+  import { getStringLabel } from '../lib/labels';
+
+  const LOOKAHEAD_BEATS = 2;
+
+  function updateVisibility(currentIndex: number) {
+    const track = document.querySelector('.lookahead-track[data-active="true"]');
+    if (!track) return;
+    const items = track.querySelectorAll('.lookahead-item');
+    const durations = Array.from(items).map(el => Number((el as HTMLElement).dataset.d));
+
+    items.forEach((item, i) => {
+      const el = item as HTMLElement;
+      el.classList.toggle('current', i === currentIndex);
+      if (i < currentIndex) {
+        el.classList.add('hidden');
+      } else {
+        let beatsAhead = 0;
+        for (let j = Math.max(0, currentIndex); j < i; j++) beatsAhead += durations[j];
+        if (beatsAhead > LOOKAHEAD_BEATS) {
+          el.classList.add('hidden');
+        } else {
+          el.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  const arrSel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
+  if (arrSel && Number(arrSel.value) !== 0) {
+    document.querySelectorAll('.lookahead-track').forEach((track, i) => {
+      const active = i === Number(arrSel.value);
+      (track as HTMLElement).style.display = active ? '' : 'none';
+      (track as HTMLElement).dataset.active = String(active);
+    });
+  }
+
+  updateVisibility(-1);
+
+  document.addEventListener('notation-change', ((e: CustomEvent) => {
+    const tuningId = (document.querySelector('.lookahead') as HTMLElement)?.dataset.tuning || 'silaba';
+    document.querySelectorAll('.lookahead-item').forEach(item => {
+      const strings: string[] = JSON.parse((item as HTMLElement).dataset.strings || '[]');
+      const label = item.querySelector('.lookahead-strings') as HTMLElement;
+      if (label) label.textContent = strings.map(s => getStringLabel(s, e.detail, tuningId)).join(', ');
+    });
+  }) as EventListener);
+
+  document.addEventListener('player-arrangement', ((e: CustomEvent) => {
+    document.querySelectorAll('.lookahead-track').forEach((track, i) => {
+      const active = i === e.detail.index;
+      (track as HTMLElement).style.display = active ? '' : 'none';
+      (track as HTMLElement).dataset.active = String(active);
+    });
+    updateVisibility(-1);
+  }) as EventListener);
+
+  document.addEventListener('player-step', ((e: CustomEvent) => {
+    updateVisibility(e.detail.index);
+  }) as EventListener);
+</script>

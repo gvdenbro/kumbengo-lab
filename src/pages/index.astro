@@ -1,0 +1,15 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const pieces = await getCollection('pieces');
+---
+<Base title="Pieces">
+  <h1>Pieces</h1>
+  {pieces.map((piece) => (
+    <article>
+      <a href={`/pieces/${piece.id}/`}><strong>{piece.data.title}</strong></a>
+      <small>{piece.data.tags.join(', ')}</small>
+    </article>
+  ))}
+</Base>

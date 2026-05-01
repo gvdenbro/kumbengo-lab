@@ -1,12 +1,10 @@
 title: Jarabi
-difficulty: intermediate
 tuning: silaba
 tags:
 - traditional
 - mandinka
 arrangements:
 - name: Intro 01
-  difficulty: beginner
   steps:
     - {d: 0.34, string: R7}
     - {d: 0.17, string: R7}

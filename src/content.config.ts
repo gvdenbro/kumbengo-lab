@@ -16,7 +16,6 @@ const stepSchema = z.object({
 
 const arrangementSchema = z.object({
   name: z.string(),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
   steps: z.preprocess(
     (val) => Array.isArray(val) ? val.flat() : val,
     z.array(stepSchema),
@@ -29,7 +28,6 @@ const pieces = defineCollection({
   loader: glob({ pattern: '**/*.yaml', base: './src/content/pieces' }),
   schema: z.object({
     title: z.string(),
-    difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
     tuning: z.enum(knownTunings),
     tempo: z.number().optional(),
     tags: z.array(z.string()),

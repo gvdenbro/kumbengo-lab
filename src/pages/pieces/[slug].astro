@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { piece } = Astro.props;
-const { title, difficulty, tuning, tags, arrangements } = piece.data;
+const { title, tuning, tags, arrangements } = piece.data;
 const tuningData = getTuning(tuning).strings;
 ---
 <Base title={title} showNotation>
@@ -30,7 +30,7 @@ const tuningData = getTuning(tuning).strings;
           ))}
         </select>
       )}
-      <small class="piece-meta">{difficulty}</small>
+      <small class="piece-meta">{tags.join(', ')}</small>
     </h1>
   </hgroup>
 

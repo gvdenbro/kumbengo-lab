@@ -6,7 +6,6 @@ import { getTotalDuration, getMidiNotes, computeOnsets } from '../lib/player-log
 
 interface Arrangement {
   name: string;
-  difficulty: string;
   steps: Step[];
 }
 
