@@ -231,6 +231,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const isActive = state === 'playing' || state === 'paused';
 
   return (
+    <>
     <div id="player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', margin: '1rem 0' }}>
       <button onClick={stopPlayback} aria-label="Restart" className="outline secondary" disabled={!isActive} style={{ padding: '0.5rem 0.75rem' }}>
         ⏮
@@ -263,6 +264,10 @@ function PlayerInner({ arrangements, tuning }: Props) {
         <span>{tempoPercent}%</span>
       </label>
     </div>
+    <p className="keyboard-hint" style={{ textAlign: 'center', fontSize: '0.75rem', opacity: 0.5, margin: 0 }}>
+      ⌨ Space play/pause · ← → speed
+    </p>
+    </>
   );
 }
 
