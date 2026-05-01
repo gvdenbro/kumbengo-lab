@@ -206,7 +206,7 @@ export default function Transcriber({ tuning }: Props) {
         ) : (
           <button onClick={stopPlayback}>⏹ Stop</button>
         )}
-        <p style={{ marginTop: '0.5rem' }}>Taps: {tapCount}</p>
+        <p style={{ marginTop: '0.5rem' }}>Taps: {tapCount}{tapCount > 0 && ` → ~${clusterTaps(tapsRef.current, 0.08).length} notes`}</p>
       </div>
     );
   }
