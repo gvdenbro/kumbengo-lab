@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTotalBeats, getCps, getPlaybackDurationMs, buildSlotMap, getMidiNotes, computeOnsets } from './player-logic';
+import { getTotalBeats, getCps, getPlaybackDurationMs, getMidiNotes, computeOnsets } from './player-logic';
 
 describe('getTotalBeats', () => {
   it('returns 0 for empty steps', () => {
@@ -32,42 +32,6 @@ describe('getPlaybackDurationMs', () => {
 
   it('scales with tempo percent', () => {
     expect(getPlaybackDurationMs(4, 120, 50)).toBeCloseTo(4000);
-  });
-});
-
-describe('buildSlotMap', () => {
-  it('maps steps to half-beat slots', () => {
-    const steps = [
-      { d: 0.5, string: 'L1' },
-      { d: 0.5, string: 'R2' },
-      { d: 1, strings: ['L1', 'L5'] },
-    ];
-    const { slots, slotMap } = buildSlotMap(steps);
-    expect(slots).toBe(4); // totalBeats=2, resolution=0.5 -> 4 slots
-    expect(slotMap.get(0)).toEqual({ index: 0, strings: ['L1'] });
-    expect(slotMap.get(1)).toEqual({ index: 1, strings: ['R2'] });
-    expect(slotMap.get(2)).toEqual({ index: 2, strings: ['L1', 'L5'] });
-    expect(slotMap.has(3)).toBe(false);
-  });
-
-  it('skips rest steps but advances time', () => {
-    const steps = [
-      { d: 0.5, string: 'L1' },
-      { d: 1 },                      // rest - no string
-      { d: 0.5, string: 'R2' },
-    ];
-    const { slots, slotMap } = buildSlotMap(steps);
-    expect(slots).toBe(4); // 0.5 + 1 + 0.5 = 2 beats -> 4 slots
-    expect(slotMap.get(0)).toEqual({ index: 0, strings: ['L1'] });
-    expect(slotMap.has(1)).toBe(false); // slot 1 = beat 0.5 (rest)
-    expect(slotMap.has(2)).toBe(false); // slot 2 = beat 1.0 (rest continues)
-    expect(slotMap.get(3)).toEqual({ index: 2, strings: ['R2'] });
-  });
-
-  it('returns empty map for empty steps', () => {
-    const { slots, slotMap } = buildSlotMap([]);
-    expect(slots).toBe(0);
-    expect(slotMap.size).toBe(0);
   });
 });
 

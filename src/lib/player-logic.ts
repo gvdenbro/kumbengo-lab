@@ -13,31 +13,6 @@ export function getPlaybackDurationMs(totalBeats: number, tempo: number, tempoPe
   return (totalBeats / (tempoPercent / 100 * tempo / 60)) * 1000;
 }
 
-export interface SlotInfo {
-  index: number;
-  strings: string[];
-}
-
-export function buildSlotMap(
-  steps: Step[],
-  resolution = 0.5,
-): { slots: number; slotMap: Map<number, SlotInfo> } {
-  const totalBeats = getTotalBeats(steps);
-  const slots = Math.round(totalBeats / resolution);
-  const slotMap = new Map<number, SlotInfo>();
-  let t = 0;
-  for (let i = 0; i < steps.length; i++) {
-    if (steps[i].string || steps[i].strings) {
-      slotMap.set(Math.round(t / resolution), {
-        index: i,
-        strings: getStepStrings(steps[i]),
-      });
-    }
-    t += steps[i].d;
-  }
-  return { slots, slotMap };
-}
-
 export function getMidiNotes(
   strings: string[],
   tuning: Record<string, { midi: number }>,
