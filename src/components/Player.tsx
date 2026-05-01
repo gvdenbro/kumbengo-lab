@@ -145,7 +145,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const buildAndPlay = useCallback(async () => {
     setState('loading');
     try {
-      await Promise.all([prebaked, audioReady]);
+      await prebaked;
 
       const steps = arrangements[arrangementIndex].steps;
       if (steps.length === 0) { setState('stopped'); return; }
