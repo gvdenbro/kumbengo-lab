@@ -1,16 +1,10 @@
 import { getStepStrings, type Step } from './piece';
 
-export function getTotalBeats(steps: Step[]): number {
+export { getStepStrings, type Step };
+
+export function getTotalDuration(steps: Step[], speedPercent: number = 100): number {
   if (steps.length === 0) return 0;
-  return steps.reduce((sum, s) => sum + s.d, 0);
-}
-
-export function getCps(tempo: number, tempoPercent: number, totalBeats: number): number {
-  return (tempoPercent / 100 * tempo) / 60 / totalBeats;
-}
-
-export function getPlaybackDurationMs(totalBeats: number, tempo: number, tempoPercent: number): number {
-  return (totalBeats / (tempoPercent / 100 * tempo / 60)) * 1000;
+  return steps.reduce((sum, s) => sum + s.d, 0) * (100 / speedPercent);
 }
 
 export function getMidiNotes(
@@ -24,12 +18,12 @@ export function getMidiNotes(
   });
 }
 
-export function computeOnsets(steps: Step[], tempo: number, tempoPercent: number): number[] {
-  const bps = (tempoPercent / 100 * tempo) / 60;
+export function computeOnsets(steps: Step[], speedPercent: number): number[] {
+  const scale = 100 / speedPercent;
   const onsets: number[] = [];
   let t = 0;
   for (const step of steps) {
-    onsets.push(t / bps);
+    onsets.push(t * scale);
     t += step.d;
   }
   return onsets;
