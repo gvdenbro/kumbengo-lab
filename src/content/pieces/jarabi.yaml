@@ -5,7 +5,7 @@ tags:
 - mandinka
 arrangements:
 - name: "01"
-  steps:
+  steps: &s01
     - {d: 0.35, string: R7}
     - {d: 0.19, string: R7}
     - {d: 0.49, string: R7}
@@ -13,7 +13,7 @@ arrangements:
     - {d: 0.18, string: R6}
     - {d: 0.46, string: L9}
 - name: "02"
-  steps:
+  steps: &s02
     - {d: 0.32, string: R7}
     - {d: 0.17, string: L10}
     - {d: 0.27, string: R6}
@@ -21,7 +21,7 @@ arrangements:
     - {d: 0.18, string: L9}
     - {d: 0.49, string: L9}
 - name: "03"
-  steps:
+  steps: &s03
     - {d: 0.31, string: L10}
     - {d: 0.18, string: R6}
     - {d: 0.34, string: L9}
@@ -29,7 +29,7 @@ arrangements:
     - {d: 0.45, string: L8}
     - {d: 0.54, string: R4}
 - name: "04"
-  steps:
+  steps: &s04
     - {d: 0.24, string: R5}
     - {d: 0.48, string: L8}
     - {d: 0.25, string: R4}
@@ -37,7 +37,7 @@ arrangements:
     - {d: 0.26, string: L3}
     - {d: 0.5, string: L3}
 - name: "05"
-  steps:
+  steps: &s05
     - {d: 0.43, string: R2}
     - {d: 0.47, string: R2}
     - {d: 0.45, string: L5}
@@ -46,7 +46,7 @@ arrangements:
     - {d: 0.25, string: L4}
     - {d: 1.1, string: R1}
 - name: "06"
-  steps:
+  steps: &s06
     - {d: 0.21, string: L9}
     - {d: 0.23, string: L10}
     - {d: 0.24, string: R6}
@@ -60,7 +60,7 @@ arrangements:
     - {d: 0.44, string: L7}
     - {d: 0.73, string: L7}
 - name: "07"
-  steps:
+  steps: &s07
     - {d: 0.47, string: R2}
     - {d: 0.47, string: R2}
     - {d: 0.51, string: L5}
@@ -69,7 +69,7 @@ arrangements:
     - {d: 0.25, string: L4}
     - {d: 0.87, string: R1}
 - name: "08"
-  steps:
+  steps: &s08
     - {d: 0.46, string: R1}
     - {d: 0.28, string: R2}
     - {d: 0.47, string: L5}
@@ -80,3 +80,13 @@ arrangements:
     - {d: 0.45, string: L2}
     - {d: 0.31, string: L2}
     - {d: 0.51, string: R2}
+- name: Full
+  steps:
+    - *s01
+    - *s02
+    - *s03
+    - *s04
+    - *s05
+    - *s06
+    - *s07
+    - *s08
