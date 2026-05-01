@@ -4,14 +4,6 @@ import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
-function distanceLabel(stringId: string): string {
-  const side = stringId[0];
-  const num = parseInt(stringId.slice(1), 10);
-  const total = side === 'L' ? 11 : 10;
-  const mid = Math.ceil(total / 2);
-  return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
-}
-
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
 interface Props {
@@ -293,7 +285,7 @@ export default function Transcriber({ tuning }: Props) {
                     borderRadius: '0.25rem', marginBottom: '0.125rem',
                   }}
                 >
-                  {i + 1}. d={step.d.toFixed(2)} → {assignments[i] ? distanceLabel(assignments[i]!) : '—'}
+                  {i + 1}. d={step.d.toFixed(2)} → {assignments[i] || '—'}
                 </li>
               ))}
             </ol>

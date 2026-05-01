@@ -4,6 +4,14 @@ interface Props {
   onStringClick: (id: string) => void;
 }
 
+function distanceLabel(stringId: string): string {
+  const side = stringId[0];
+  const num = parseInt(stringId.slice(1), 10);
+  const total = side === 'L' ? 11 : 10;
+  const mid = Math.ceil(total / 2);
+  return num <= mid ? `${side}⇧${num}` : `${side}⇩${total - num + 1}`;
+}
+
 export default function BridgeDiagramInteractive({ onStringClick }: Props) {
   const [flash, setFlash] = useState<string | null>(null);
 
@@ -24,13 +32,13 @@ export default function BridgeDiagramInteractive({ onStringClick }: Props) {
       style={{
         width: '2rem', height: '2rem', borderRadius: '50%',
         border: '2px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.625rem', cursor: 'pointer',
+        fontSize: '0.5rem', cursor: 'pointer',
         background: flash === id ? 'var(--pico-primary-background)' : undefined,
         color: flash === id ? 'var(--pico-primary-inverse)' : undefined,
         borderColor: flash === id ? 'var(--pico-primary-border)' : undefined,
       }}
     >
-      {id}
+      {distanceLabel(id)}
     </div>
   );
 
