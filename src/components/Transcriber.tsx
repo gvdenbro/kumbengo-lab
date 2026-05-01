@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
+import { getStringLabel } from '../lib/labels';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
@@ -245,7 +246,7 @@ export default function Transcriber({ tuning }: Props) {
                     borderRadius: '0.25rem', marginBottom: '0.125rem',
                   }}
                 >
-                  {i + 1}. d={step.d.toFixed(2)} → {assignments[i] || '—'}
+                  {i + 1}. d={step.d.toFixed(2)} → {assignments[i] ? getStringLabel(assignments[i]!, 'distance', 'silaba') : '—'}
                 </li>
               ))}
             </ol>
