@@ -1,0 +1,17 @@
+title: Jarabi
+difficulty: intermediate
+tuning: silaba
+tempo: 90
+tags:
+- traditional
+- mandinka
+arrangements:
+- name: Intro 01
+  difficulty: beginner
+  steps:
+    - {d: 0.34, string: R7}
+    - {d: 0.17, string: R7}
+    - {d: 0.45, string: R7}
+    - {d: 0.36, string: L10}
+    - {d: 0.17, string: R6}
+    - {d: 0.29, string: L9}
