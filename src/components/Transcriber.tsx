@@ -42,6 +42,7 @@ export default function Transcriber({ tuning }: Props) {
   const [speed, setSpeed] = useState(1);
   const [playing, setPlaying] = useState(false);
   const [tapCount, setTapCount] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [steps, setSteps] = useState<{ d: number }[]>([]);
   const [assignments, setAssignments] = useState<(string | null)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -53,6 +54,21 @@ export default function Transcriber({ tuning }: Props) {
   const loopStartRef = useRef(0);
   const tapsRef = useRef<number[]>([]);
   const speedRef = useRef(speed);
+  const rafRef = useRef<number | null>(null);
+
+  // Progress bar animation
+  useEffect(() => {
+    if (!playing) { rafRef.current && cancelAnimationFrame(rafRef.current); return; }
+    function tick() {
+      if (ctxRef.current && bufferRef.current) {
+        const elapsed = (ctxRef.current.currentTime - loopStartRef.current) * speedRef.current;
+        setProgress((elapsed % bufferRef.current.duration) / bufferRef.current.duration);
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { rafRef.current && cancelAnimationFrame(rafRef.current); };
+  }, [playing]);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
@@ -214,6 +230,7 @@ export default function Transcriber({ tuning }: Props) {
         ) : (
           <button onClick={stopPlayback}>⏹ Stop</button>
         )}
+        {playing && <progress value={progress} max={1} style={{ width: '100%', height: '0.5rem' }} />}
         <p style={{ marginTop: '0.5rem' }}>Taps: {tapCount}{tapCount > 0 && ` → ~${clusterTaps(tapsRef.current, 0.08).length} notes`}</p>
       </div>
     );
