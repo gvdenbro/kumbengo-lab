@@ -33,7 +33,7 @@ interface NoteEntry { index: number; strings: string[]; time: number; }
 
 function PlayerInner({ arrangements, tuning }: Props) {
   const [state, setState] = useState<PlayerState>('stopped');
-  const [looping, setLooping] = useState(true);
+  const [looping, setLooping] = useState(false);
   const [tempoPercent, setTempoPercent] = useState(100);
   const [arrangementIndex, setArrangementIndex] = useState(0);
 
