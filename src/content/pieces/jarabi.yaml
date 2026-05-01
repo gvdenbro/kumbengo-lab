@@ -4,40 +4,36 @@ tags:
 - traditional
 - mandinka
 arrangements:
-- name: "01"
-  steps: &s01
-    - {d: 0.35, string: R7}
-    - {d: 0.19, string: R7}
+- name: "intro 01"
+  steps: &intro01
+    - {d: 0.33, string: R7}
+    - {d: 0.18, string: R7}
     - {d: 0.49, string: R7}
     - {d: 0.35, string: L10}
-    - {d: 0.18, string: R6}
+    - {d: 0.17, string: R6}
     - {d: 0.46, string: L9}
-- name: "02"
-  steps: &s02
     - {d: 0.32, string: R7}
-    - {d: 0.17, string: L10}
+    - {d: 0.2, string: L10}
     - {d: 0.27, string: R6}
-    - {d: 0.47, string: L9}
-    - {d: 0.18, string: L9}
-    - {d: 0.49, string: L9}
-- name: "03"
-  steps: &s03
-    - {d: 0.31, string: L10}
-    - {d: 0.18, string: R6}
-    - {d: 0.34, string: L9}
-    - {d: 0.17, string: R5}
-    - {d: 0.45, string: L8}
-    - {d: 0.54, string: R4}
-- name: "04"
-  steps: &s04
-    - {d: 0.24, string: R5}
-    - {d: 0.48, string: L8}
-    - {d: 0.25, string: R4}
-    - {d: 0.24, string: L3}
-    - {d: 0.26, string: L3}
-    - {d: 0.5, string: L3}
-- name: "05"
-  steps: &s05
+    - {d: 0.44, string: L9}
+    - {d: 0.22, string: L9}
+    - {d: 0.5, string: L9}
+- name: "intro 02"
+  steps: &intro02
+    - {d: 0.3, string: L10}
+    - {d: 0.2, string: R6}
+    - {d: 0.33, string: L9}
+    - {d: 0.19, string: R5}
+    - {d: 0.46, string: L8}
+    - {d: 0.5, string: R4}
+    - {d: 0.29, string: R5}
+    - {d: 0.19, string: L8}
+    - {d: 0.29, string: R4}
+    - {d: 0.45, string: L3}
+    - {d: 0.23, string: L3}
+    - {d: 0.52, string: L3}
+- name: "intro intermezzo"
+  steps: &introintermezzo
     - {d: 0.43, string: R2}
     - {d: 0.47, string: R2}
     - {d: 0.45, string: L5}
@@ -45,8 +41,8 @@ arrangements:
     - {d: 0.46, string: L3}
     - {d: 0.25, string: L4}
     - {d: 1.1, string: R1}
-- name: "06"
-  steps: &s06
+- name: "intro 03"
+  steps: &intro03
     - {d: 0.21, string: L9}
     - {d: 0.23, string: L10}
     - {d: 0.24, string: R6}
@@ -59,17 +55,8 @@ arrangements:
     - {d: 0.26, string: L7}
     - {d: 0.44, string: L7}
     - {d: 0.73, string: L7}
-- name: "07"
-  steps: &s07
-    - {d: 0.47, string: R2}
-    - {d: 0.47, string: R2}
-    - {d: 0.51, string: L5}
-    - {d: 0.54, string: L5}
-    - {d: 0.46, string: L3}
-    - {d: 0.25, string: L4}
-    - {d: 0.87, string: R1}
-- name: "08"
-  steps: &s08
+- name: "bass"
+  steps: &bass
     - {d: 0.46, string: R1}
     - {d: 0.28, string: R2}
     - {d: 0.47, string: L5}
@@ -82,11 +69,10 @@ arrangements:
     - {d: 0.51, string: R2}
 - name: Full
   steps:
-    - *s01
-    - *s02
-    - *s03
-    - *s04
-    - *s05
-    - *s06
-    - *s07
-    - *s08
+    - *intro01
+    - *intro02
+    - *introintermezzo
+    - *intro03
+    - *introintermezzo
+    - *intro03
+    - *bass
