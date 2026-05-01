@@ -199,6 +199,26 @@ export default function Transcriber({ tuning }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  // Assign phase keyboard: Delete/Backspace to clear, arrows to navigate
+  useEffect(() => {
+    if (phase !== 'assign') return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        setAssignments(prev => { const next = [...prev]; next[currentStep] = null; return next; });
+      } else if (e.key === 'ArrowDown' && currentStep < steps.length - 1) {
+        e.preventDefault();
+        setCurrentStep(currentStep + 1);
+      } else if (e.key === 'ArrowUp' && currentStep > 0) {
+        e.preventDefault();
+        setCurrentStep(currentStep - 1);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [phase, currentStep, steps.length]);
+
   if (phase === 'load') {
     return (
       <div
