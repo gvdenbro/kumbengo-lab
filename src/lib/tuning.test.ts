@@ -36,8 +36,10 @@ describe('getStringLabel', () => {
     expect(getStringLabel('R3', 'note', 'silaba')).toBe('C4');
   });
 
-  it('returns arrow with number for distance notation', () => {
-    expect(getStringLabel('L1', 'distance', 'silaba')).toBe('⇩1');
-    expect(getStringLabel('L11', 'distance', 'silaba')).toBe('⇧11');
+  it('returns side + arrow + distance for distance notation', () => {
+    expect(getStringLabel('L1', 'distance', 'silaba')).toBe('L⇧1');
+    expect(getStringLabel('L11', 'distance', 'silaba')).toBe('L⇩1');
+    expect(getStringLabel('R1', 'distance', 'silaba')).toBe('R⇧1');
+    expect(getStringLabel('R10', 'distance', 'silaba')).toBe('R⇩1');
   });
 });
