@@ -46,11 +46,9 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const noteQueueRef = useRef<NoteEntry[]>([]);
   const loopingRef = useRef(looping);
   const tempoPercentRef = useRef(tempoPercent);
-  const stateRef = useRef<PlayerState>('stopped');
 
   useEffect(() => { loopingRef.current = looping; }, [looping]);
   useEffect(() => { tempoPercentRef.current = tempoPercent; }, [tempoPercent]);
-  useEffect(() => { stateRef.current = state; }, [state]);
 
   useEffect(() => {
     const sel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
@@ -73,6 +71,8 @@ function PlayerInner({ arrangements, tuning }: Props) {
     if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     if (stopTimerRef.current != null) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
   }, []);
+
+  useEffect(() => () => { stopScheduler(); }, [stopScheduler]);
 
   const stopPlayback = useCallback(() => {
     stopScheduler();
@@ -252,14 +252,14 @@ function PlayerInner({ arrangements, tuning }: Props) {
         Loop
       </label>
       <label>
-        Tempo:{' '}
+        Speed:{' '}
         <input
           type="range"
           min={50}
           max={150}
           value={tempoPercent}
           onChange={e => handleTempoChange(Number(e.target.value))}
-          aria-valuetext={`${tempoPercent}% of original tempo`}
+          aria-valuetext={`${tempoPercent}% of original speed`}
         />
         <span>{tempoPercent}%</span>
       </label>

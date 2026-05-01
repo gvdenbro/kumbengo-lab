@@ -1,7 +1,5 @@
 import { getStepStrings, type Step } from './piece';
 
-export { getStepStrings, type Step };
-
 export function getTotalDuration(steps: Step[], speedPercent: number = 100): number {
   if (steps.length === 0) return 0;
   return steps.reduce((sum, s) => sum + s.d, 0) * (100 / speedPercent);
