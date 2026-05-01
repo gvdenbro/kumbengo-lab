@@ -39,6 +39,12 @@ const { title, showNotation = false } = Astro.props;
     </header>
     <slot />
   </main>
+  <footer class="container" style="margin-top:2rem;text-align:center;">
+    <small>
+      <a href="https://github.com/gvdenbro/kumbengo-lab">GitHub</a> ·
+      AGPL-3.0
+    </small>
+  </footer>
 </body>
 <script>
   const sel = document.getElementById('notation-select') as HTMLSelectElement | null;
