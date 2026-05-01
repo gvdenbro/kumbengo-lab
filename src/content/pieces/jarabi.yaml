@@ -12,12 +12,12 @@ arrangements:
     - {d: 0.35, string: L10}
     - {d: 0.17, string: R6}
     - {d: 0.46, string: L9}
-    - {d: 0.32, string: R7}
-    - {d: 0.2, string: L10}
-    - {d: 0.27, string: R6}
-    - {d: 0.44, string: L9}
-    - {d: 0.22, string: L9}
-    - {d: 0.5, string: L9}
+    - {d: 0.32, string: L10}
+    - {d: 0.2, string: R6}
+    - {d: 0.27, string: L9}
+    - {d: 0.44, string: R5}
+    - {d: 0.22, string: R5}
+    - {d: 0.5, string: R5}
 - name: "intro 02"
   steps: &intro02
     - {d: 0.3, string: L10}
