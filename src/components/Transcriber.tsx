@@ -19,13 +19,13 @@ if (typeof window !== 'undefined') {
   initAudioOnFirstClick().catch(() => {});
 }
 
-function buildYaml(steps: { d: number }[], assignments: (string | null)[]): string {
+function buildYaml(name: string, steps: { d: number }[], assignments: (string | null)[]): string {
   const lines = steps.map((step, i) => {
     const str = assignments[i];
-    if (str) return `  - {d: ${step.d}, string: ${str}}`;
-    return `  - {d: ${step.d}}`;
+    if (str) return `    - {d: ${step.d}, string: ${str}}`;
+    return `    - {d: ${step.d}}`;
   });
-  return `steps:\n${lines.join('\n')}`;
+  return `- name: "${name || 'untitled'}"\n  steps:\n${lines.join('\n')}`;
 }
 
 export default function Transcriber({ tuning }: Props) {
@@ -38,6 +38,7 @@ export default function Transcriber({ tuning }: Props) {
   const [assignments, setAssignments] = useState<(string | null)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [arrangementName, setArrangementName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -148,7 +149,7 @@ export default function Transcriber({ tuning }: Props) {
   }, [currentStep, steps, assignments, playAssignedNotes]);
 
   const copyYaml = useCallback(() => {
-    navigator.clipboard.writeText(buildYaml(steps, assignments));
+    navigator.clipboard.writeText(buildYaml(arrangementName, steps, assignments));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [steps, assignments]);
@@ -228,6 +229,13 @@ export default function Transcriber({ tuning }: Props) {
     return (
       <div>
         <p>Click a string for step {currentStep + 1}/{steps.length}</p>
+        <input
+          type="text"
+          placeholder="Arrangement name"
+          value={arrangementName}
+          onChange={e => setArrangementName(e.target.value)}
+          style={{ marginBottom: '1rem', maxWidth: '200px' }}
+        />
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
             <BridgeDiagramInteractive onStringClick={assignString} />
@@ -261,7 +269,7 @@ export default function Transcriber({ tuning }: Props) {
         </div>
         <details open style={{ marginTop: '1rem' }}>
           <summary>YAML preview <button className="outline" style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={copyYaml}>{copied ? '✓ Copied!' : '📋 Copy'}</button></summary>
-          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>{buildYaml(steps, assignments)}</pre>
+          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>{buildYaml(arrangementName, steps, assignments)}</pre>
         </details>
       </div>
     );
