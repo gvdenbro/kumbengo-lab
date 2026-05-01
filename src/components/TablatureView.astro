@@ -1,0 +1,29 @@
+---
+import { getStepStrings, type Step } from '../lib/piece';
+interface Props { steps: Step[]; tuning: string; }
+const { steps, tuning } = Astro.props;
+---
+<table class="tablature" role="grid">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Duration</th>
+      <th>Strings</th>
+    </tr>
+  </thead>
+  <tbody>
+    {steps.map((step, i) => (
+      <tr>
+        <td>{i + 1}</td>
+        <td>{step.d}</td>
+        <td>{getStepStrings(step).join(', ') || '—'}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+<style>
+  .tablature { font-size: 0.8rem; }
+  .tablature td, .tablature th { padding: 0.25rem 0.5rem; }
+  @media (max-width: 480px) { .tablature { font-size: 0.7rem; } }
+</style>
