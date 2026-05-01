@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, Component, type ReactNode } f
 import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds, getSampleInfo, soundMap, loadBuffer } from '@strudel/webaudio';
 import { superdough } from 'superdough';
 import { getStepStrings, type Step } from '../lib/piece';
-import { getTotalBeats, getPlaybackDurationMs, getMidiNotes, computeOnsets } from '../lib/player-logic';
+import { getTotalDuration, getMidiNotes, computeOnsets } from '../lib/player-logic';
 
 interface Arrangement {
   name: string;
@@ -13,7 +13,6 @@ interface Arrangement {
 interface Props {
   arrangements: Arrangement[];
   tuning: Record<string, { midi: number }>;
-  tempo: number;
 }
 
 let prebaked: Promise<void> | undefined;
@@ -33,7 +32,7 @@ type PlayerState = 'stopped' | 'loading' | 'playing' | 'paused';
 
 interface NoteEntry { index: number; strings: string[]; time: number; }
 
-function PlayerInner({ arrangements, tuning, tempo }: Props) {
+function PlayerInner({ arrangements, tuning }: Props) {
   const [state, setState] = useState<PlayerState>('stopped');
   const [looping, setLooping] = useState(true);
   const [tempoPercent, setTempoPercent] = useState(100);
@@ -99,9 +98,10 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
     const ctx = getAudioContext();
 
     function schedule() {
-      const onsets = computeOnsets(steps, tempo, tempoPercentRef.current);
-      const bps = (tempoPercentRef.current / 100 * tempo) / 60;
-      const totalDuration = getTotalBeats(steps) / bps;
+      const speed = tempoPercentRef.current;
+      const scale = 100 / speed;
+      const onsets = computeOnsets(steps, speed);
+      const totalDuration = getTotalDuration(steps, speed);
 
       while (nextIndexRef.current < steps.length) {
         const onset = startTimeRef.current + onsets[nextIndexRef.current];
@@ -112,7 +112,7 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
         if (strings.length > 0) {
           const midiNotes = getMidiNotes(strings, tuning);
           for (const note of midiNotes) {
-            superdough({ s: 'folkharp', note }, onset, step.d / bps);
+            superdough({ s: 'folkharp', note }, onset, step.d * scale);
           }
         }
         noteQueueRef.current.push({ index: nextIndexRef.current, strings, time: onset });
@@ -121,21 +121,18 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
 
       if (nextIndexRef.current >= steps.length) {
         if (loopingRef.current) {
-          const totalDur = getTotalBeats(steps) / bps;
-          startTimeRef.current += totalDur;
+          startTimeRef.current += totalDuration;
           nextIndexRef.current = 0;
         } else {
-          // Stop after last note finishes
           const lastOnset = startTimeRef.current + onsets[steps.length - 1];
-          const lastDur = steps[steps.length - 1].d / bps;
-          const endTime = lastOnset + lastDur;
-          const delay = (endTime - ctx.currentTime) * 1000 + 100;
+          const lastDur = steps[steps.length - 1].d * scale;
+          const delay = (lastOnset + lastDur - ctx.currentTime) * 1000 + 100;
           if (delay > 0) {
             stopTimerRef.current = window.setTimeout(() => {
               stopPlayback();
             }, delay);
           }
-          return; // Don't reschedule
+          return;
         }
       }
 
@@ -144,7 +141,7 @@ function PlayerInner({ arrangements, tuning, tempo }: Props) {
 
     schedule();
     rafRef.current = requestAnimationFrame(drawLoop);
-  }, [tempo, tuning, drawLoop, stopPlayback]);
+  }, [tuning, drawLoop, stopPlayback]);
 
   const buildAndPlay = useCallback(async () => {
     setState('loading');
