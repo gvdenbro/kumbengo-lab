@@ -15,7 +15,6 @@ const { title, showNotation = false } = Astro.props;
       #notation-select { font-size: 0.75rem; padding: 0.25rem 0.5rem !important; background-image: none !important; }
       .container { padding: 0.5rem; }
       nav { padding: 0; }
-      .nav-link { display: none; }
     }
   </style>
 </head>
@@ -25,8 +24,6 @@ const { title, showNotation = false } = Astro.props;
       <nav>
         <ul><li><a href="/"><strong>Kumbengo Lab</strong></a></li></ul>
         <ul>
-          <li class="nav-link"><a href="/">Pieces</a></li>
-          <li class="nav-link"><a href="/transcribe">Transcribe</a></li>
           {showNotation && (
             <li>
               <select id="notation-select" aria-label="Notation style" style="font-size:0.875rem;width:auto;">
