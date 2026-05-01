@@ -38,7 +38,6 @@ export default function Transcriber({ tuning }: Props) {
   const [assignments, setAssignments] = useState<(string | null)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [arrangementName, setArrangementName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -149,7 +148,7 @@ export default function Transcriber({ tuning }: Props) {
   }, [currentStep, steps, assignments, playAssignedNotes]);
 
   const copyYaml = useCallback(() => {
-    navigator.clipboard.writeText(buildYaml(arrangementName, steps, assignments));
+    navigator.clipboard.writeText(buildYaml(new Date().toISOString().slice(0, 16), steps, assignments));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [steps, assignments]);
@@ -229,13 +228,6 @@ export default function Transcriber({ tuning }: Props) {
     return (
       <div>
         <p>Click a string for step {currentStep + 1}/{steps.length}</p>
-        <input
-          type="text"
-          placeholder="Arrangement name"
-          value={arrangementName}
-          onChange={e => setArrangementName(e.target.value)}
-          style={{ marginBottom: '1rem', maxWidth: '200px' }}
-        />
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
             <BridgeDiagramInteractive onStringClick={assignString} />
@@ -269,7 +261,7 @@ export default function Transcriber({ tuning }: Props) {
         </div>
         <details open style={{ marginTop: '1rem' }}>
           <summary>YAML preview <button className="outline" style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={copyYaml}>{copied ? '✓ Copied!' : '📋 Copy'}</button></summary>
-          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>{buildYaml(arrangementName, steps, assignments)}</pre>
+          <pre style={{ fontSize: '0.8rem', overflow: 'auto' }}>{buildYaml(new Date().toISOString().slice(0, 16), steps, assignments)}</pre>
         </details>
       </div>
     );
