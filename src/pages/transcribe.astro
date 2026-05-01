@@ -1,8 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
 import Transcriber from '../components/Transcriber.tsx';
+import { getTuning } from '../lib/tuning';
+
+const silaba = getTuning('silaba');
+const tuning = Object.fromEntries(
+  Object.entries(silaba.strings).map(([id, info]) => [id, info.midi])
+);
 ---
 <Base title="Transcribe">
   <h1>Transcribe</h1>
-  <Transcriber client:only="react" />
+  <Transcriber client:only="react" tuning={tuning} />
 </Base>

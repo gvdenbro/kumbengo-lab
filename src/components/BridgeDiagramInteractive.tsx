@@ -16,7 +16,11 @@ export default function BridgeDiagramInteractive({ onStringClick }: Props) {
   const dot = (id: string) => (
     <div
       key={id}
+      role="button"
+      tabIndex={0}
+      aria-label={id}
       onClick={() => handleClick(id)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(id); } }}
       style={{
         width: '2rem', height: '2rem', borderRadius: '50%',
         border: '2px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center',

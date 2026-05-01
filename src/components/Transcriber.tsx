@@ -6,10 +6,9 @@ import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
-const TUNING: Record<string, number> = {
-  L1:41,L2:48,L3:50,L4:52,L5:55,L6:58,L7:62,L8:65,L9:69,L10:72,L11:76,
-  R1:53,R2:57,R3:60,R4:64,R5:67,R6:70,R7:74,R8:77,R9:79,R10:81,
-};
+interface Props {
+  tuning: Record<string, number>;
+}
 
 let prebaked: Promise<void> | undefined;
 if (typeof window !== 'undefined') {
@@ -29,7 +28,7 @@ function buildYaml(steps: { d: number }[], assignments: (string | null)[]): stri
   return `steps:\n${lines.join('\n')}`;
 }
 
-export default function Transcriber() {
+export default function Transcriber({ tuning }: Props) {
   const [phase, setPhase] = useState<Phase>('load');
   const [dragOver, setDragOver] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -39,6 +38,7 @@ export default function Transcriber() {
   const [assignments, setAssignments] = useState<(string | null)[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -52,10 +52,15 @@ export default function Transcriber() {
   }, []);
 
   const loadFile = useCallback(async (file: File) => {
-    const arrayBuf = await file.arrayBuffer();
-    const ctx = getCtx();
-    bufferRef.current = await ctx.decodeAudioData(arrayBuf);
-    setPhase('rhythm');
+    try {
+      setError(null);
+      const arrayBuf = await file.arrayBuffer();
+      const ctx = getCtx();
+      bufferRef.current = await ctx.decodeAudioData(arrayBuf);
+      setPhase('rhythm');
+    } catch {
+      setError('Could not decode audio file. Please try a different file.');
+    }
   }, [getCtx]);
 
   const startPlayback = useCallback(() => {
@@ -80,7 +85,8 @@ export default function Transcriber() {
     sourceRef.current?.stop();
     sourceRef.current = null;
     setPlaying(false);
-    const dur = bufferRef.current!.duration;
+    if (!bufferRef.current) return;
+    const dur = bufferRef.current.duration;
     const clusters = clusterTaps(tapsRef.current, 0.08);
     const result = clustersToSteps(clusters, dur);
     setSteps(result);
@@ -114,7 +120,7 @@ export default function Transcriber() {
     for (let i = 0; i < end; i++) {
       const str = a[i];
       if (str) {
-        superdough({ s: 'folkharp', note: TUNING[str] ?? 60 }, time, steps[i].d);
+        superdough({ s: 'folkharp', note: tuning[str] ?? 60 }, time, steps[i].d);
       }
       time += steps[i].d;
     }
@@ -158,10 +164,10 @@ export default function Transcriber() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || !sourceRef.current || !ctxRef.current) return;
+      if (e.code !== 'Space' || !sourceRef.current || !ctxRef.current || !bufferRef.current) return;
       e.preventDefault();
       const elapsed = (ctxRef.current.currentTime - loopStartRef.current) * speedRef.current;
-      const dur = bufferRef.current!.duration;
+      const dur = bufferRef.current.duration;
       tapsRef.current.push(elapsed % dur);
       setTapCount(tapsRef.current.length);
     };
@@ -179,6 +185,7 @@ export default function Transcriber() {
       >
         <p>Drop an audio file here, or click to select</p>
         <input type="file" accept="audio/*,video/*" onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); }} />
+        {error && <p style={{ color: 'var(--pico-del-color)' }}>{error}</p>}
       </div>
     );
   }
