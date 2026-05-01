@@ -203,11 +203,12 @@ export default function Transcriber({ tuning }: Props) {
   useEffect(() => {
     if (phase !== 'assign') return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === 'Delete' || e.code === 'Backspace') {
         e.preventDefault();
         setAssignments(prev => { const next = [...prev]; next[currentStep] = null; return next; });
-      } else if (e.key === 'ArrowDown' && currentStep < steps.length - 1) {
+      }
+      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
+      if (e.key === 'ArrowDown' && currentStep < steps.length - 1) {
         e.preventDefault();
         setCurrentStep(currentStep + 1);
       } else if (e.key === 'ArrowUp' && currentStep > 0) {
