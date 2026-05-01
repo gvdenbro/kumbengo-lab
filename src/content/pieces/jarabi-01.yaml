@@ -1,0 +1,114 @@
+title: Jarabi 01
+difficulty: beginner
+tuning: silaba
+tempo: 62
+tags:
+- transcribed
+arrangements:
+- name: Transcribed 1
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: L8}
+  - {d: 0.5, string: R7}
+  - {d: 0.5, string: R7}
+  - {d: 0.5, string: R3}
+  - {d: 1.0, string: L10}
+  - {d: 1, string: L9}
+- name: Transcribed 2
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: L8}
+  - {d: 0.5, string: L10}
+  - {d: 0.5, string: R3}
+  - {d: 0.5, string: L9}
+  - {d: 1.5, string: L8}
+  - {d: 0.5, string: R5}
+  - {d: 1, string: L8}
+- name: Transcribed 3
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R6}
+  - {d: 0.5, string: L9}
+  - {d: 0.5, string: R3}
+  - {d: 1.0, string: L8}
+  - {d: 1, string: R4}
+- name: Transcribed 4
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R4}
+  - {d: 0.5, string: L8}
+  - {d: 1.0, string: L7}
+  - {d: 0.5, string: L7}
+  - {d: 1, string: L7}
+- name: Transcribed 5
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, string: L3}
+  - {d: 0.5, string: R1}
+  - {d: 1, string: L6}
+- name: Transcribed 6
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: L9}
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: R6}
+  - {d: 0.5, string: L9}
+  - {d: 0.5, string: R5}
+  - {d: 0.5, string: L8}
+  - {d: 1, string: R4}
+- name: Transcribed 7
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R4}
+  - {d: 0.5, string: L8}
+  - {d: 0.5, string: R4}
+  - {d: 1.0, string: L3}
+  - {d: 1.0, string: L7}
+  - {d: 1, string: L7}
+- name: Transcribed 8
+  difficulty: beginner
+  steps:
+  - {d: 1.0, string: R2}
+  - {d: 1.0, string: R2}
+  - {d: 1.0, string: L5}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, string: L6}
+  - {d: 0.5, string: L3}
+  - {d: 1.0, string: L4}
+  - {d: 1, string: R1}
+- name: Transcribed 9
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: L9}
+  - {d: 1.0, string: R1}
+  - {d: 0.5, string: R5}
+  - {d: 0.5, string: L5}
+  - {d: 1, string: R4}
+- name: Transcribed 10
+  difficulty: beginner
+  steps:
+  - {d: 1.0, string: R5}
+  - {d: 1.0, string: R4}
+  - {d: 1.0, string: L3}
+  - {d: 0.5, string: L7}
+  - {d: 1, string: R2}
+- name: Transcribed 11
+  difficulty: beginner
+  steps:
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: L5}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: L2}
+  - {d: 0.5, string: R2}
+  - {d: 0.5, string: R1}
+  - {d: 0.5, string: L9}
+  - {d: 1, string: R2}
