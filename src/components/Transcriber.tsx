@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
+import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
@@ -133,7 +133,7 @@ export default function Transcriber({ tuning }: Props) {
 
   const playAssignedNotes = useCallback(async (overrideAssignments?: (string | null)[]) => {
     await prebaked;
-    const ctx = getCtx();
+    const ctx = getAudioContext();
     await ctx.resume();
     const a = overrideAssignments || assignments;
     const end = currentStep + 1;
@@ -145,7 +145,7 @@ export default function Transcriber({ tuning }: Props) {
       }
       time += steps[i].d;
     }
-  }, [getCtx, assignments, currentStep, steps]);
+  }, [assignments, currentStep, steps]);
 
   const playAssigned = useCallback(() => playAssignedNotes(), [playAssignedNotes]);
 
