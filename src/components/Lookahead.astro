@@ -76,29 +76,20 @@ function gapToHeight(gap: number, minGap: number): string {
 <script>
   import { getStringLabel } from '../lib/labels';
 
-  const LOOKAHEAD_BEATS = Number(
-    (document.querySelector('.lookahead') as HTMLElement)?.dataset.lookaheadBeats ?? 3
-  );
-
   function updateVisibility(currentIndex: number) {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
     if (!track) return;
     const items = track.querySelectorAll('.lookahead-item');
-    const durations = Array.from(items).map(el => Number((el as HTMLElement).dataset.d));
 
     items.forEach((item, i) => {
       const el = item as HTMLElement;
       el.classList.toggle('current', i === currentIndex);
       if (i < currentIndex) {
         el.classList.add('hidden');
+      } else if (i - currentIndex > 4) {
+        el.classList.add('hidden');
       } else {
-        let beatsAhead = 0;
-        for (let j = Math.max(0, currentIndex); j < i; j++) beatsAhead += durations[j];
-        if (beatsAhead > LOOKAHEAD_BEATS) {
-          el.classList.add('hidden');
-        } else {
-          el.classList.remove('hidden');
-        }
+        el.classList.remove('hidden');
       }
     });
   }
