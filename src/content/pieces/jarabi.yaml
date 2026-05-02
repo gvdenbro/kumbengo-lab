@@ -4,7 +4,7 @@ tags:
 - traditional
 - mandinka
 arrangements:
-- name: "intro 01"
+- name: "Intro 01"
   steps: &intro01
     - {d: 0.33, string: R7}
     - {d: 0.18, string: R7}
@@ -18,7 +18,7 @@ arrangements:
     - {d: 0.44, string: R5}
     - {d: 0.22, string: R5}
     - {d: 0.5, string: R5}
-- name: "intro 02"
+- name: "Intro 02"
   steps: &intro02
     - {d: 0.3, string: L10}
     - {d: 0.2, string: R6}
@@ -32,7 +32,7 @@ arrangements:
     - {d: 0.45, string: L3}
     - {d: 0.23, string: L3}
     - {d: 0.52, string: L3}
-- name: "intro intermezzo"
+- name: "Intro intermezzo"
   steps: &introintermezzo
     - {d: 0.43, string: R2}
     - {d: 0.47, string: R2}
@@ -41,21 +41,21 @@ arrangements:
     - {d: 0.46, string: L3}
     - {d: 0.25, string: L4}
     - {d: 1.1, string: R1}
-- name: "intro 03"
+- name: "Intro 03"
   steps: &intro03
-    - {d: 0.21, string: L9}
-    - {d: 0.23, string: L10}
-    - {d: 0.24, string: R6}
-    - {d: 0.24, string: L9}
-    - {d: 0.23, string: R5}
-    - {d: 0.25, string: L8}
-    - {d: 0.5, string: R5}
-    - {d: 0.23, string: L8}
+    - {d: 0.19, string: L9}
+    - {d: 0.22, string: L10}
+    - {d: 0.22, string: R6}
+    - {d: 0.23, string: L9}
+    - {d: 0.24, string: R5}
+    - {d: 0.22, string: L8}
+    - {d: 0.48 string: R5}}
+    - {d: 0.27, string: L8}
     - {d: 0.24, string: R4}
-    - {d: 0.26, string: L7}
-    - {d: 0.44, string: L7}
-    - {d: 0.73, string: L7}
-- name: "bass"
+    - {d: 0.24, string: L7}
+    - {d: 0.47, string: L7}
+    - {d: 0.75, string: L7}
+- name: "Bass"
   steps: &bass
     - {d: 0.46, string: R1}
     - {d: 0.28, string: R2}
