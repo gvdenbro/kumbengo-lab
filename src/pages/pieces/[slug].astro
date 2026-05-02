@@ -100,8 +100,21 @@ const tuningData = getTuning(tuning).strings;
 <script>
   const sel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
   if (sel) {
+    // Restore arrangement from URL hash
+    const hash = decodeURIComponent(location.hash.slice(1));
+    if (hash) {
+      const options = Array.from(sel.options);
+      const match = options.findIndex(o => o.textContent === hash);
+      if (match >= 0) {
+        sel.value = String(match);
+        sel.dispatchEvent(new Event('change'));
+      }
+    }
+
     sel.addEventListener('change', () => {
       const idx = Number(sel.value);
+      const name = sel.options[idx]?.textContent || '';
+      history.replaceState(null, '', `#${encodeURIComponent(name)}`);
       document.querySelectorAll('.arrangement-tab').forEach((tab, i) => {
         (tab as HTMLElement).style.display = i === idx ? '' : 'none';
       });
