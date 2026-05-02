@@ -280,39 +280,40 @@ def main():
         else:
             arr_name = args.arrangement
 
-        tmp = Path(tempfile.mkdtemp(prefix="kora-transcribe-"))
-        is_video = input_file.suffix.lower() in VIDEO_EXTENSIONS
+        with tempfile.TemporaryDirectory(prefix="kora-transcribe-") as tmp_str:
+            tmp = Path(tmp_str)
+            is_video = input_file.suffix.lower() in VIDEO_EXTENSIONS
 
-        # Step 0: Extract audio from video if needed
-        if is_video:
-            print("[0/4] Extracting audio from video...")
-            audio = extract_audio(input_file, tmp)
-            print(f"   → {audio}")
-        else:
-            audio = input_file
+            # Step 0: Extract audio from video if needed
+            if is_video:
+                print("[0/4] Extracting audio from video...")
+                audio = extract_audio(input_file, tmp)
+                print(f"   → {audio}")
+            else:
+                audio = input_file
 
-        # Step 1: Source separation
-        if not args.no_separate:
-            audio = separate(audio, tmp)
-        else:
-            print("[1/4] Skipping source separation")
+            # Step 1: Source separation
+            if not args.no_separate:
+                audio = separate(audio, tmp)
+            else:
+                print("[1/4] Skipping source separation")
 
-        # Step 2: Tempo detection
-        if args.tempo:
-            tempo = args.tempo
-            print(f"[2/4] Using provided tempo: {tempo} BPM")
-        else:
-            print("[2/4] Detecting tempo...")
-            estimated = detect_tempo(audio)
-            print(f"   → Estimated: {round(estimated)} BPM\n")
-            tempo = confirm_tempo(estimated)
-        print()
+            # Step 2: Tempo detection
+            if args.tempo:
+                tempo = args.tempo
+                print(f"[2/4] Using provided tempo: {tempo} BPM")
+            else:
+                print("[2/4] Detecting tempo...")
+                estimated = detect_tempo(audio)
+                print(f"   → Estimated: {round(estimated)} BPM\n")
+                tempo = confirm_tempo(estimated)
+            print()
 
-        # Step 3: Note detection
-        note_events = detect_notes(audio)
+            # Step 3: Note detection
+            note_events = detect_notes(audio)
 
-        # Step 4: Build steps
-        steps = build_steps(note_events, tempo, args.resolution, args.min_velocity, args.monophonic)
+            # Step 4: Build steps
+            steps = build_steps(note_events, tempo, args.resolution, args.min_velocity, args.monophonic)
 
         if not steps:
             print(f"Warning: no notes detected in {input_file.name}, skipping", file=sys.stderr)

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
+import { initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
@@ -48,6 +48,11 @@ export default function Transcriber({ tuning }: Props) {
   const speedRef = useRef(speed);
   const rafRef = useRef<number | null>(null);
 
+  // Close AudioContext on unmount
+  useEffect(() => {
+    return () => { ctxRef.current?.close(); };
+  }, []);
+
   // Progress bar animation
   useEffect(() => {
     if (!playing) { rafRef.current && cancelAnimationFrame(rafRef.current); return; }
@@ -63,7 +68,7 @@ export default function Transcriber({ tuning }: Props) {
   }, [playing]);
 
   const getCtx = useCallback(() => {
-    if (!ctxRef.current) ctxRef.current = new AudioContext();
+    if (!ctxRef.current || ctxRef.current.state === 'closed') ctxRef.current = new AudioContext();
     return ctxRef.current;
   }, []);
 
@@ -128,7 +133,7 @@ export default function Transcriber({ tuning }: Props) {
 
   const playAssignedNotes = useCallback(async (overrideAssignments?: (string | null)[]) => {
     await prebaked;
-    const ctx = getAudioContext();
+    const ctx = getCtx();
     await ctx.resume();
     const a = overrideAssignments || assignments;
     const end = currentStep + 1;
@@ -140,7 +145,7 @@ export default function Transcriber({ tuning }: Props) {
       }
       time += steps[i].d;
     }
-  }, [assignments, currentStep, steps]);
+  }, [getCtx, assignments, currentStep, steps]);
 
   const playAssigned = useCallback(() => playAssignedNotes(), [playAssignedNotes]);
 

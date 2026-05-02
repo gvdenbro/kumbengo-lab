@@ -14,6 +14,14 @@ describe('getTotalDuration', () => {
     expect(getTotalDuration([{ d: 1, string: 'L1' }], 50)).toBe(2);
     expect(getTotalDuration([{ d: 1, string: 'L1' }], 200)).toBe(0.5);
   });
+
+  it('throws on zero speedPercent', () => {
+    expect(() => getTotalDuration([{ d: 1, string: 'L1' }], 0)).toThrow('speedPercent must be positive');
+  });
+
+  it('throws on negative speedPercent', () => {
+    expect(() => getTotalDuration([{ d: 1, string: 'L1' }], -50)).toThrow('speedPercent must be positive');
+  });
 });
 
 describe('getMidiNotes', () => {
@@ -23,8 +31,8 @@ describe('getMidiNotes', () => {
     expect(getMidiNotes(['L1', 'R2'], tuning)).toEqual([41, 57]);
   });
 
-  it('falls back to 60 for unknown strings', () => {
-    expect(getMidiNotes(['X1'], tuning)).toEqual([60]);
+  it('throws for unknown strings', () => {
+    expect(() => getMidiNotes(['X1'], tuning)).toThrow('Unknown string "X1"');
   });
 });
 
@@ -52,5 +60,9 @@ describe('computeOnsets', () => {
 
   it('returns empty for empty steps', () => {
     expect(computeOnsets([], 100)).toEqual([]);
+  });
+
+  it('throws on zero speedPercent', () => {
+    expect(() => computeOnsets([{ d: 1, string: 'L1' }], 0)).toThrow('speedPercent must be positive');
   });
 });
