@@ -1,5 +1,8 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import tuningsRaw from './data/tunings.yaml';
+
+const knownTunings = Object.keys(tuningsRaw) as [string, ...string[]];
 
 const stringId = z.string().regex(
   /^(L([1-9]|1[01])|R([1-9]|10))$/,
@@ -17,12 +20,10 @@ const stepSchema = z.object({
 const arrangementSchema = z.object({
   name: z.string(),
   steps: z.preprocess(
-    (val) => Array.isArray(val) ? val.flat() : val,
+    (val) => Array.isArray(val) ? val.flat(Infinity) : val,
     z.array(stepSchema),
   ),
 });
-
-const knownTunings = ['silaba'] as const;
 
 const pieces = defineCollection({
   loader: glob({ pattern: '**/*.yaml', base: './src/content/pieces' }),

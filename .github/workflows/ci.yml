@@ -16,4 +16,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: rm -rf dist .astro && npm run build
+      - run: npx astro check
+      - run: npm run build

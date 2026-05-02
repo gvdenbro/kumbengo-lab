@@ -15,13 +15,12 @@ interface Props {
 }
 
 let prebaked: Promise<void> | undefined;
-let audioReady: Promise<void> | undefined;
 if (typeof window !== 'undefined') {
   prebaked = Promise.all([
     registerSynthSounds(),
     samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
   ]).then(() => {}).catch(err => console.error('Sample preload failed:', err));
-  audioReady = initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
+  initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
 }
 
 const LOOKAHEAD = 0.1;
@@ -41,6 +40,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const rafRef = useRef<number | null>(null);
   const stopTimerRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
+  const loopCountRef = useRef(0);
   const nextIndexRef = useRef(0);
   const noteQueueRef = useRef<NoteEntry[]>([]);
   const loopingRef = useRef(looping);
@@ -103,7 +103,8 @@ function PlayerInner({ arrangements, tuning }: Props) {
       const totalDuration = getTotalDuration(steps, speed);
 
       while (nextIndexRef.current < steps.length) {
-        const onset = startTimeRef.current + onsets[nextIndexRef.current];
+        const loopStart = startTimeRef.current + loopCountRef.current * totalDuration;
+        const onset = loopStart + onsets[nextIndexRef.current];
         if (onset > ctx.currentTime + LOOKAHEAD) break;
 
         const step = steps[nextIndexRef.current];
@@ -120,10 +121,11 @@ function PlayerInner({ arrangements, tuning }: Props) {
 
       if (nextIndexRef.current >= steps.length) {
         if (loopingRef.current) {
-          startTimeRef.current += totalDuration;
+          loopCountRef.current++;
           nextIndexRef.current = 0;
         } else {
-          const lastOnset = startTimeRef.current + onsets[steps.length - 1];
+          const loopStart = startTimeRef.current + loopCountRef.current * totalDuration;
+          const lastOnset = loopStart + onsets[steps.length - 1];
           const lastDur = steps[steps.length - 1].d * scale;
           const delay = (lastOnset + lastDur - ctx.currentTime) * 1000 + 100;
           if (delay > 0) {
@@ -173,6 +175,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
       await ctx.resume();
       startTimeRef.current = ctx.currentTime;
       nextIndexRef.current = 0;
+      loopCountRef.current = 0;
       noteQueueRef.current = [];
       setState('playing');
       startScheduler(steps);

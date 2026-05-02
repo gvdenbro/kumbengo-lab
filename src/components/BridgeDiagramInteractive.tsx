@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Props {
   onStringClick: (id: string) => void;
@@ -14,11 +14,15 @@ function distanceLabel(stringId: string): string {
 
 export default function BridgeDiagramInteractive({ onStringClick }: Props) {
   const [flash, setFlash] = useState<string | null>(null);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => () => { if (timerRef.current != null) clearTimeout(timerRef.current); }, []);
 
   const handleClick = (id: string) => {
     setFlash(id);
     onStringClick(id);
-    setTimeout(() => setFlash(null), 200);
+    if (timerRef.current != null) clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => setFlash(null), 200);
   };
 
   const dot = (id: string) => (

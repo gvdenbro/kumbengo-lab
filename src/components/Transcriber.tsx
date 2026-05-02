@@ -202,22 +202,25 @@ export default function Transcriber({ tuning }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.code === 'Backspace') {
         e.preventDefault();
-        setSteps(prev => prev.filter((_, i) => i !== currentStep));
-        setAssignments(prev => prev.filter((_, i) => i !== currentStep));
-        if (currentStep >= steps.length - 1 && currentStep > 0) setCurrentStep(currentStep - 1);
+        setCurrentStep(prev => {
+          setSteps(s => s.filter((_, i) => i !== prev));
+          setAssignments(a => a.filter((_, i) => i !== prev));
+          return prev > 0 ? prev - 1 : 0;
+        });
+        return;
       }
       if ((e.target as HTMLElement).matches('input, select, textarea')) return;
-      if (e.key === 'ArrowDown' && currentStep < steps.length - 1) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setCurrentStep(currentStep + 1);
-      } else if (e.key === 'ArrowUp' && currentStep > 0) {
+        setSteps(s => { setCurrentStep(prev => Math.min(prev + 1, s.length - 1)); return s; });
+      } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setCurrentStep(currentStep - 1);
+        setCurrentStep(prev => Math.max(prev - 1, 0));
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [phase, currentStep, steps.length]);
+  }, [phase]);
 
   if (phase === 'load') {
     return (

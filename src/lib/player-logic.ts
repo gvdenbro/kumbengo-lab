@@ -1,4 +1,4 @@
-import { getStepStrings, type Step } from './piece';
+import { type Step } from './piece';
 
 export function getTotalDuration(steps: Step[], speedPercent: number = 100): number {
   if (steps.length === 0) return 0;

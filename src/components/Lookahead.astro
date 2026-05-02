@@ -76,7 +76,9 @@ function gapToHeight(gap: number, minGap: number): string {
 <script>
   import { getStringLabel } from '../lib/labels';
 
-  const LOOKAHEAD_BEATS = 2;
+  const LOOKAHEAD_BEATS = Number(
+    (document.querySelector('.lookahead') as HTMLElement)?.dataset.lookaheadBeats ?? 3
+  );
 
   function updateVisibility(currentIndex: number) {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
