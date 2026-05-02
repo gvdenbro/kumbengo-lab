@@ -225,14 +225,16 @@ export default function Transcriber({ tuning }: Props) {
   if (phase === 'load') {
     return (
       <div
+        role="region"
+        aria-label="Audio file drop zone"
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) loadFile(f); }}
         style={{ border: `2px dashed ${dragOver ? 'var(--pico-primary)' : '#ccc'}`, padding: '2rem', textAlign: 'center', borderRadius: '0.5rem' }}
       >
         <p>Drop an audio file here, or click to select</p>
-        <input type="file" accept="audio/*,video/*" onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); }} />
-        {error && <p style={{ color: 'var(--pico-del-color)' }}>{error}</p>}
+        <input type="file" accept="audio/*,video/*" aria-label="Select audio file" onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); }} />
+        {error && <p role="alert" style={{ color: 'var(--pico-del-color)' }}>{error}</p>}
       </div>
     );
   }
@@ -281,11 +283,15 @@ export default function Transcriber({ tuning }: Props) {
             <BridgeDiagramInteractive onStringClick={assignString} />
           </div>
           <div style={{ flex: 1, minWidth: '200px' }}>
-            <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ol style={{ listStyle: 'none', padding: 0, margin: 0 }} role="listbox" aria-label="Steps">
               {steps.map((step, i) => (
                 <li
                   key={i}
+                  role="option"
+                  tabIndex={0}
+                  aria-selected={i === currentStep}
                   onClick={() => setCurrentStep(i)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrentStep(i); } }}
                   style={{
                     padding: '0.25rem 0.5rem', cursor: 'pointer',
                     background: i === currentStep ? 'var(--pico-primary-background)' : undefined,

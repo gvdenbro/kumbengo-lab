@@ -1,14 +1,19 @@
 ---
-interface Props { title: string; showNotation?: boolean; }
-const { title, showNotation = false } = Astro.props;
+interface Props { title: string; description?: string; showNotation?: boolean; }
+const { title, description = 'Learn the kora, one piece at a time. Browse pieces, view tablature, and play back interactively.', showNotation = false } = Astro.props;
+const pageTitle = `${title} — Kumbengo Lab`;
 ---
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content={description} />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
   <link rel="icon" type="image/png" href="/kora.png" />
-  <title>{title} — Kumbengo Lab</title>
+  <title>{pageTitle}</title>
   <style is:global>
     @import "@picocss/pico/css/pico.amber.min.css";
     @media (max-width: 480px) {
