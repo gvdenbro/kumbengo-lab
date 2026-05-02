@@ -69,18 +69,18 @@ arrangements:
   - name: C Head
     steps:
       # Reusable phrases
-      - &c_head  # d. e f g a bes a g f e d
+      - &c_head  # d,. e f g a bes a g f e d (low octave)
         - {d: 1.5, string: L3}
         - {d: 0.5, string: L4}
         - {d: 1, string: R1}
         - {d: 1, string: L5}
-        - {d: 0.5, string: L9}
-        - {d: 0.5, string: R6}
-        - {d: 0.5, string: L9}
-        - {d: 0.5, string: R5}
-        - {d: 0.5, string: L8}
-        - {d: 0.5, string: R4}
-        - {d: 1, string: L7}
+        - {d: 0.5, string: R2}
+        - {d: 0.5, string: L6}
+        - {d: 0.5, string: R2}
+        - {d: 0.5, string: L5}
+        - {d: 0.5, string: R1}
+        - {d: 0.5, string: L4}
+        - {d: 1, string: L3}
   - name: Melody
     steps:
       # === A section (ending on e) ===
