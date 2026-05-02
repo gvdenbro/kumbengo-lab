@@ -3,7 +3,7 @@ import { getStepStrings, type Step } from '../lib/piece';
 interface Props { steps: Step[]; tuning: string; }
 const { steps, tuning } = Astro.props;
 ---
-<table class="tablature" role="grid">
+<table class="tablature" data-tuning={tuning}>
   <thead>
     <tr>
       <th>#</th>
@@ -16,11 +16,27 @@ const { steps, tuning } = Astro.props;
       <tr>
         <td>{i + 1}</td>
         <td>{step.d}</td>
-        <td>{getStepStrings(step).join(', ') || '—'}</td>
+        <td class="string-cell" data-strings={JSON.stringify(getStepStrings(step))}>{getStepStrings(step).join(', ') || '—'}</td>
       </tr>
     ))}
   </tbody>
 </table>
+
+<script>
+  import { getStringLabel } from '../lib/labels';
+
+  document.addEventListener('notation-change', ((e: CustomEvent) => {
+    document.querySelectorAll('.tablature').forEach(table => {
+      const tuningId = (table as HTMLElement).dataset.tuning || 'silaba';
+      table.querySelectorAll('.string-cell').forEach(cell => {
+        const strings: string[] = JSON.parse((cell as HTMLElement).dataset.strings || '[]');
+        (cell as HTMLElement).textContent = strings.length
+          ? strings.map(s => getStringLabel(s, e.detail, tuningId)).join(', ')
+          : '—';
+      });
+    });
+  }) as EventListener);
+</script>
 
 <style>
   .tablature { font-size: 0.8rem; }
