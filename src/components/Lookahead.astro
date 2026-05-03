@@ -80,13 +80,14 @@ function gapToHeight(gap: number, minGap: number): string {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
     if (!track) return;
     const items = track.querySelectorAll('.lookahead-item');
+    const start = Math.max(currentIndex, 0);
 
     items.forEach((item, i) => {
       const el = item as HTMLElement;
       el.classList.toggle('current', i === currentIndex);
       if (i < currentIndex) {
         el.classList.add('hidden');
-      } else if (i - currentIndex > 4) {
+      } else if (i - start > 4) {
         el.classList.add('hidden');
       } else {
         el.classList.remove('hidden');
