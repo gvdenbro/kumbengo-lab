@@ -16,7 +16,7 @@ arrangements:
     - {d: 0.24, string: L8}
     - {d: 0.39, string: R4}
     - {d: 1.46, string: R3}
-    - {d: 0.62, string: R3}
+    - {d: 1.20, string: R3}
 - name: "Part 02"
   steps: &intro02
     - {d: 0.42, string: R1}
