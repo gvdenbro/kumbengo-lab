@@ -1,0 +1,39 @@
+title: Miniyamba
+tuning: silaba
+tags:
+- mandinka
+- traditional
+arrangements:
+- name: "Part 01"
+  steps: &intro01
+    - {d: 0.35, string: R6}
+    - {d: 0.39, string: R6}
+    - {d: 0.39, string: R6}
+    - {d: 0.42, string: L10}
+    - {d: 0.39, string: R6}
+    - {d: 0.39, string: L9}
+    - {d: 0.2, string: R5}
+    - {d: 0.24, string: L8}
+    - {d: 0.39, string: R4}
+    - {d: 1.46, string: R3}
+    - {d: 0.62, string: R3}
+- name: "Part 02"
+  steps: &intro02
+    - {d: 0.42, string: R1}
+    - {d: 0.37, string: L5}
+    - {d: 1.15, string: R2}
+    - {d: 0.39, string: R5}
+    - {d: 0.36, string: R6}
+    - {d: 0.36, string: L9}
+    - {d: 0.2, string: R5}
+    - {d: 0.27, string: L8}
+    - {d: 0.41, string: R4}
+    - {d: 0.74, string: L7}
+    - {d: 0.37, string: R4}
+    - {d: 0.38, string: L8}
+    - {d: 0.84, string: L7}
+    - {d: 1.13, string: L7}
+- name: Full
+  steps:
+    - *intro01
+    - *intro02
