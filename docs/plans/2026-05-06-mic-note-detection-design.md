@@ -9,13 +9,15 @@ The assign phase of the transcription tool requires clicking the bridge diagram 
 ### UX Flow
 
 1. User enters assign phase → mic permission requested once, stream stays open
-2. User presses "Listen" button (or spacebar) → UI shows "Listening..."
+2. User presses spacebar → UI shows "Listening..." (up to 3s window)
 3. User plucks a kora string
-4. Pitch detected → snapped to nearest kora string → shown as "Detected: R5 (G4)"
+4. Stable pitch detected (resolves early) → snapped to nearest kora string → shown as "Detected: R5 (G4)"
 5. Enter confirms → string assigned, advances to next step
-6. Escape or re-press "Listen" → retry detection
+6. If wrong: spacebar again to re-listen (overwrites previous detection)
 7. Bridge diagram click still works alongside (both methods coexist)
 8. Leaving assign phase closes mic stream
+
+Note: 3s window gives ~1s to move hand from keyboard to kora, then 2s of listening. Early resolution means no waiting if detection is fast.
 
 ### Technical Approach
 
@@ -23,16 +25,17 @@ The assign phase of the transcription tool requires clicking the bridge diagram 
 
 **New module: `src/lib/pitch-detect.ts`**
 - `openMic()` → requests `getUserMedia({ audio: true })`, creates `AnalyserNode`, returns handle
-- `listenForNote(handle, tuning)` → Promise that resolves to a string ID when stable pitch detected
+- `listenForNote(handle, tuning)` → Promise that resolves to a string ID when stable pitch detected (timeout 3s)
 - `closeMic(handle)` → stops stream, disconnects nodes
-- Stability heuristic: 3 consecutive frames within ±1 semitone
+- Stability heuristic: 3 consecutive frames within ±1 semitone, with amplitude threshold to ignore silence
 - Hz → MIDI: `12 * log2(freq / 440) + 69`, then snap to nearest kora string from tuning data
+- Early resolution: resolves as soon as stable pitch found, doesn't wait full 3s
 
 **Transcriber changes:**
 - `micRef` holds the open mic handle (opened on assign phase entry, closed on exit)
 - `detectedString` state shown in UI
-- "Listen" button calls `listenForNote`, sets result
-- Enter/Escape keyboard handling in assign phase extended
+- Spacebar in assign phase calls `listenForNote`, sets result
+- Enter confirms detection via existing `assignString`
 
 ### Files Changed
 
