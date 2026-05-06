@@ -252,6 +252,15 @@ export default function Transcriber({ tuning }: Props) {
         setDetectedString(d => { if (d) assignString(d); return null; });
         return;
       }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        setAssignments(a => {
+          const prev = a.slice(0, currentStep).findLast(s => s !== null);
+          if (prev) assignString(prev);
+          return a;
+        });
+        return;
+      }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSteps(s => { setCurrentStep(prev => Math.min(prev + 1, s.length - 1)); return s; });
