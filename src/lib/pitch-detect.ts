@@ -48,6 +48,7 @@ export function closeMic(handle: MicHandle): void {
 export function listenForNote(
   handle: MicHandle,
   tuning: Record<string, { midi: number }>,
+  signal?: AbortSignal,
 ): Promise<string | null> {
   const detector = PitchDetector.forFloat32Array(handle.analyser.fftSize);
   const buf = new Float32Array(handle.analyser.fftSize);
@@ -55,6 +56,8 @@ export function listenForNote(
   let lastMidi = -1;
 
   return new Promise(resolve => {
+    if (signal?.aborted) { resolve(null); return; }
+
     const deadline = setTimeout(() => { cleanup(); resolve(null); }, LISTEN_TIMEOUT);
 
     const interval = setInterval(() => {
@@ -76,6 +79,8 @@ export function listenForNote(
         resolve(snapToString(lastMidi, tuning));
       }
     }, 50);
+
+    signal?.addEventListener('abort', () => { cleanup(); resolve(null); });
 
     function cleanup() { clearTimeout(deadline); clearInterval(interval); }
   });

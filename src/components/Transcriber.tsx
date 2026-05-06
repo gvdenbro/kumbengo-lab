@@ -196,20 +196,32 @@ export default function Transcriber({ tuning }: Props) {
   }, []);
 
   // Open/close mic on assign phase
+  const abortRef = useRef<AbortController | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
   useEffect(() => {
     if (phase !== 'assign') return;
     let handle: MicHandle | null = null;
-    openMic().then(h => { handle = h; micRef.current = h; }).catch(() => {});
-    return () => { if (handle) { closeMic(handle); micRef.current = null; } };
+    setMicError(null);
+    openMic().then(h => { handle = h; micRef.current = h; }).catch(() => {
+      setMicError('Mic access denied or unavailable');
+    });
+    return () => {
+      abortRef.current?.abort();
+      if (handle) { closeMic(handle); micRef.current = null; }
+    };
   }, [phase]);
 
   const startListening = useCallback(async () => {
     if (!micRef.current || listening) return;
     setListening(true);
     setDetectedString(null);
-    const result = await listenForNote(micRef.current, tuning);
-    setDetectedString(result);
-    setListening(false);
+    const ac = new AbortController();
+    abortRef.current = ac;
+    const result = await listenForNote(micRef.current, tuning, ac.signal);
+    if (!ac.signal.aborted) {
+      setDetectedString(result);
+      setListening(false);
+    }
   }, [listening, tuning]);
 
   useEffect(() => { speedRef.current = speed; }, [speed]);
@@ -341,7 +353,7 @@ export default function Transcriber({ tuning }: Props) {
       <div>
         <p>Click a string for step {currentStep + 1}/{steps.length}</p>
         <p style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
-          {listening ? '🎤 Listening...' : detectedString ? `Detected: ${detectedString} — Enter to confirm` : '⎵ Space to listen with mic'}
+          {micError ? `⚠ ${micError}` : listening ? '🎤 Listening...' : detectedString ? `Detected: ${detectedString} — Enter to confirm` : '⎵ Space to listen with mic'}
         </p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
