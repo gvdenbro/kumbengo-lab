@@ -4,9 +4,7 @@ import Transcriber from '../components/Transcriber.tsx';
 import { getTuning } from '../lib/tuning';
 
 const silaba = getTuning('silaba');
-const tuning = Object.fromEntries(
-  Object.entries(silaba.strings).map(([id, info]) => [id, info.midi])
-);
+const tuning = silaba.strings;
 ---
 <Base title="Transcribe">
   <h1>Transcribe</h1>

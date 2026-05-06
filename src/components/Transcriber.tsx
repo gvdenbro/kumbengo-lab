@@ -2,12 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { superdough } from 'superdough';
 import { clusterTaps, clustersToSteps, parseAudacityLabels } from '../lib/tap-rhythm';
+import { openMic, closeMic, listenForNote, type MicHandle } from '../lib/pitch-detect';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
 
 interface Props {
-  tuning: Record<string, number>;
+  tuning: Record<string, { midi: number }>;
 }
 
 let prebaked: Promise<void> | undefined;
@@ -47,6 +48,9 @@ export default function Transcriber({ tuning }: Props) {
   const tapsRef = useRef<number[]>([]);
   const speedRef = useRef(speed);
   const rafRef = useRef<number | null>(null);
+  const micRef = useRef<MicHandle | null>(null);
+  const [listening, setListening] = useState(false);
+  const [detectedString, setDetectedString] = useState<string | null>(null);
 
   // Close AudioContext on unmount
   useEffect(() => {
@@ -141,7 +145,7 @@ export default function Transcriber({ tuning }: Props) {
     for (let i = 0; i < end; i++) {
       const str = a[i];
       if (str) {
-        superdough({ s: 'folkharp', note: tuning[str] ?? 60 }, time, steps[i].d);
+        superdough({ s: 'folkharp', note: tuning[str]?.midi ?? 60 }, time, steps[i].d);
       }
       time += steps[i].d;
     }
@@ -191,6 +195,23 @@ export default function Transcriber({ tuning }: Props) {
     }
   }, []);
 
+  // Open/close mic on assign phase
+  useEffect(() => {
+    if (phase !== 'assign') return;
+    let handle: MicHandle | null = null;
+    openMic().then(h => { handle = h; micRef.current = h; }).catch(() => {});
+    return () => { if (handle) { closeMic(handle); micRef.current = null; } };
+  }, [phase]);
+
+  const startListening = useCallback(async () => {
+    if (!micRef.current || listening) return;
+    setListening(true);
+    setDetectedString(null);
+    const result = await listenForNote(micRef.current, tuning);
+    setDetectedString(result);
+    setListening(false);
+  }, [listening, tuning]);
+
   useEffect(() => { speedRef.current = speed; }, [speed]);
   useEffect(() => { if (sourceRef.current) sourceRef.current.playbackRate.value = speed; }, [speed]);
 
@@ -207,7 +228,7 @@ export default function Transcriber({ tuning }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  // Assign phase keyboard: Delete/Backspace to clear, arrows to navigate
+  // Assign phase keyboard: Delete/Backspace to clear, arrows to navigate, Space to listen, Enter to confirm
   useEffect(() => {
     if (phase !== 'assign') return;
     const onKey = (e: KeyboardEvent) => {
@@ -221,6 +242,16 @@ export default function Transcriber({ tuning }: Props) {
         return;
       }
       if ((e.target as HTMLElement).matches('input, select, textarea')) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        startListening();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        setDetectedString(d => { if (d) assignString(d); return null; });
+        return;
+      }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSteps(s => { setCurrentStep(prev => Math.min(prev + 1, s.length - 1)); return s; });
@@ -231,7 +262,7 @@ export default function Transcriber({ tuning }: Props) {
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [phase]);
+  }, [phase, startListening, assignString]);
 
   if (phase === 'load') {
     return (
@@ -292,6 +323,9 @@ export default function Transcriber({ tuning }: Props) {
     return (
       <div>
         <p>Click a string for step {currentStep + 1}/{steps.length}</p>
+        <p style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
+          {listening ? '🎤 Listening...' : detectedString ? `Detected: ${detectedString} — Enter to confirm` : '⎵ Space to listen with mic'}
+        </p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
             <BridgeDiagramInteractive onStringClick={assignString} />
