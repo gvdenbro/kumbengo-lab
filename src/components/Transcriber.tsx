@@ -241,7 +241,7 @@ export default function Transcriber({ tuning }: Props) {
         });
         return;
       }
-      if ((e.target as HTMLElement).matches('input, select, textarea')) return;
+      if ((e.target as HTMLElement).matches('input, select, textarea, [role="button"]')) return;
       if (e.code === 'Space') {
         e.preventDefault();
         startListening();
