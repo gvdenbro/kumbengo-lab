@@ -254,10 +254,17 @@ export default function Transcriber({ tuning }: Props) {
       }
       if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
-        setAssignments(a => {
-          const prev = a.slice(0, currentStep).findLast(s => s !== null);
-          if (prev) assignString(prev);
-          return a;
+        setCurrentStep(step => {
+          setAssignments(a => {
+            const prev = a.slice(0, step).findLast(s => s !== null);
+            if (prev) {
+              const updated = [...a];
+              updated[step] = prev;
+              return updated;
+            }
+            return a;
+          });
+          return step < steps.length - 1 ? step + 1 : step;
         });
         return;
       }
