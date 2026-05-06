@@ -260,6 +260,7 @@ export default function Transcriber({ tuning }: Props) {
             if (prev) {
               const updated = [...a];
               updated[step] = prev;
+              playAssignedNotes(updated);
               return updated;
             }
             return a;
