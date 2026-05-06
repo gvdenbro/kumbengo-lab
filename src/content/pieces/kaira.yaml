@@ -1,0 +1,62 @@
+title: Kaira
+tuning: silaba
+tags:
+- mandinka
+- traditional
+arrangements:
+- name: "Intro"
+  steps:
+    - {d: 0.43, string: R7}
+    - {d: 0.39, string: R7}
+    - {d: 0.41, string: L10}
+    - {d: 0.39, string: L10}
+    - {d: 0.35, string: R6}
+    - {d: 0.96, string: R6}
+    - {d: 0.39, string: L10}
+    - {d: 0.38, string: L10}
+    - {d: 0.35, string: R6}
+    - {d: 0.37, string: R6}
+    - {d: 0.36, string: L9}
+    - {d: 1.04, string: L9}
+    - {d: 0.35, string: R7}
+    - {d: 0.27, string: R7}
+    - {d: 0.34, string: L10}
+    - {d: 0.23, string: R6}
+    - {d: 0.34, string: L9}
+    - {d: 0.36, string: R5}
+    - {d: 0.23, string: R5}
+    - {d: 0.34, string: L8}
+    - {d: 0.21, string: R4}
+    - {d: 1.45, string: L7}
+    - {d: 0.41, string: R7}
+    - {d: 0.4, string: R7}
+    - {d: 0.38, string: L10}
+    - {d: 0.38, string: L10}
+    - {d: 0.34, string: R6}
+    - {d: 1.03, string: R6}
+    - {d: 0.38, string: L10}
+    - {d: 0.37, string: L10}
+    - {d: 0.34, string: R6}
+    - {d: 0.37, string: R6}
+    - {d: 0.34, string: L9}
+    - {d: 1.1, string: L9}
+    - {d: 0.31, string: R7}
+    - {d: 0.24, string: R7}
+    - {d: 0.3, string: L10}
+    - {d: 0.2, string: R6}
+    - {d: 0.36, string: L9}
+    - {d: 0.29, string: R5}
+    - {d: 0.26, string: R5}
+    - {d: 0.32, string: L8}
+    - {d: 0.2, string: R4}
+    - {d: 0.39, string: L7}
+    - {d: 0.21, string: R5}
+    - {d: 0.22, string: L9}
+    - {d: 0.25, string: R6}
+    - {d: 0.21, string: L9}
+    - {d: 0.24, string: R5}
+    - {d: 0.22, string: L8}
+    - {d: 0.27, string: R4}
+    - {d: 0.22, string: L8}
+    - {d: 0.67, string: L7}
+    - {d: 0.77, string: R6}
