@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds } from '@strudel/webaudio';
 import { superdough } from 'superdough';
-import { clusterTaps, clustersToSteps } from '../lib/tap-rhythm';
+import { clusterTaps, clustersToSteps, parseAudacityLabels } from '../lib/tap-rhythm';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 
 type Phase = 'load' | 'rhythm' | 'verify' | 'assign';
@@ -180,6 +180,17 @@ export default function Transcriber({ tuning }: Props) {
     setPhase('rhythm');
   }, []);
 
+  const importLabels = useCallback(async (file: File) => {
+    const text = await file.text();
+    const dur = bufferRef.current?.duration;
+    if (!dur) return;
+    const result = parseAudacityLabels(text, dur);
+    if (result.length > 0) {
+      setSteps(result);
+      setPhase('verify');
+    }
+  }, []);
+
   useEffect(() => { speedRef.current = speed; }, [speed]);
   useEffect(() => { if (sourceRef.current) sourceRef.current.playbackRate.value = speed; }, [speed]);
 
@@ -257,6 +268,9 @@ export default function Transcriber({ tuning }: Props) {
         )}
         {playing && <progress value={progress} max={1} style={{ width: '100%', height: '0.5rem' }} />}
         <p style={{ marginTop: '0.5rem' }}>Taps: {tapCount}{tapCount > 0 && ` → ~${clusterTaps(tapsRef.current, 0.08).length} notes`}</p>
+        <hr style={{ margin: '1rem 0' }} />
+        <p>Or import note onsets from Audacity labels:</p>
+        <input type="file" accept=".txt,.csv" aria-label="Import Audacity labels" onChange={e => { const f = e.target.files?.[0]; if (f) importLabels(f); }} />
       </div>
     );
   }

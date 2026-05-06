@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clusterTaps, clustersToSteps } from './tap-rhythm';
+import { clusterTaps, clustersToSteps, parseAudacityLabels } from './tap-rhythm';
 
 describe('clusterTaps', () => {
   it('groups taps within tolerance', () => {
@@ -49,5 +49,30 @@ describe('clustersToSteps', () => {
 
   it('returns empty for empty clusters', () => {
     expect(clustersToSteps([], 4)).toEqual([]);
+  });
+});
+
+describe('parseAudacityLabels', () => {
+  it('parses tab-delimited labels into steps', () => {
+    const text = '0.500000\t0.500000\t0.500000\n1.200000\t1.200000\t1.200000\n2.000000\t2.000000\t2.000000';
+    const steps = parseAudacityLabels(text, 3);
+    expect(steps).toEqual([{ d: 0.5 }, { d: 0.7 }, { d: 0.8 }, { d: 1 }]);
+  });
+
+  it('returns empty for no valid lines', () => {
+    expect(parseAudacityLabels('', 4)).toEqual([]);
+    expect(parseAudacityLabels('garbage', 4)).toEqual([]);
+  });
+
+  it('ignores lines with fewer than 3 columns', () => {
+    const text = '0.5\t0.5\t0.5\nbad line\n1.0\t1.0\t1.0';
+    const steps = parseAudacityLabels(text, 2);
+    expect(steps).toEqual([{ d: 0.5 }, { d: 0.5 }, { d: 1 }]);
+  });
+
+  it('uses audio duration for last step', () => {
+    const text = '0.300000\t0.300000\t0.300000';
+    const steps = parseAudacityLabels(text, 1.5);
+    expect(steps).toEqual([{ d: 0.3 }, { d: 1.2 }]);
   });
 });

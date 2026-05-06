@@ -33,6 +33,24 @@ export function clustersToSteps(clusters: TapCluster[], loopDuration: number): {
 
 function round2(n: number): number { return Math.round(n * 100) / 100; }
 
+export function parseAudacityLabels(text: string, audioDuration: number): { d: number }[] {
+  const onsets = [0];
+  for (const line of text.split('\n')) {
+    const cols = line.split('\t');
+    if (cols.length < 3) continue;
+    const t = parseFloat(cols[2]);
+    if (!isNaN(t) && t > 0) onsets.push(t);
+  }
+  if (onsets.length < 2) return [];
+  onsets.sort((a, b) => a - b);
+  const steps: { d: number }[] = [];
+  for (let i = 0; i < onsets.length - 1; i++) {
+    steps.push({ d: round2(onsets[i + 1] - onsets[i]) });
+  }
+  steps.push({ d: round2(audioDuration - onsets[onsets.length - 1]) });
+  return steps;
+}
+
 function median(arr: number[]): number {
   const s = [...arr].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
