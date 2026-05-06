@@ -43,7 +43,9 @@ Each step has a duration `d` (seconds until next event) and either `string` (sin
 Navigate to `/transcribe` to capture arrangements from audio recordings:
 
 1. Load an audio file (drag-and-drop or file picker)
-2. Play the audio in a loop at 50%/75%/100% speed and tap spacebar to mark note onsets
+2. Define the rhythm using one of two methods:
+   - **Tap:** Play the audio in a loop at 50%/75%/100% speed and tap spacebar to mark note onsets
+   - **Import Audacity labels:** Use Audacity's note onset detection plugin to generate labels, export them (File → Export Labels), and upload the `.txt` file
 3. Verify the extracted rhythm, retry if needed
 4. Assign strings by clicking the interactive bridge diagram
 5. Copy the generated YAML and paste into a piece file
