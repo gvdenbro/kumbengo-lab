@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { PitchDetector } from 'pitchy';
 import { openMic, closeMic, type MicHandle } from './pitch-detect';
-import { CLARITY_THRESHOLD } from './tuner-logic';
+import { CLARITY_THRESHOLD, SNAP_MAX_SEMITONES } from './tuner-logic';
+
+const STABLE_FRAMES = 3;
 
 export interface PitchFrame {
   hz: number | null;
@@ -28,6 +30,13 @@ export function usePitchStream(active: boolean): PitchFrame {
 
       const detector = PitchDetector.forFloat32Array(handle.analyser.fftSize);
       const buf = new Float32Array(handle.analyser.fftSize);
+      let lastMidi = -1;
+      let stableCount = 0;
+      let smoothedHz: number | null = null;
+      const SMOOTH_FACTOR = 0.3;
+      const HOLD_MS = 500;
+      let lastGoodTime = 0;
+      let lastGoodFrame: PitchFrame = { hz: null, clarity: 0 };
 
       function loop() {
         if (cancelled) return;
@@ -35,9 +44,28 @@ export function usePitchStream(active: boolean): PitchFrame {
         const [freq, clarity] = detector.findPitch(buf, handle.ctx.sampleRate);
 
         if (clarity >= CLARITY_THRESHOLD && freq >= 60 && freq <= 2000) {
-          setFrame({ hz: freq, clarity });
+          const midi = Math.round(12 * Math.log2(freq / 440) + 69);
+          if (Math.abs(midi - lastMidi) <= SNAP_MAX_SEMITONES) {
+            stableCount++;
+          } else {
+            stableCount = 1;
+            lastMidi = midi;
+            smoothedHz = null;
+          }
+          if (stableCount >= STABLE_FRAMES) {
+            smoothedHz = smoothedHz === null ? freq : SMOOTH_FACTOR * freq + (1 - SMOOTH_FACTOR) * smoothedHz;
+            lastGoodFrame = { hz: smoothedHz, clarity };
+            lastGoodTime = performance.now();
+            setFrame(lastGoodFrame);
+          }
         } else {
-          setFrame({ hz: null, clarity });
+          stableCount = 0;
+          if (lastGoodFrame.hz !== null && performance.now() - lastGoodTime < HOLD_MS) {
+            setFrame(lastGoodFrame);
+          } else {
+            smoothedHz = null;
+            setFrame({ hz: null, clarity });
+          }
         }
 
         rafRef.current = requestAnimationFrame(loop);

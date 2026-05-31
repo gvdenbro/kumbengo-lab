@@ -3,4 +3,4 @@ dist/
 .astro/
 __pycache__/
 test-data/
-.worktrees/.superpowers/
+.superpowers/

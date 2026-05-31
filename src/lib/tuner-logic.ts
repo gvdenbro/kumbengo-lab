@@ -1,7 +1,8 @@
 export const IN_TUNE_CENTS = 3;
+export const IN_TUNE_EXIT_CENTS = 6;
 export const VISIBLE_RANGE_CENTS = 30;
-export const CLARITY_THRESHOLD = 0.85;
-export const AUTO_ADVANCE_MS = 1000;
+export const CLARITY_THRESHOLD = 0.93;
+export const AUTO_ADVANCE_MS = 500;
 export const SNAP_MAX_SEMITONES = 2;
 
 const GUIDED_ORDER: string[] = [

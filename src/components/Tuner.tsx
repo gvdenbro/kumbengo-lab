@@ -7,6 +7,7 @@ import {
   isInTune,
   advanceGuided,
   AUTO_ADVANCE_MS,
+  IN_TUNE_EXIT_CENTS,
 } from '../lib/tuner-logic';
 import BridgeDiagramInteractive from './BridgeDiagramInteractive';
 import VibrationLine from './VibrationLine';
@@ -21,6 +22,7 @@ export default function Tuner() {
   const [locked, setLocked] = useState<string | null>(null);
   const [tunedStrings, setTunedStrings] = useState<Set<string>>(new Set());
   const greenSince = useRef<number | null>(null);
+  const wasInTune = useRef(false);
 
   const { hz } = usePitchStream(active);
 
@@ -28,7 +30,17 @@ export default function Tuner() {
   const currentTarget = locked ?? detected ?? target;
   const targetMidi = currentTarget ? tuning.strings[currentTarget]?.midi : null;
   const cents = hz && targetMidi != null ? centsFromTarget(hz, targetMidi) : null;
-  const inTune = cents !== null && isInTune(cents);
+
+  // Hysteresis: enter green at ±3¢, exit only beyond ±6¢
+  let inTune: boolean;
+  if (cents === null) {
+    inTune = false;
+  } else if (wasInTune.current) {
+    inTune = Math.abs(cents) <= IN_TUNE_EXIT_CENTS;
+  } else {
+    inTune = isInTune(cents);
+  }
+  wasInTune.current = inTune;
 
   const tunedRef = useRef<Set<string>>(tunedStrings);
   tunedRef.current = tunedStrings;
