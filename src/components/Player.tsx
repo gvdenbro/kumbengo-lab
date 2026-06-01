@@ -20,7 +20,7 @@ if (typeof window !== 'undefined') {
     registerSynthSounds(),
     samples('https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/', { prebake: true }),
   ]).then(() => {}).catch(err => console.error('Sample preload failed:', err));
-  initAudioOnFirstClick().catch(err => console.error('Audio init failed:', err));
+  initAudioOnFirstClick().catch((err: unknown) => console.error('Audio init failed:', err));
 }
 
 const LOOKAHEAD = 0.1;
