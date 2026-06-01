@@ -115,17 +115,19 @@ export default function Tuner() {
             {allTuned ? (
               <div style={{ fontSize: '1.5rem', color: '#2ecc71' }}>All tuned ✓</div>
             ) : currentTarget && targetInfo ? (
-              <>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{targetInfo.note}</div>
-                <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{currentTarget}</div>
-                {cents !== null && <div style={{ fontSize: '0.75rem', color: inTune ? '#2ecc71' : '#aaa' }}>{cents > 0 ? '+' : ''}{cents.toFixed(0)}¢</div>}
-              </>
+              <div style={{ fontSize: '1.2rem' }}>
+                <span style={{ color: '#aaa' }}>{currentTarget}</span>
+                {' · '}
+                <span style={{ fontWeight: 'bold' }}>{targetInfo.note}</span>
+                {' · '}
+                <span style={{ color: inTune ? '#2ecc71' : '#aaa', display: 'inline-block', minWidth: '4ch', textAlign: 'right', whiteSpace: 'nowrap' }}>{cents !== null ? `${cents > 0 ? '+' : ''}${cents.toFixed(0)}¢` : ''}</span>
+              </div>
             ) : (
               <div style={{ fontSize: '1rem', color: '#888' }}>Play a string…</div>
             )}
           </div>
 
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', overflow: 'hidden' }}>
             <VibrationLine cents={cents} />
             <BridgeDiagramInteractive
               onStringClick={handleStringClick}
