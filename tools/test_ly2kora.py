@@ -54,3 +54,23 @@ def test_parse_voice_tie():
     assert len(events) == 2
     assert events[0] == (0.0, [72], 2.0)  # C5, tied = 2 beats
     assert events[1] == (2.0, [74], 1.0)  # D5
+
+from ly2kora import merge_voices
+
+def test_merge_voices_interleaved():
+    """Two voices with different onset times merge into sorted timeline."""
+    voice1 = [(0.0, [72], 1.0), (1.0, [74], 1.0)]  # C5, D5
+    voice2 = [(0.0, [60], 0.5), (0.5, [62], 0.5)]   # C4, D4
+    merged = merge_voices([voice1, voice2])
+    assert merged == [
+        (0.0, [72, 60], 0.5),   # both at onset 0 → combined, d=time to next
+        (0.5, [62], 0.5),       # D4 alone
+        (1.0, [74], 1.0),       # D5 alone (last event keeps own duration)
+    ]
+
+def test_merge_voices_simultaneous_same_onset():
+    """Events at exact same onset get combined into one step."""
+    voice1 = [(0.0, [72], 1.0)]
+    voice2 = [(0.0, [60], 1.0)]
+    merged = merge_voices([voice1, voice2])
+    assert merged == [(0.0, [72, 60], 1.0)]

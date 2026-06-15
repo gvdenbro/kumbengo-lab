@@ -167,3 +167,36 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
         i += 1
 
     return events
+
+
+def merge_voices(voices: list[list[tuple[float, list[int], float]]]) -> list[tuple[float, list[int], float]]:
+    """Merge multiple voice event lists into a single timeline.
+
+    Events at the same onset are combined (pitches merged).
+    Duration (d) becomes time-to-next-event, except for the last event
+    which keeps its written duration.
+    """
+    all_events: dict[float, list[int]] = {}
+    all_durations: dict[float, float] = {}
+
+    for voice in voices:
+        for onset, pitches, duration in voice:
+            onset_r = round(onset, 6)
+            if onset_r in all_events:
+                all_events[onset_r].extend(pitches)
+            else:
+                all_events[onset_r] = list(pitches)
+            all_durations[onset_r] = max(all_durations.get(onset_r, 0), duration)
+
+    sorted_onsets = sorted(all_events.keys())
+
+    merged: list[tuple[float, list[int], float]] = []
+    for idx, onset in enumerate(sorted_onsets):
+        pitches = all_events[onset]
+        if idx < len(sorted_onsets) - 1:
+            d = sorted_onsets[idx + 1] - onset
+        else:
+            d = all_durations[onset]
+        merged.append((round(onset, 6), pitches, round(d, 6)))
+
+    return merged
