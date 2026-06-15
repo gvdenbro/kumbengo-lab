@@ -74,3 +74,46 @@ def test_merge_voices_simultaneous_same_onset():
     voice2 = [(0.0, [60], 1.0)]
     merged = merge_voices([voice1, voice2])
     assert merged == [(0.0, [72, 60], 1.0)]
+
+import yaml
+from ly2kora import events_to_yaml
+
+def test_events_to_yaml_single_string():
+    """Single-pitch events use 'string' key."""
+    events = [(0.0, [65], 1.0)]
+    result = events_to_yaml(events, title="Test", transpose=0, tempo=65)
+    data = yaml.safe_load(result)
+    assert data["title"] == "Test"
+    assert data["tuning"] == "silaba"
+    assert data["tags"] == ["cover"]
+    assert len(data["arrangements"]) == 1
+    step = data["arrangements"][0]["steps"][0]
+    assert step["string"] == "L8"
+    assert abs(step["d"] - 0.923) < 0.001
+
+def test_events_to_yaml_multiple_strings():
+    """Multi-pitch events use 'strings' key."""
+    events = [(0.0, [65, 69], 0.5)]
+    result = events_to_yaml(events, title="Test", transpose=0, tempo=65)
+    data = yaml.safe_load(result)
+    step = data["arrangements"][0]["steps"][0]
+    assert step["strings"] == ["L8", "L9"]
+    assert "string" not in step
+
+def test_events_to_yaml_with_transpose():
+    """Transpose shifts MIDI before mapping."""
+    events = [(0.0, [60], 1.0)]
+    result = events_to_yaml(events, title="Test", transpose=5, tempo=65)
+    data = yaml.safe_load(result)
+    step = data["arrangements"][0]["steps"][0]
+    assert step["string"] == "L8"  # C4(60) + 5 = F4(65) = L8
+
+def test_events_to_yaml_rest():
+    """Rest events have d but no string/strings."""
+    events = [(0.0, [], 1.0)]
+    result = events_to_yaml(events, title="Test", transpose=0, tempo=65)
+    data = yaml.safe_load(result)
+    step = data["arrangements"][0]["steps"][0]
+    assert "string" not in step
+    assert "strings" not in step
+    assert abs(step["d"] - 0.923) < 0.001

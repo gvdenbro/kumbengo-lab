@@ -30,6 +30,8 @@ def midi_to_string(midi: int) -> str:
     return SILABA_MIDI_TO_STRING[midi]
 
 
+import yaml
+
 import ly.document
 import ly.pitch
 
@@ -200,3 +202,31 @@ def merge_voices(voices: list[list[tuple[float, list[int], float]]]) -> list[tup
         merged.append((round(onset, 6), pitches, round(d, 6)))
 
     return merged
+
+
+def events_to_yaml(events: list[tuple[float, list[int], float]], *, title: str, transpose: int, tempo: int) -> str:
+    """Convert merged events to Kumbengo Lab piece YAML."""
+    beat_duration = 60.0 / tempo
+    steps = []
+
+    for onset, pitches, d_beats in events:
+        d_seconds = round(d_beats * beat_duration, 3)
+        step: dict = {"d": d_seconds}
+
+        if pitches:
+            transposed = [midi + transpose for midi in pitches]
+            strings = [midi_to_string(m) for m in transposed]
+            if len(strings) == 1:
+                step["string"] = strings[0]
+            else:
+                step["strings"] = strings
+
+        steps.append(step)
+
+    piece = {
+        "title": title,
+        "tuning": "silaba",
+        "tags": ["cover"],
+        "arrangements": [{"name": "Full", "steps": steps}],
+    }
+    return yaml.dump(piece, default_flow_style=None, sort_keys=False, allow_unicode=True)
