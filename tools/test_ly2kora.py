@@ -8,16 +8,15 @@ def test_midi_to_string_exact_matches():
     assert midi_to_string(81) == "R10"  # A5
 
 def test_midi_to_string_out_of_range():
-    import pytest
-    with pytest.raises(ValueError):
-        midi_to_string(40)
-    with pytest.raises(ValueError):
-        midi_to_string(82)
+    """Out-of-range notes get octave-folded into kora range."""
+    assert midi_to_string(40) == "L4"   # 40+12=52=L4 (E3)
+    assert midi_to_string(82) == "R6"   # 82-12=70=R6 (Bb4)
+    assert midi_to_string(93) == "R10"  # 93-12=81=R10 (A5)
 
 def test_midi_to_string_not_in_tuning():
     import pytest
     with pytest.raises(ValueError):
-        midi_to_string(42)  # F#2 not in Silaba
+        midi_to_string(42)  # F#2 not in Silaba (no folding helps - pitch class not in scale)
 
 from ly2kora import parse_voice
 

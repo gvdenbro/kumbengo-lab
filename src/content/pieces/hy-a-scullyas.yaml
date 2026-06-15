@@ -4,158 +4,149 @@ tags: [cover]
 arrangements:
 - name: Full
   steps:
-  - d: 0.923
-    strings: [R8, L8]
   - d: 0.462
-    strings: [R7, L9, L7]
-  - {d: 0.462, string: L11}
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [L9, R7]
-  - {d: 0.462, string: L11}
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [R7, L9, R7]
-  - d: 0.231
-    strings: [L11, L11]
+    strings: [R7, L9]
+  - {d: 0.231, string: L11}
   - {d: 0.231, string: R8}
+  - {d: 0.462, string: L11}
   - d: 0.462
-    strings: [R5, L11]
+    strings: [R10, R7]
+  - {d: 0.462, string: L11}
+  - {d: 0.462, string: L11}
+  - d: 0.462
+    strings: [L10, R10, R7]
+  - {d: 0.462, string: L11}
+  - d: 0.462
+    strings: [L11, R9]
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [L11, R8]
+    strings: [R7, R8]
   - d: 0.462
-    strings: [R5, L11]
-  - d: 0.462
-    strings: [L10, R8]
+    strings: [R9, L11]
+  - {d: 0.462, string: R8}
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [L11, R5, L11]
+    strings: [R9, L11]
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [R7, L9, R7]
-  - {d: 0.462, string: L11}
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [L9, R7]
-  - {d: 0.462, string: L11}
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [R7, L9, R7]
-  - d: 0.231
-    strings: [L11, L11]
+    strings: [R7, R10]
+  - {d: 0.231, string: L11}
   - {d: 0.231, string: R8}
+  - {d: 0.462, string: L11}
   - d: 0.462
-    strings: [R5, L11]
+    strings: [R10, R7]
+  - d: 0.462
+    strings: [R9, L11]
+  - {d: 0.462, string: L11}
+  - d: 0.462
+    strings: [L10, R10, R7]
+  - {d: 0.462, string: L11}
+  - d: 0.462
+    strings: [L11, R9]
   - {d: 0.462, string: R8}
+  - d: 0.462
+    strings: [R7, R8]
+  - d: 0.462
+    strings: [R9, L11]
+  - {d: 0.462, string: R8}
+  - {d: 0.462, string: L11}
   - d: 0.462
     strings: [R9, R8]
-  - d: 0.462
-    strings: [R5, L11]
-  - d: 0.462
-    strings: [L10, R8]
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [L11, R5, R8]
   - {d: 0.462, string: R9}
   - d: 0.462
-    strings: [R7, R6, R7]
-  - {d: 0.462, string: R9}
-  - {d: 0.462, string: R10}
-  - d: 0.462
-    strings: [R5, R7]
-  - {d: 0.462, string: R9}
-  - {d: 0.462, string: R10}
-  - d: 0.462
-    strings: [R7, L9, R7]
-  - {d: 0.231, string: L10}
-  - {d: 0.231, string: R6}
-  - d: 0.462
-    strings: [L8, L11]
-  - {d: 0.462, string: R8}
-  - d: 0.462
-    strings: [R6, R8]
-  - d: 0.462
-    strings: [R5, L11]
-  - d: 0.462
-    strings: [R10, R8]
-  - {d: 0.462, string: R7}
-  - d: 0.923
-    strings: [R7, R5, R8]
-  - d: 0.462
-    strings: [R8, R6, R8]
-  - {d: 0.462, string: R7}
-  - {d: 0.462, string: L10}
-  - d: 0.462
-    strings: [R9, R5]
-  - {d: 0.462, string: R7}
-  - {d: 0.462, string: R10}
-  - d: 0.462
-    strings: [R7, L9, R7]
+    strings: [R7, R6]
   - d: 0.231
-    strings: [L10, L11]
+    strings: [L10, R9]
   - {d: 0.231, string: R6}
+  - {d: 0.462, string: R10}
   - d: 0.462
-    strings: [L8, R8]
+    strings: [R9, R7]
+  - d: 0.462
+    strings: [R6, R9]
+  - {d: 0.462, string: R10}
+  - d: 0.692
+    strings: [R10, R7]
+  - {d: 0.231}
+  - d: 0.462
+    strings: [R7, R8, L11]
+  - {d: 0.462, string: R8}
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [R10, L10, L11]
-  - {d: 0.462, string: R7}
+    strings: [R9, L11]
+  - {d: 0.462, string: R8}
+  - d: 0.462
+    strings: [R9, R7]
+  - d: 0.462
+    strings: [R9, R8]
+  - {d: 0.462, string: R10}
+  - d: 0.462
+    strings: [R7, R6, R8]
+  - d: 0.231
+    strings: [L10, R7]
+  - {d: 0.231, string: R6}
+  - {d: 0.462, string: L10}
+  - {d: 0.462, string: R9}
+  - d: 0.923
+    strings: [R10, R7]
+  - d: 0.462
+    strings: [R7, R10]
+  - {d: 0.462, string: L11}
+  - {d: 0.462, string: R8}
+  - {d: 0.462, string: R8}
   - d: 0.462
     strings: [R7, L10, L11]
+  - {d: 0.462, string: R7}
+  - d: 0.462
+    strings: [R8, L10, L11]
   - {d: 0.462, string: R6}
   - d: 0.923
-    strings: [L7, L8]
+    strings: [R8, R7]
   - d: 0.462
-    strings: [R7, L9, L7]
-  - {d: 0.462, string: R8}
-  - d: 0.462
-    strings: [R8, R8]
-  - d: 0.462
-    strings: [L9, R7]
-  - d: 0.462
-    strings: [R8, R8]
-  - {d: 0.462, string: R8}
-  - d: 0.462
-    strings: [R8, L9, R7]
-  - d: 0.231
-    strings: [R8, R8]
+    strings: [R8, R10, R7]
+  - {d: 0.231, string: R8}
   - {d: 0.231, string: L11}
   - d: 0.462
-    strings: [L10, R5, R9]
+    strings: [L10, R8]
+  - d: 0.462
+    strings: [R10, R7]
+  - {d: 0.462, string: R8}
+  - {d: 0.462, string: R8}
+  - d: 0.462
+    strings: [R10, R7]
+  - {d: 0.462, string: R8}
+  - {d: 0.462, string: R9}
   - {d: 0.462, string: R10}
-  - {d: 0.462, string: R10}
   - d: 0.462
-    strings: [L9, R7]
+    strings: [R7, R10]
+  - d: 0.462
+    strings: [R10, R7]
   - {d: 0.462, string: R8}
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [L9, R7]
+    strings: [R8, R10, R7]
   - {d: 0.462, string: R8}
   - d: 0.462
-    strings: [R7, L9, R7]
-  - {d: 0.462, string: R8}
-  - d: 0.462
-    strings: [R8, R8]
-  - d: 0.462
-    strings: [L9, R7]
-  - d: 0.462
-    strings: [R8, R8]
-  - {d: 0.462, string: R8}
-  - d: 0.462
-    strings: [R8, L9, R7]
-  - d: 0.231
-    strings: [R8, R8]
+    strings: [R8, R10, R7]
+  - {d: 0.231, string: R8}
   - {d: 0.231, string: L11}
   - d: 0.462
-    strings: [L10, R5, L10]
+    strings: [L10, R8]
+  - d: 0.462
+    strings: [R10, R7]
+  - {d: 0.462, string: R8}
+  - {d: 0.462, string: R8}
+  - d: 0.462
+    strings: [R10, R7]
+  - {d: 0.462, string: R8}
+  - d: 0.462
+    strings: [R9, L10]
+  - d: 0.462
+    strings: [R10, L11]
+  - {d: 0.462, string: L11}
+  - d: 0.462
+    strings: [R9, L10]
   - {d: 0.462, string: L11}
   - {d: 0.462, string: L11}
   - d: 0.462
-    strings: [R5, L10]
-  - {d: 0.462, string: L11}
-  - {d: 0.462, string: L11}
-  - d: 0.462
-    strings: [R5, L10]
-  - d: 0.462
-    strings: [R10, R8]
+    strings: [R9, L10]
+  - {d: 0.462, string: R8}

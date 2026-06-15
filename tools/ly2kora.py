@@ -21,15 +21,19 @@ SILABA_MIDI_TO_STRING: dict[int, str] = {
 }
 
 
-def midi_to_string(midi: int) -> str | None:
-    """Map a MIDI note number to the nearest Silaba kora string ID via octave folding."""
-    # Fold into kora range (41-81) by shifting octaves
+def midi_to_string(midi: int) -> str:
+    """Map a MIDI note number to the exact Silaba kora string ID.
+
+    Folds octaves to fit within kora range (41-81).
+    Raises ValueError if the pitch class is not in the Silaba scale.
+    """
+    # Fold into kora range by shifting octaves
     while midi > 81:
         midi -= 12
     while midi < 41:
         midi += 12
     if midi not in SILABA_MIDI_TO_STRING:
-        return None
+        raise ValueError(f"MIDI {midi} (pitch class {midi % 12}) is not in Silaba tuning")
     return SILABA_MIDI_TO_STRING[midi]
 
 
@@ -84,6 +88,7 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
     i = 0
     in_chord = False
     chord_pitches: list[int] = []
+    skip_next_note = False  # Skip notes that are part of \key, \tempo etc.
 
     # Skip tokens before SequentialStart '{' (the \relative reference pitch)
     while i < len(tokens) and not isinstance(tokens[i], lilypond.SequentialStart):
@@ -93,6 +98,12 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
 
     while i < len(tokens):
         token = tokens[i]
+
+        # Track commands that consume a pitch (e.g. \key c \major)
+        if isinstance(token, (lilypond.PitchCommand, lilypond.Tempo)):
+            skip_next_note = True
+            i += 1
+            continue
 
         if isinstance(token, lilypond.Tie):
             tie_active = True
@@ -147,12 +158,19 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
             while i < len(tokens) and isinstance(tokens[i], lilypond.OctaveCheck):
                 i += 1
 
+            # Skip notes that are arguments to \key, \tempo, etc.
+            if skip_next_note:
+                skip_next_note = False
+                while i < len(tokens) and isinstance(tokens[i], (lilypond.Duration, lilypond.Dot)):
+                    i += 1
+                continue
+
             pitch = ly.pitch.Pitch(note=note_num, alter=alter, octave=octave_mod)
             if in_chord:
                 pitch.makeAbsolute(chord_base_pitch)
-                if not chord_pitches:
-                    # First note in chord: update last_pitch for notes after the chord
-                    last_pitch = pitch.copy()
+                chord_base_pitch = pitch.copy()
+                # Update last_pitch to the last chord note for post-chord relative calcs
+                last_pitch = pitch.copy()
             else:
                 pitch.makeAbsolute(last_pitch)
                 last_pitch = pitch.copy()
@@ -225,7 +243,7 @@ def events_to_yaml(events: list[tuple[float, list[int], float]], *, title: str, 
 
         if pitches:
             transposed = [midi + transpose for midi in pitches]
-            strings = [s for m in transposed if (s := midi_to_string(m)) is not None]
+            strings = list(dict.fromkeys(midi_to_string(m) for m in transposed))
             if len(strings) == 1:
                 step["string"] = strings[0]
             elif len(strings) > 1:
