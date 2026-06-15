@@ -21,17 +21,19 @@ SILABA_MIDI_TO_STRING: dict[int, str] = {
 }
 
 
-def midi_to_string(midi: int) -> str:
-    """Map a MIDI note number to the exact Silaba kora string ID.
+def midi_to_string(midi: int, *, fold: bool = False) -> str | None:
+    """Map a MIDI note number to a Silaba kora string ID.
 
-    Folds octaves to fit within kora range (41-81).
+    If fold=True, shifts octaves to fit range. Otherwise returns None for out-of-range.
     Raises ValueError if the pitch class is not in the Silaba scale.
     """
-    # Fold into kora range by shifting octaves
-    while midi > 81:
-        midi -= 12
-    while midi < 41:
-        midi += 12
+    if fold:
+        while midi > 81:
+            midi -= 12
+        while midi < 41:
+            midi += 12
+    elif midi < 41 or midi > 81:
+        return None
     if midi not in SILABA_MIDI_TO_STRING:
         raise ValueError(f"MIDI {midi} (pitch class {midi % 12}) is not in Silaba tuning")
     return SILABA_MIDI_TO_STRING[midi]
@@ -167,10 +169,12 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
 
             pitch = ly.pitch.Pitch(note=note_num, alter=alter, octave=octave_mod)
             if in_chord:
+                # In LilyPond \relative, all chord notes resolve relative to
+                # the pitch BEFORE the chord (chord_base_pitch).
                 pitch.makeAbsolute(chord_base_pitch)
-                chord_base_pitch = pitch.copy()
-                # Update last_pitch to the last chord note for post-chord relative calcs
-                last_pitch = pitch.copy()
+                if not chord_pitches:
+                    # After the chord, last_pitch = first note of chord
+                    last_pitch = pitch.copy()
             else:
                 pitch.makeAbsolute(last_pitch)
                 last_pitch = pitch.copy()
@@ -243,7 +247,8 @@ def events_to_yaml(events: list[tuple[float, list[int], float]], *, title: str, 
 
         if pitches:
             transposed = [midi + transpose for midi in pitches]
-            strings = list(dict.fromkeys(midi_to_string(m) for m in transposed))
+            strings = [s for m in transposed if (s := midi_to_string(m)) is not None]
+            strings = list(dict.fromkeys(strings))  # deduplicate preserving order
             if len(strings) == 1:
                 step["string"] = strings[0]
             elif len(strings) > 1:

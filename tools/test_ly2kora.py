@@ -8,15 +8,18 @@ def test_midi_to_string_exact_matches():
     assert midi_to_string(81) == "R10"  # A5
 
 def test_midi_to_string_out_of_range():
-    """Out-of-range notes get octave-folded into kora range."""
-    assert midi_to_string(40) == "L4"   # 40+12=52=L4 (E3)
-    assert midi_to_string(82) == "R6"   # 82-12=70=R6 (Bb4)
-    assert midi_to_string(93) == "R10"  # 93-12=81=R10 (A5)
+    """Out-of-range notes return None by default, or fold if requested."""
+    assert midi_to_string(40) is None
+    assert midi_to_string(82) is None
+    assert midi_to_string(40, fold=True) == "L4"   # 40+12=52=L4
+    assert midi_to_string(82, fold=True) == "R6"   # 82-12=70=R6
 
 def test_midi_to_string_not_in_tuning():
     import pytest
     with pytest.raises(ValueError):
         midi_to_string(42)  # F#2 not in Silaba (no folding helps - pitch class not in scale)
+    with pytest.raises(ValueError):
+        midi_to_string(42, fold=True)
 
 from ly2kora import parse_voice
 
@@ -40,9 +43,9 @@ def test_parse_voice_chord():
     ly_text = r"\relative e' { <e a>8 b'8 }"
     events = parse_voice(ly_text, start_pitch_name="e", start_octave=4)
     # <e a> = E4 + A4, eighth note
-    # b' = B5 relative to a (goes up), eighth note
+    # b' = relative to E4 (first chord note): closest B to E4 is B3, + ' = B4
     assert events[0] == (0.0, [64, 69], 0.5)  # E4 + A4
-    assert events[1] == (0.5, [83], 0.5)       # B5
+    assert events[1] == (0.5, [71], 0.5)       # B4
 
 def test_parse_voice_tie():
     """Tied notes extend duration, no new event."""
