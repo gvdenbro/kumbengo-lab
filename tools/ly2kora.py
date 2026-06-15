@@ -21,12 +21,15 @@ SILABA_MIDI_TO_STRING: dict[int, str] = {
 }
 
 
-def midi_to_string(midi: int) -> str:
-    """Map a MIDI note number to the exact Silaba kora string ID."""
-    if midi < 41 or midi > 81:
-        raise ValueError(f"MIDI {midi} is out of kora range (41-81)")
+def midi_to_string(midi: int) -> str | None:
+    """Map a MIDI note number to the nearest Silaba kora string ID via octave folding."""
+    # Fold into kora range (41-81) by shifting octaves
+    while midi > 81:
+        midi -= 12
+    while midi < 41:
+        midi += 12
     if midi not in SILABA_MIDI_TO_STRING:
-        raise ValueError(f"MIDI {midi} is not in Silaba tuning")
+        return None
     return SILABA_MIDI_TO_STRING[midi]
 
 
@@ -110,6 +113,7 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
         if isinstance(token, lilypond.ChordStart):
             in_chord = True
             chord_pitches = []
+            chord_base_pitch = last_pitch.copy()
             i += 1
             continue
 
@@ -144,8 +148,14 @@ def parse_voice(ly_text: str, start_pitch_name: str = "c", start_octave: int = 4
                 i += 1
 
             pitch = ly.pitch.Pitch(note=note_num, alter=alter, octave=octave_mod)
-            pitch.makeAbsolute(last_pitch)
-            last_pitch = pitch.copy()
+            if in_chord:
+                pitch.makeAbsolute(chord_base_pitch)
+                if not chord_pitches:
+                    # First note in chord: update last_pitch for notes after the chord
+                    last_pitch = pitch.copy()
+            else:
+                pitch.makeAbsolute(last_pitch)
+                last_pitch = pitch.copy()
             midi = _pitch_to_midi(pitch)
 
             if in_chord:
@@ -215,10 +225,10 @@ def events_to_yaml(events: list[tuple[float, list[int], float]], *, title: str, 
 
         if pitches:
             transposed = [midi + transpose for midi in pitches]
-            strings = [midi_to_string(m) for m in transposed]
+            strings = [s for m in transposed if (s := midi_to_string(m)) is not None]
             if len(strings) == 1:
                 step["string"] = strings[0]
-            else:
+            elif len(strings) > 1:
                 step["strings"] = strings
 
         steps.append(step)
@@ -230,3 +240,74 @@ def events_to_yaml(events: list[tuple[float, list[int], float]], *, title: str, 
         "arrangements": [{"name": "Full", "steps": steps}],
     }
     return yaml.dump(piece, default_flow_style=None, sort_keys=False, allow_unicode=True)
+
+
+import argparse
+import re
+import sys
+
+
+def extract_voices(ly_content: str) -> list[tuple[str, str, int]]:
+    """Extract voice blocks from a LilyPond file.
+
+    Returns list of (voice_ly_text, start_pitch_name, start_octave).
+    Finds \\relative <pitch><octave> { ... } blocks.
+    """
+    pattern = r"\\relative\s+([a-g])([',]*)\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}"
+    matches = re.findall(pattern, ly_content, re.DOTALL)
+
+    voices = []
+    for note_name, octave_str, body in matches:
+        octave = 3 + ly.pitch.octaveToNum(octave_str)
+        voice_text = rf"\relative {note_name}{octave_str} {{ {body} }}"
+        voices.append((voice_text, note_name, octave))
+    return voices
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Convert LilyPond to kora piece YAML")
+    parser.add_argument("input", help="Input .ly file")
+    parser.add_argument("--transpose", type=int, default=0, help="Semitones to transpose")
+    parser.add_argument("--tempo", type=int, default=None, help="BPM (overrides file tempo)")
+    parser.add_argument("-o", "--output", help="Output YAML path (default: stdout)")
+    parser.add_argument("--title", help="Piece title (default: from file header)")
+    args = parser.parse_args()
+
+    content = open(args.input).read()
+
+    # Extract title from header if not specified
+    title = args.title
+    if not title:
+        m = re.search(r'title\s*=\s*"([^"]+)"', content)
+        title = m.group(1) if m else "Untitled"
+
+    # Extract tempo from file if not specified
+    tempo = args.tempo
+    if not tempo:
+        m = re.search(r"\\tempo\s+4\s*=\s*(\d+)", content)
+        tempo = int(m.group(1)) if m else 120
+
+    # Extract and parse voices
+    voice_specs = extract_voices(content)
+    if not voice_specs:
+        print("Error: no \\relative voices found in input", file=sys.stderr)
+        sys.exit(1)
+
+    parsed_voices = []
+    for voice_text, start_name, start_oct in voice_specs:
+        events = parse_voice(voice_text, start_pitch_name=start_name, start_octave=start_oct)
+        parsed_voices.append(events)
+
+    # Merge and generate
+    merged = merge_voices(parsed_voices)
+    output = events_to_yaml(merged, title=title, transpose=args.transpose, tempo=tempo)
+
+    if args.output:
+        open(args.output, "w").write(output)
+        print(f"Written to {args.output}")
+    else:
+        print(output)
+
+
+if __name__ == "__main__":
+    main()
