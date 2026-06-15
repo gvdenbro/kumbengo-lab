@@ -117,3 +117,11 @@ def test_events_to_yaml_rest():
     assert "string" not in step
     assert "strings" not in step
     assert abs(step["d"] - 0.923) < 0.001
+
+def test_parse_voice_dotted_half():
+    """Dotted half note = 3 beats (from first bar of the piece)."""
+    ly_text = r"\relative a'' { a2. a8 b16 c16 }"
+    events = parse_voice(ly_text, start_pitch_name="a", start_octave=5)
+    assert events[0][2] == 3.0  # dotted half = 3 beats
+    assert events[1][2] == 0.5  # eighth = 0.5 beats
+    assert events[2][2] == 0.25  # sixteenth
