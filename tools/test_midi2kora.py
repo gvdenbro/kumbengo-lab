@@ -1,4 +1,4 @@
-from ly2kora import midi_to_string
+from midi2kora import midi_to_string
 
 
 def test_midi_to_string_exact_matches():
