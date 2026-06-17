@@ -1,35 +1,41 @@
 title: Hy a Scullyas Lyf Adhagrow
 tuning: silaba
+draft: true
 tags: [cover]
 arrangements:
+- name: intro
+  steps:
+    # Reusable phrases
+    - &intro
+      - d: 0.462
+        strings: [L7, R2, R7]
+      - {d: 0.462, string: R4}
+      - {d: 0.462, string: R4}
+      - d: 0.462
+        strings: [L7, R2]
+      - {d: 0.462, string: R4}
+      - {d: 0.462, string: R4}
+      - d: 0.462
+        strings: [L7, R2, R7]
+      - d: 0.231
+        strings: [L11, R4]
+      - {d: 0.231, string: R8}
+      - d: 0.462
+        strings: [L5, R4]
+      - {d: 0.462, string: L8}
+      - d: 0.462
+        strings: [L8, L11]
+      - d: 0.462
+        strings: [L5, R4]
+      - d: 0.462
+        strings: [L8, L10]
+      - {d: 0.462, string: L8}
+      - d: 0.462
+        strings: [L5, L11, R4]
+      - {d: 0.462, string: L8}
 - name: Full
   steps:
-  - d: 0.462
-    strings: [R7, R2, L7]
-  - {d: 0.462, string: R4}
-  - {d: 0.462, string: R4}
-  - d: 0.462
-    strings: [R2, L7]
-  - {d: 0.462, string: R4}
-  - {d: 0.462, string: R4}
-  - d: 0.462
-    strings: [R7, R2, L7]
-  - d: 0.231
-    strings: [L11, R4]
-  - {d: 0.231, string: R8}
-  - d: 0.462
-    strings: [L5, R4]
-  - {d: 0.462, string: L8}
-  - d: 0.462
-    strings: [L11, L8]
-  - d: 0.462
-    strings: [L5, R4]
-  - d: 0.462
-    strings: [L10, L8]
-  - {d: 0.462, string: L8}
-  - d: 0.462
-    strings: [L11, L5, R4]
-  - {d: 0.462, string: L8}
+  - *intro
   - d: 0.462
     strings: [R7, R2, L7]
   - {d: 0.462, string: R4}

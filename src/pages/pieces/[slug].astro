@@ -8,7 +8,7 @@ import Player from '../../components/Player';
 import { getTuning } from '../../lib/tuning';
 
 export async function getStaticPaths() {
-  const pieces = await getCollection('pieces');
+  const pieces = (await getCollection('pieces')).filter((p) => !p.data.draft);
   return pieces.map((piece) => ({
     params: { slug: piece.id },
     props: { piece },

@@ -32,6 +32,7 @@ const pieces = defineCollection({
     title: z.string(),
     tuning: z.enum(knownTunings),
     tempo: z.number().optional(),
+    draft: z.boolean().optional(),
     tags: z.array(z.string()),
     arrangements: z.array(arrangementSchema).min(1),
   }),

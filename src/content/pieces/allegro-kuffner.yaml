@@ -1,0 +1,62 @@
+title: Allegro (Kuffner)
+tuning: silaba
+tags: [cover]
+arrangements:
+- name: Full
+  steps:
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 1.2, string: L9}
+  - {d: 1.2, string: L9}
+  - {d: 0.6, string: R5}
+  - {d: 0.6, string: R4}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: R4}
+  - {d: 0.3, string: R4}
+  - {d: 0.3, string: L8}
+  - {d: 0.6, string: R4}
+  - {d: 0.6, string: R4}
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: L9}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: L9}
+  - {d: 1.2, string: R5}
+  - {d: 0.6, string: R4}
+  - {d: 0.3, string: L8}
+  - {d: 0.3, string: R4}
+  - {d: 2.4, string: L7}
+  - {d: 0.6, string: L9}
+  - {d: 0.6, string: R6}
+  - {d: 0.6, string: L10}
+  - {d: 0.6, string: L9}
+  - {d: 1.2, string: R5}
+  - {d: 1.2, string: R5}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: R5}
+  - {d: 0.6, string: L9}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: R4}
+  - {d: 0.3, string: R4}
+  - {d: 0.3, string: L8}
+  - {d: 0.6, string: R4}
+  - {d: 0.6, string: R4}
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: R2}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: L9}
+  - {d: 0.6, string: L7}
+  - {d: 0.6, string: L8}
+  - {d: 0.6, string: L9}
+  - {d: 1.2, string: R5}
+  - {d: 0.6, string: R4}
+  - {d: 0.3, string: L8}
+  - {d: 0.3, string: R4}
+  - {d: 0.6, string: L7}
