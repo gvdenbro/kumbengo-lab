@@ -50,6 +50,27 @@ Navigate to `/transcribe` to capture arrangements from audio recordings:
 4. Assign strings by clicking the interactive bridge diagram
 5. Copy the generated YAML and paste into a piece file
 
+## MIDI to kora
+
+Generate a piece YAML from any MIDI file:
+
+```bash
+uv run tools/midi2kora.py input.mid --transpose -7 --tempo 100 --title "My Piece" -o src/content/pieces/my-piece.yaml
+```
+
+Options:
+- `--transpose` — semitones to shift (find what fits the Silaba tuning)
+- `--tempo` — BPM for duration calculation (default 120)
+- `--title` — piece title in the YAML
+- `--fold` — fold out-of-range notes into nearest octave instead of dropping them
+- `-o` — output file (prints to stdout if omitted)
+
+If your source is LilyPond, export MIDI first:
+
+```bash
+lilypond -dmidi-extension=mid file.ly
+```
+
 ## Tech stack
 
 Astro 6, TypeScript, Pico CSS, superdough (Web Audio), Vitest. Deployed to Cloudflare Pages.
