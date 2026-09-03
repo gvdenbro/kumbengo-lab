@@ -55,16 +55,18 @@ Navigate to `/transcribe` to capture arrangements from audio recordings:
 Generate a piece YAML from any MIDI file:
 
 ```bash
-uv run tools/midi2kora.py input.mid --transpose -7 --tempo 100 --title "My Piece" -o src/content/pieces/my-piece.yaml
+uv run tools/midi2kora.py input.mid --transpose auto --tempo 100 --title "My Piece" --drop-unplayable -o src/content/pieces/my-piece.yaml
 ```
 
 Options:
-- `--transpose` — semitones to shift (find what fits the Silaba tuning)
+- `--transpose` — semitones to shift, or `auto` to automatically pick the key that drops the fewest notes. Default `0`. In `auto` mode it searches −12…+12 semitones, keeps the fewest-dropped key (ties favor the smallest shift), and prints e.g. `Auto-transpose: +2 (drops 22 note(s))`.
 - `--tempo` — BPM for duration calculation (default 120)
 - `--title` — piece title in the YAML
 - `--fold` — fold out-of-range notes into nearest octave instead of dropping them
 - `--drop-unplayable` — drop notes with no Silaba string (off-scale or low-register gap notes) instead of erroring
 - `-o` — output file (prints to stdout if omitted)
+
+**Playability reduction (automatic).** Because a kora is played with only the thumb (low strings) and index (high strings) of each hand, at most 2 notes can sound per hand and 4 in total. The converter automatically reduces any chord that exceeds this to its most playable subset — keeping the outer notes (melody + bass) first and filling in inner notes only where a finger is free — and reports `Reduced N note(s) for playability` on stderr. Off-scale or out-of-range notes are separate: handle those with `--transpose`/`--fold`/`--drop-unplayable`.
 
 If your source is LilyPond, export MIDI first:
 
