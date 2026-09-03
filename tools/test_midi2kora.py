@@ -81,3 +81,31 @@ def test_two_high_left_notes_not_playable():
 def test_two_low_left_notes_not_playable():
     # both below index_min=5 -> only the thumb can reach, one digit
     assert m.is_playable(["L2", "L3"]) is False
+
+
+def test_reduce_passthrough_single():
+    assert m.reduce_to_playable(["L9"]) == ["L9"]
+
+
+def test_reduce_passthrough_playable_pair():
+    assert m.reduce_to_playable(["L3", "R7"]) == ["L3", "R7"]
+
+
+def test_reduce_impossible_left_triad_keeps_outer_pair():
+    # L6=Bb3(bass), L7=D4(mid), L9=A4(melody) -> drop the middle
+    result = m.reduce_to_playable(["L9", "L7", "L6"])
+    assert result == ["L9", "L6"]
+    assert m.is_playable(result)
+
+
+def test_reduce_four_note_chord_keeps_reachable_inner():
+    # R6=Bb4(melody), L8=F4, L7=D4, L6=Bb3(bass)
+    result = m.reduce_to_playable(["R6", "L8", "L7", "L6"])
+    assert result == ["R6", "L7", "L6"]
+    assert m.is_playable(result)
+
+
+def test_reduce_result_preserves_input_order():
+    result = m.reduce_to_playable(["R7", "L6", "L9"])
+    assert result == [s for s in ["R7", "L6", "L9"] if s in result]
+    assert m.is_playable(result)

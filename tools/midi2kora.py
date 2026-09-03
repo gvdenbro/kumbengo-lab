@@ -85,6 +85,29 @@ def is_playable(strings: list[str]) -> bool:
     return True
 
 
+STRING_TO_MIDI: dict[str, int] = {v: k for k, v in SILABA_MIDI_TO_STRING.items()}
+
+
+def reduce_to_playable(strings: list[str]) -> list[str]:
+    """Return the playable subset of a chord, keeping outer notes first.
+
+    Notes are considered in order of 'outerness' (distance from the chord's
+    pitch center, so melody and bass come first); each is kept only if the
+    running set stays playable. Inner notes fill in where a digit is free.
+    Result preserves the original input order.
+    """
+    if len(strings) <= 1:
+        return list(strings)
+    pitches = {s: STRING_TO_MIDI[s] for s in strings}
+    center = (min(pitches.values()) + max(pitches.values())) / 2
+    ordered = sorted(strings, key=lambda s: (-abs(pitches[s] - center), pitches[s]))
+    kept: list[str] = []
+    for s in ordered:
+        if is_playable(kept + [s]):
+            kept.append(s)
+    return [s for s in strings if s in kept]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert MIDI to kora piece YAML")
     parser.add_argument("input", help="Input .mid file")
