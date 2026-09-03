@@ -139,7 +139,8 @@ def best_transpose(
 def main():
     parser = argparse.ArgumentParser(description="Convert MIDI to kora piece YAML")
     parser.add_argument("input", help="Input .mid file")
-    parser.add_argument("--transpose", type=int, default=0, help="Semitones to transpose")
+    parser.add_argument("--transpose", default="0",
+                        help="Semitones to transpose, or 'auto' to minimize dropped notes")
     parser.add_argument("--tempo", type=int, default=120, help="BPM for duration calculation")
     parser.add_argument("--title", default="Untitled", help="Piece title")
     parser.add_argument("--fold", action="store_true", help="Fold out-of-range notes into nearest octave (default: drop)")
@@ -165,6 +166,15 @@ def main():
         if msg.type == 'note_on' and msg.velocity > 0:
             onset_groups[abs_time].append(msg.note)
 
+    # Resolve transpose: fixed integer, or 'auto' to minimize dropped notes
+    if args.transpose == "auto":
+        all_pitches = [n for group in onset_groups.values() for n in group]
+        transpose, auto_dropped = best_transpose(all_pitches, fold=args.fold)
+        import sys
+        print(f"Auto-transpose: {transpose:+d} (drops {auto_dropped} note(s))", file=sys.stderr)
+    else:
+        transpose = int(args.transpose)
+
     # Build steps
     sorted_onsets = sorted(onset_groups.keys())
     tpb = mid.ticks_per_beat
@@ -178,7 +188,7 @@ def main():
         d_seconds = round((d_ticks / tpb) * beat_dur, 3)
 
         pitches = onset_groups[onset]
-        transposed = [n + args.transpose for n in pitches]
+        transposed = [n + transpose for n in pitches]
         mapped = [midi_to_string(m, fold=args.fold, drop=args.drop_unplayable) for m in transposed]
         dropped += sum(1 for s in mapped if s is None)
         strings = list(dict.fromkeys(s for s in mapped if s is not None))
