@@ -8,13 +8,13 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6]
+    strings: [L9, L6]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [L8, L7, L6]
+    strings: [L8, L6]
   - {d: 0.353, string: R4}
   - {d: 0.706, string: R3}
   - d: 0.706
@@ -27,13 +27,13 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6]
+    strings: [L9, L6]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [R6, L8, L7, L6]
+    strings: [R6, L7, L6]
   - d: 0.353
     strings: [L10, R4]
   - {d: 0.706, string: R3}
@@ -65,13 +65,11 @@ arrangements:
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -106,13 +104,11 @@ arrangements:
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -147,13 +143,11 @@ arrangements:
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -188,13 +182,11 @@ arrangements:
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -293,19 +285,18 @@ arrangements:
   - {d: 0.353, string: L11}
   - d: 0.353
     strings: [R5, L10]
-  - d: 0.353
-    strings: [L9, L10]
+  - {d: 0.353, string: L9}
   - d: 0.353
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [L8, L7, L6]
+    strings: [L8, L6]
   - d: 0.353
     strings: [R4, R9, L11]
   - {d: 0.706, string: R3}
@@ -319,15 +310,15 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [R6, L8, L7, L6]
+    strings: [R6, L7, L6]
   - d: 0.353
-    strings: [L10, R4, R9, L11]
+    strings: [R4, R9, L11]
   - {d: 0.706, string: R3}
   - d: 0.706
     strings: [R5, R4]
@@ -353,17 +344,15 @@ arrangements:
   - {d: 0.353, string: L5}
   - {d: 0.353, string: R6}
   - d: 0.706
-    strings: [L7, L6, L3]
+    strings: [L7, L3]
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -394,17 +383,15 @@ arrangements:
   - {d: 0.353, string: L5}
   - {d: 0.353, string: R6}
   - d: 0.706
-    strings: [L7, L6, L3]
+    strings: [L7, L3]
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -435,17 +422,15 @@ arrangements:
   - {d: 0.353, string: L5}
   - {d: 0.353, string: R6}
   - d: 0.706
-    strings: [L7, L6, L3]
+    strings: [L7, L3]
   - d: 0.353
     strings: [R1, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -477,17 +462,15 @@ arrangements:
     strings: [L5, L2]
   - {d: 0.353, string: R6}
   - d: 0.706
-    strings: [L7, L6, L3]
+    strings: [L7, L3]
   - d: 0.353
     strings: [R1, L2, L10]
   - {d: 0.353, string: L10}
-  - d: 0.353
-    strings: [R3, R2]
+  - {d: 0.353, string: R2}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: R1}
   - {d: 0.353, string: L9}
-  - d: 0.706
-    strings: [R3, R2]
+  - {d: 0.706, string: R2}
   - d: 0.353
     strings: [L4, L10]
   - {d: 0.353, string: L10}
@@ -508,7 +491,7 @@ arrangements:
     strings: [L7, L6, R7]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L5, L2, L11]
+    strings: [L2, L11]
   - {d: 0.353, string: L10}
   - d: 0.353
     strings: [R3, L5]
@@ -531,7 +514,7 @@ arrangements:
     strings: [L7, L6, R7]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L5, L2, L11]
+    strings: [L2, L11]
   - {d: 0.353, string: L10}
   - d: 0.353
     strings: [R3, L5, L10]
@@ -554,7 +537,7 @@ arrangements:
     strings: [L7, L6, R7]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L5, L2, L11]
+    strings: [L2, L11]
   - {d: 0.353, string: L10}
   - d: 0.353
     strings: [R3, L5, L10]
@@ -576,7 +559,7 @@ arrangements:
     strings: [L7, L6, R7]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L5, L2, L11]
+    strings: [L2, L11]
   - {d: 0.353, string: L10}
   - {d: 0.353, string: L10}
   - {d: 0.353, string: L10}
@@ -584,19 +567,18 @@ arrangements:
   - {d: 0.353, string: L11}
   - d: 0.353
     strings: [R5, L10]
-  - d: 0.353
-    strings: [L9, L10]
+  - {d: 0.353, string: L9}
   - d: 0.353
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [L8, L7, L6]
+    strings: [L8, L6]
   - d: 0.353
     strings: [R4, L5, R9, L11]
   - {d: 0.706, string: R3}
@@ -610,15 +592,15 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [R6, L8, L7, L6]
+    strings: [R6, L7, L6]
   - d: 0.353
-    strings: [L10, R4, L5, R9, L11]
+    strings: [R4, L5, R9, L11]
   - {d: 0.706, string: R3}
   - d: 0.706
     strings: [R5, R4]
@@ -629,13 +611,13 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [L8, L7, L6]
+    strings: [L8, L6]
   - d: 0.353
     strings: [R4, L5, R9, L11]
   - {d: 0.706, string: R3}
@@ -649,12 +631,12 @@ arrangements:
     strings: [R6, L5]
   - {d: 0.353, string: R7}
   - d: 0.353
-    strings: [L9, L7, L6, R9]
+    strings: [L7, L6, R9]
   - {d: 0.353, string: R6}
   - d: 0.353
     strings: [R5, L5]
   - {d: 0.353, string: L9}
   - d: 0.353
-    strings: [R6, L8, L7, L6]
+    strings: [R6, L7, L6]
   - d: 0.706
-    strings: [L10, R4, L5, R9, L11]
+    strings: [R4, L5, R9, L11]
