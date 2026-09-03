@@ -85,6 +85,10 @@ def is_playable(strings: list[str]) -> bool:
     return True
 
 
+# NOTE: reduce_to_playable orders notes by pitch while is_playable reasons about
+# string position. This relies on SILABA_MIDI_TO_STRING being monotonic in position
+# on each side (higher position number = higher pitch). Preserve that invariant if
+# the tuning ever changes.
 STRING_TO_MIDI: dict[str, int] = {v: k for k, v in SILABA_MIDI_TO_STRING.items()}
 
 

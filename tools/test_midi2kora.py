@@ -124,3 +124,15 @@ def test_every_reduced_chord_is_playable_across_range():
         reduced = m.reduce_to_playable(chord)
         assert m.is_playable(reduced), f"{chord} -> {reduced} not playable"
         assert len(reduced) <= 4
+
+
+def test_overlap_zone_pair_is_playable():
+    # L5/L6 are the overlap zone (index_min=5, thumb_max=6): L5->thumb, L6->index.
+    assert m.is_playable(["L5", "L6"]) is True
+    # extremes across the row still split across the two digits
+    assert m.is_playable(["L1", "L6"]) is True
+    assert m.is_playable(["L5", "L11"]) is True
+
+
+def test_reduce_empty_returns_empty():
+    assert m.reduce_to_playable([]) == []

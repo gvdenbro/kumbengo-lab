@@ -122,3 +122,4 @@ onsets pass through unchanged.
 - Finger-travel / sequential-speed constraints between onsets.
 - Choosing L vs R for a pitch (forced by tuning).
 - Musically-optimal voice selection beyond the outer-notes-first heuristic.
+- Exposing the finger-region bounds as CLI flags — deferred (YAGNI); the bounds remain module constants that are easy to edit in place.
