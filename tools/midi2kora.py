@@ -49,6 +49,42 @@ def midi_to_string(midi: int, *, fold: bool = False, drop: bool = False) -> str 
     return SILABA_MIDI_TO_STRING[midi]
 
 
+# Soft thumb/index split per side (position numbers). Thumb reaches
+# positions 1..thumb_max; index reaches index_min..count. Positions in
+# [index_min, thumb_max] are the overlap zone (either digit).
+FINGER_REACH: dict[str, dict[str, int]] = {
+    "L": {"thumb_max": 6, "index_min": 5, "count": 11},
+    "R": {"thumb_max": 6, "index_min": 5, "count": 10},
+}
+
+
+def parse_string(s: str) -> tuple[str, int]:
+    """Split a string ID like 'L11' into ('L', 11)."""
+    return s[0], int(s[1:])
+
+
+def is_playable(strings: list[str]) -> bool:
+    """True if all strings can sound at the same instant on a kora.
+
+    Each hand has a thumb (low strings) and index (high strings): at most
+    2 notes per side, and if 2, the lower must be thumb-reachable and the
+    higher index-reachable.
+    """
+    by_side: dict[str, list[int]] = {"L": [], "R": []}
+    for s in strings:
+        side, pos = parse_string(s)
+        by_side[side].append(pos)
+    for side, positions in by_side.items():
+        if len(positions) > 2:
+            return False
+        if len(positions) == 2:
+            low, high = sorted(positions)
+            reach = FINGER_REACH[side]
+            if not (low <= reach["thumb_max"] and high >= reach["index_min"]):
+                return False
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert MIDI to kora piece YAML")
     parser.add_argument("input", help="Input .mid file")

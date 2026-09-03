@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+import midi2kora as m
 from midi2kora import midi_to_string
 
 
@@ -43,3 +49,35 @@ def test_midi_to_string_drop_preserves_valid():
     """drop=True still returns the string for playable notes."""
     assert midi_to_string(41, drop=True) == "L1"
     assert midi_to_string(81, drop=True) == "R10"
+
+
+def test_parse_string():
+    assert m.parse_string("L11") == ("L", 11)
+    assert m.parse_string("R1") == ("R", 1)
+
+
+def test_single_note_is_playable():
+    assert m.is_playable(["L9"]) is True
+
+
+def test_two_notes_split_across_hands_is_playable():
+    assert m.is_playable(["L3", "R7"]) is True
+
+
+def test_two_left_notes_thumb_and_index_is_playable():
+    # L6 (pos 6, thumb) + L9 (pos 9, index)
+    assert m.is_playable(["L6", "L9"]) is True
+
+
+def test_three_left_notes_not_playable():
+    assert m.is_playable(["L6", "L7", "L9"]) is False
+
+
+def test_two_high_left_notes_not_playable():
+    # both above thumb_max=6 -> only the index can reach, one digit
+    assert m.is_playable(["L8", "L9"]) is False
+
+
+def test_two_low_left_notes_not_playable():
+    # both below index_min=5 -> only the thumb can reach, one digit
+    assert m.is_playable(["L2", "L3"]) is False
