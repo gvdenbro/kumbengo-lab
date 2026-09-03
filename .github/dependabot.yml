@@ -8,6 +8,11 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+        exclude-patterns:
+          - "typescript"
+      typescript:
+        patterns:
+          - "typescript"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
