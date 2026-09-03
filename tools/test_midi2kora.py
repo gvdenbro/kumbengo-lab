@@ -109,3 +109,18 @@ def test_reduce_result_preserves_input_order():
     result = m.reduce_to_playable(["R7", "L6", "L9"])
     assert result == [s for s in ["R7", "L6", "L9"] if s in result]
     assert m.is_playable(result)
+
+
+def test_every_reduced_chord_is_playable_across_range():
+    # Exhaustive-ish: a spread of chords must always come out playable.
+    chords = [
+        ["L9", "L7", "L6"],
+        ["R6", "L8", "L7", "L6"],
+        ["L1", "L2", "L3", "L4"],
+        ["R8", "R9", "R10"],
+        ["L11", "R10", "L1", "R1"],
+    ]
+    for chord in chords:
+        reduced = m.reduce_to_playable(chord)
+        assert m.is_playable(reduced), f"{chord} -> {reduced} not playable"
+        assert len(reduced) <= 4

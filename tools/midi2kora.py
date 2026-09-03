@@ -143,6 +143,7 @@ def main():
     beat_dur = 60.0 / args.tempo
     steps = []
     dropped = 0
+    reduced = 0
 
     for idx, onset in enumerate(sorted_onsets):
         d_ticks = sorted_onsets[idx + 1] - onset if idx < len(sorted_onsets) - 1 else tpb
@@ -153,6 +154,9 @@ def main():
         mapped = [midi_to_string(m, fold=args.fold, drop=args.drop_unplayable) for m in transposed]
         dropped += sum(1 for s in mapped if s is None)
         strings = list(dict.fromkeys(s for s in mapped if s is not None))
+        playable = reduce_to_playable(strings)
+        reduced += len(strings) - len(playable)
+        strings = playable
 
         step: dict = {"d": d_seconds}
         if len(strings) == 1:
@@ -172,6 +176,10 @@ def main():
     if dropped:
         import sys
         print(f"Dropped {dropped} unplayable note(s)", file=sys.stderr)
+
+    if reduced:
+        import sys
+        print(f"Reduced {reduced} note(s) for playability", file=sys.stderr)
 
     if args.output:
         Path(args.output).write_text(output)
