@@ -136,3 +136,25 @@ def test_overlap_zone_pair_is_playable():
 
 def test_reduce_empty_returns_empty():
     assert m.reduce_to_playable([]) == []
+
+
+def test_count_dropped_on_scale_zero():
+    assert m.count_dropped([65], 0, fold=False) == 0        # F4 is on-scale
+
+
+def test_count_dropped_off_scale_one():
+    assert m.count_dropped([61], 0, fold=False) == 1        # C#4 off-scale
+
+
+def test_count_dropped_off_scale_recovered_by_shift():
+    assert m.count_dropped([61], 1, fold=False) == 0        # +1 -> D4
+
+
+def test_best_transpose_recovers_off_scale():
+    t, dropped = m.best_transpose([61, 61, 61], fold=False)
+    assert dropped == 0
+    assert t == -1                                          # tie |1|==|-1|, -1 sorts first
+
+
+def test_best_transpose_zero_when_already_optimal():
+    assert m.best_transpose([65], fold=False) == (0, 0)

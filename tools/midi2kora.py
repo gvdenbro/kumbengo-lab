@@ -112,6 +112,30 @@ def reduce_to_playable(strings: list[str]) -> list[str]:
     return [s for s in strings if s in kept]
 
 
+def count_dropped(pitches: list[int], transpose: int, *, fold: bool) -> int:
+    """Number of pitches that map to no Silaba string at this transpose."""
+    return sum(
+        1 for n in pitches
+        if midi_to_string(n + transpose, fold=fold, drop=True) is None
+    )
+
+
+def best_transpose(
+    pitches: list[int], *, fold: bool, search_range: range = range(-12, 13)
+) -> tuple[int, int]:
+    """Return (transpose, dropped_count) minimizing dropped notes.
+
+    Ties break toward the smallest absolute transpose (closest to the
+    original key).
+    """
+    best_t, best_dropped = 0, None
+    for t in sorted(search_range, key=lambda x: (abs(x), x)):
+        dropped = count_dropped(pitches, t, fold=fold)
+        if best_dropped is None or dropped < best_dropped:
+            best_t, best_dropped = t, dropped
+    return best_t, best_dropped
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert MIDI to kora piece YAML")
     parser.add_argument("input", help="Input .mid file")
