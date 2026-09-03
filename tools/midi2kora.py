@@ -28,11 +28,12 @@ SILABA_MIDI_TO_STRING: dict[int, str] = {
 }
 
 
-def midi_to_string(midi: int, *, fold: bool = False) -> str | None:
+def midi_to_string(midi: int, *, fold: bool = False, drop: bool = False) -> str | None:
     """Map a MIDI note number to a Silaba kora string ID.
 
     If fold=True, shifts octaves to fit range. Otherwise returns None for out-of-range.
-    Raises ValueError if the pitch class is not in the Silaba scale.
+    If drop=True, returns None for notes not on a Silaba string (off-scale or gap notes).
+    Otherwise raises ValueError for such notes.
     """
     if fold:
         while midi > 81:
@@ -42,6 +43,8 @@ def midi_to_string(midi: int, *, fold: bool = False) -> str | None:
     elif midi < 41 or midi > 81:
         return None
     if midi not in SILABA_MIDI_TO_STRING:
+        if drop:
+            return None
         raise ValueError(f"MIDI {midi} (pitch class {midi % 12}) is not in Silaba tuning")
     return SILABA_MIDI_TO_STRING[midi]
 
@@ -53,6 +56,7 @@ def main():
     parser.add_argument("--tempo", type=int, default=120, help="BPM for duration calculation")
     parser.add_argument("--title", default="Untitled", help="Piece title")
     parser.add_argument("--fold", action="store_true", help="Fold out-of-range notes into nearest octave (default: drop)")
+    parser.add_argument("--drop-unplayable", action="store_true", help="Drop notes with no Silaba string (off-scale or gap notes) instead of erroring")
     parser.add_argument("-o", "--output", help="Output YAML path (default: stdout)")
     args = parser.parse_args()
 
@@ -79,6 +83,7 @@ def main():
     tpb = mid.ticks_per_beat
     beat_dur = 60.0 / args.tempo
     steps = []
+    dropped = 0
 
     for idx, onset in enumerate(sorted_onsets):
         d_ticks = sorted_onsets[idx + 1] - onset if idx < len(sorted_onsets) - 1 else tpb
@@ -86,8 +91,9 @@ def main():
 
         pitches = onset_groups[onset]
         transposed = [n + args.transpose for n in pitches]
-        strings = [s for m in transposed if (s := midi_to_string(m, fold=args.fold)) is not None]
-        strings = list(dict.fromkeys(strings))
+        mapped = [midi_to_string(m, fold=args.fold, drop=args.drop_unplayable) for m in transposed]
+        dropped += sum(1 for s in mapped if s is None)
+        strings = list(dict.fromkeys(s for s in mapped if s is not None))
 
         step: dict = {"d": d_seconds}
         if len(strings) == 1:
@@ -103,6 +109,10 @@ def main():
         "arrangements": [{"name": "Full", "steps": steps}],
     }
     output = yaml.dump(piece, default_flow_style=None, sort_keys=False, allow_unicode=True)
+
+    if dropped:
+        import sys
+        print(f"Dropped {dropped} unplayable note(s)", file=sys.stderr)
 
     if args.output:
         Path(args.output).write_text(output)

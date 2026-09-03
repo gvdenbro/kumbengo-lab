@@ -23,3 +23,23 @@ def test_midi_to_string_not_in_tuning():
         midi_to_string(42)  # F#2 not in Silaba
     with pytest.raises(ValueError):
         midi_to_string(42, fold=True)
+
+
+def test_midi_to_string_drop_off_scale():
+    """With drop=True, off-scale notes return None instead of raising."""
+    assert midi_to_string(42, drop=True) is None  # F#2 not in Silaba scale
+
+
+def test_midi_to_string_drop_gap_note():
+    """With drop=True, in-range notes with no string (gap) return None."""
+    # midi 43 (G2) is within range 41-81 but has no Silaba string
+    # (the kora jumps from F2=41 to C3=48 in the low register)
+    assert midi_to_string(43, drop=True) is None
+    # fold + drop together: G2 stays 43 (already in range), no string -> None
+    assert midi_to_string(43, fold=True, drop=True) is None
+
+
+def test_midi_to_string_drop_preserves_valid():
+    """drop=True still returns the string for playable notes."""
+    assert midi_to_string(41, drop=True) == "L1"
+    assert midi_to_string(81, drop=True) == "R10"

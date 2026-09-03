@@ -63,6 +63,7 @@ Options:
 - `--tempo` — BPM for duration calculation (default 120)
 - `--title` — piece title in the YAML
 - `--fold` — fold out-of-range notes into nearest octave instead of dropping them
+- `--drop-unplayable` — drop notes with no Silaba string (off-scale or low-register gap notes) instead of erroring
 - `-o` — output file (prints to stdout if omitted)
 
 If your source is LilyPond, export MIDI first:
