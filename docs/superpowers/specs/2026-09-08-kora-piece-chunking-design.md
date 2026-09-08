@@ -27,10 +27,11 @@ breaks.
   When `chunks` is absent (hand-written YAML), the UI is exactly today's
   single full piece — no default splitting.
 - **Reuse:** maintained libraries for the standard hard sub-problems
-  (`rapidfuzz`/`Levenshtein` for approximate matching, `pyahocorasick` for
-  candidate enumeration); our own code stays a thin, tested *decision layer*
-  over them, because boundary choice + rest-anchoring is product logic, not a
-  solved packaged problem. `music21` is optional and verified during planning.
+  (`rapidfuzz`/`Levenshtein` for approximate matching; no automaton library
+  needed at piece scale — bounded-window enumeration is O(n·48)); our own code
+  stays a thin, tested *decision layer* over them, because phrase/dominance
+  choice is product logic, not a solved packaged problem. `music21` was
+  verified during planning and kept out (YAGNI).
 
 ## Data model
 
@@ -74,22 +75,33 @@ constant, so it does not confer transposition sensitivity).
 
 ### Stage 2 — Find repeated windows
 
-- Enumerate candidate repeated substrings over the token sequence using
-  `pyahocorasick` (instant at n≈450).
+- Enumerate exact repeated substrings over the token sequence with a
+  bounded-window count (max pattern length 48 → O(n·48), instant at n≈450) —
+  no dedicated automaton library needed at this scale.
+- Drop trivial micro-motifs (occurring too often) and redundant prefix
+  extensions of longer repeats (`significant_repeats`).
 - Merge near-repeats with a *bounded* edit-distance pass (`rapidfuzz` /
   `Levenshtein`, the Mongeau–Sankoff trick) so ornaments/small timing drift
   don't break detection.
-- Candidate boundaries are the cuts between repeated blocks. Prefer boundaries
-  that also coincide with a rest gap (≥ ~1.5× median inter-onset gap, floor
-  ~0.5s) — the rest-anchor behavior.
+- Pick the **dominant phrase**: the longest repeated block (≥ `phrase_min_len`
+  tokens, default 8) whose occurrence spans fit within `--max-chunk-size`, with
+  the highest `len × occurrence_count`. This is the block that best defines the
+  piece's phrase structure — for `mad-world.midi` it is the length-29 verse
+  recurring 7×. Challenged and validated during planning: len-longest-first
+  and coverage-only dominance both pick wrong blocks on real corpus pieces;
+  this metric plus a span-duration cap does not.
+- Each occurrence of the dominant phrase becomes one chunk (duplicates kept).
 
 ### Stage 3 — Emit chunks + fallback
 
-- Walk the piece in order, emitting one chunk per detected boundary occurrence.
-- Regions with no detected repeat get split at the largest internal gaps,
-  targeting `--max-chunk-size` (default ~10–20s of music).
-- If nothing meaningful repeats or segments, emit size-based splits over the
-  whole piece. `chunks` is therefore **always present** in generated files.
+- Build the chunk list by walking the piece in order: every dominant-phrase
+  occurrence is a repeat-derived chunk; the leftover gaps between/before/after
+  occurrences are fallback chunks.
+- Gap chunks longer than `--max-chunk-size` are split at the **largest internal
+  rests**; gap chunks shorter than `--min-chunk-size` are merged forward into
+  the previous chunk while the merged duration stays ≤ `--max-chunk-size`.
+- If no phrase qualifies, emit size-based splits over the whole piece at the
+  largest rests. `chunks` is therefore **always present** in generated files.
 
 **Partition model (worked example).** The sequence of detected repeat
 occurrences partitions the piece in order: each occurrence is a chunk
@@ -110,16 +122,17 @@ repeated/rest signals dictate; the invariant is exact tiling (`chunks` cover
 ### Thresholds & CLI
 
 All thresholds are CLI flags (tunable, no magic numbers):
-`--max-chunk-size`, `--min-chunk-size`, `--rest-threshold`, and thresholds for
-minimum repeated-block length / required occurrence count. Agreed defaults
-(finalized against real pieces in `test-data/` during planning):
+`--max-chunk-size`, `--min-chunk-size`, `--min-repeat-len`,
+`--min-repeat-occ`, and `phrase_min_len` (dominance floor, module constant
+8 — phrases, not micro-motifs). Agreed defaults (validated against real
+pieces in `test-data/` during planning):
 
 - Target chunk size: **10–20s of music** (`--max-chunk-size` upper bound;
   `--min-chunk-size` floor).
 - Minimum repeated-block length that counts as evidence: **~3 steps**,
-  recurring **≥ 2×**.
-- Rest-gap threshold for a natural cut: **≥ ~1.5× the median inter-onset gap**,
-  floor ~0.5s.
+  recurring **≥ 2×** (`--min-repeat-len`, `--min-repeat-occ`).
+- Dominance floor: a block must be **≥ 8 tokens** to drive phrase chunking
+  (a 3–7 step motif repeating everywhere must not over-segment a piece).
 
 ## Frontend
 
@@ -179,9 +192,9 @@ const chunkSchema = z.object({
 | Sub-problem | Library | Status |
 |---|---|---|
 | MIDI parsing | `mido` (already in script) | maintained |
-| Approx. matching / edit distance | `rapidfuzz` or `Levenshtein` C ext | actively maintained |
-| Candidate enumeration over token sequence | `pyahocorasick` | maintained |
-| Optional symbolic modeling | `music21` | maintained but marginal fit — verify during planning, keep out unless it earns its place (YAGNI) |
+| Approx. matching / edit distance | `rapidfuzz` (Levenshtein C ext) | actively maintained |
+| Candidate enumeration over token sequence | none — bounded-window count is O(n·48), milliseconds at n≈450; an automaton adds a dependency without carrying load | — |
+| Optional symbolic modeling | `music21` | maintained but marginal fit — verified during planning and kept out (corpus n-gram search, not intra-piece chunking) |
 
 Dependencies are declared in the PEP 723 `# dependencies = [...]` header of
 `midi2kora.py` (uv-managed; no `pyproject.toml`, per repo convention).
