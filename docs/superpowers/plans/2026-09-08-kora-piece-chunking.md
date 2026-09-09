@@ -280,7 +280,7 @@ git commit -m "feat(midi2kora): add repeated-substring detection and significanc
 
 ---
 
-### Task 3: Merge near-repeats and derive rest-nudged boundaries
+### Task 3: Merge near-repeats and pick the dominant phrase
 
 **Files:**
 - Modify: `tools/midi2kora.py` (add `merge_near_repeats` + `pick_dominant` + `occurrence_spans` after `significant_repeats`; add `from rapidfuzz.distance import Levenshtein` at top)
@@ -476,7 +476,7 @@ Expected: PASS (all merge/pick/spans tests plus existing).
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py
-git commit -m "feat(midi2kora): merge near-repeats and derive rest-nudged chunk boundaries"
+git commit -m "feat(midi2kora): merge near-repeats and pick the dominant phrase"
 ```
 
 ---
