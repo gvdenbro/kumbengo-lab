@@ -956,8 +956,9 @@ Add:
 ```ts
 describe('regionFromChunk', () => {
   const steps = Array.from({ length: 30 }, () => ({ d: 1, string: 'L1' }));
+  // chunks array holds only real chunks; index 0 of the selector is the
+  // virtual "All" option (regionFromChunk returns null for it).
   const chunks = [
-    { name: 'All', start: 0, end: 29 },
     { name: 'A', start: 0, end: 9 },
     { name: 'B', start: 10, end: 19 },
     { name: 'C', start: 20, end: 29 },
@@ -974,7 +975,7 @@ describe('regionFromChunk', () => {
 
   it('clamps an out-of-range chunk to valid bounds', () => {
     const bad = [{ name: 'X', start: 5, end: 999 }];
-    const r = regionFromChunk(bad, 0, steps);
+    const r = regionFromChunk(bad, 1, steps);
     expect(r).toEqual({ start: 5, end: 29 });
   });
 });
@@ -990,7 +991,7 @@ describe('chunkSteps', () => {
     const r: Region = { start: 10, end: 19 };
     const out = chunkSteps(steps, r);
     expect(out).toHaveLength(10);
-    expect(out[0].string).toBe('L1');
+    expect(out[0].string).toBe('L11'); // index 10 -> (10 % 11) + 1 = 11
   });
 
   it('empty region (start > end) yields empty steps', () => {

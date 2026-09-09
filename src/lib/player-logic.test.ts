@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTotalDuration, getMidiNotes, computeOnsets } from './player-logic';
+import { getTotalDuration, getMidiNotes, computeOnsets, regionFromChunk, chunkSteps, type Region } from './player-logic';
 
 describe('getTotalDuration', () => {
   it('returns 0 for empty steps', () => {
@@ -64,5 +64,51 @@ describe('computeOnsets', () => {
 
   it('throws on zero speedPercent', () => {
     expect(() => computeOnsets([{ d: 1, string: 'L1' }], 0)).toThrow('speedPercent must be positive');
+  });
+});
+
+
+describe('regionFromChunk', () => {
+  const steps = Array.from({ length: 30 }, () => ({ d: 1, string: 'L1' }));
+  // chunks array holds only real chunks; index 0 of the selector is the
+  // virtual "All" option (regionFromChunk returns null for it).
+  const chunks = [
+    { name: 'A', start: 0, end: 9 },
+    { name: 'B', start: 10, end: 19 },
+    { name: 'C', start: 20, end: 29 },
+  ];
+
+  it('returns null for All (index 0)', () => {
+    expect(regionFromChunk(chunks, 0, steps)).toBeNull();
+  });
+
+  it('returns the window for a chunk', () => {
+    const r = regionFromChunk(chunks, 1, steps);
+    expect(r).toEqual({ start: 0, end: 9 });
+  });
+
+  it('clamps an out-of-range chunk to valid bounds', () => {
+    const bad = [{ name: 'X', start: 5, end: 999 }];
+    const r = regionFromChunk(bad, 1, steps);
+    expect(r).toEqual({ start: 5, end: 29 });
+  });
+});
+
+describe('chunkSteps', () => {
+  const steps = Array.from({ length: 30 }, (_, i) => ({ d: 1, string: `L${(i % 11) + 1}` }));
+
+  it('returns all steps for a null region', () => {
+    expect(chunkSteps(steps, null)).toHaveLength(30);
+  });
+
+  it('returns only the window for a region', () => {
+    const r: Region = { start: 10, end: 19 };
+    const out = chunkSteps(steps, r);
+    expect(out).toHaveLength(10);
+    expect(out[0].string).toBe('L11'); // index 10 -> (10 % 11) + 1 = 11
+  });
+
+  it('empty region (start > end) yields empty steps', () => {
+    expect(chunkSteps(steps, { start: 5, end: 4 })).toEqual([]);
   });
 });

@@ -1,4 +1,30 @@
-import { type Step } from './piece';
+import { type Step, type Chunk } from './piece';
+
+export interface Region {
+  start: number;
+  end: number;
+}
+
+export function regionFromChunk(
+  chunks: Chunk[],
+  index: number,
+  fullSteps: Step[],
+): Region | null {
+  // index 0 is the "All" option
+  if (!chunks || index === 0 || index > chunks.length) return null;
+  const chunk = chunks[index - 1];
+  const n = fullSteps.length;
+  const start = Math.max(0, Math.min(chunk.start, n - 1));
+  const end = Math.max(0, Math.min(chunk.end, n - 1));
+  if (start > end) return null;
+  return { start, end };
+}
+
+export function chunkSteps(fullSteps: Step[], region: Region | null): Step[] {
+  if (!region) return fullSteps;
+  if (region.start > region.end) return [];
+  return fullSteps.slice(region.start, region.end + 1);
+}
 
 export function getTotalDuration(steps: Step[], speedPercent: number = 100): number {
   if (steps.length === 0) return 0;
