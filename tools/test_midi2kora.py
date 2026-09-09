@@ -158,3 +158,42 @@ def test_best_transpose_recovers_off_scale():
 
 def test_best_transpose_zero_when_already_optimal():
     assert m.best_transpose([65], fold=False) == (0, 0)
+
+
+def test_tokenize_single_note_start():
+    assert m.tokenize_steps([{"d": 0.35, "string": "L5"}]) == ["S1"]
+
+
+def test_tokenize_intervals_up_down_same():
+    # L5 (F3=53), R3 (C4=60) up, L4 (E3=52) down, L4 again same
+    steps = [
+        {"d": 0.35, "string": "L5"},
+        {"d": 0.35, "string": "R3"},
+        {"d": 0.35, "string": "L4"},
+        {"d": 0.35, "string": "L4"},
+    ]
+    assert m.tokenize_steps(steps) == ["S1", "U1", "D1", "=1"]
+
+
+def test_tokenize_duration_quantization():
+    # <=0.45 -> '1'; 0.45<d<0.70 -> '2'; >=0.70 -> '3'
+    steps = [
+        {"d": 0.35, "string": "L1"},
+        {"d": 0.50, "string": "L1"},
+        {"d": 0.90, "string": "L1"},
+        {"d": 0.45, "string": "L1"},
+        {"d": 0.70, "string": "L1"},
+    ]
+    assert m.tokenize_steps(steps) == ["S1", "=2", "=3", "=1", "=3"]
+
+
+def test_tokenize_rest_and_leading_rest():
+    # rests carry 'R'+dur; a leading rest keeps prev=None so the first
+    # sounding note still gets 'S'
+    steps = [
+        {"d": 0.30},
+        {"d": 0.50, "string": "L1"},
+        {"d": 0.35},
+        {"d": 1.00, "string": "L1"},
+    ]
+    assert m.tokenize_steps(steps) == ["R1", "S2", "R1", "=3"]

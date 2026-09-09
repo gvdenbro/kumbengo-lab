@@ -112,6 +112,52 @@ def reduce_to_playable(strings: list[str]) -> list[str]:
     return [s for s in strings if s in kept]
 
 
+# Duration quantization for tokens: d <= DUR_SHORT -> '1', d < DUR_MED -> '2',
+# else '3'. Coarse enough to absorb timing drift between repeats.
+DUR_SHORT = 0.45
+DUR_MED = 0.70
+
+
+def _quantize_duration(d: float) -> str:
+    if d <= DUR_SHORT:
+        return "1"
+    if d < DUR_MED:
+        return "2"
+    return "3"
+
+
+def tokenize_steps(steps: list[dict]) -> list[str]:
+    """Map steps to transposition-invariant 2-char tokens.
+
+    Token = interval char + quantized-duration char. The interval is relative
+    to the previous sounding step's lowest pitch ('U' up / 'D' down / '=' same);
+    the first sounding step uses 'S'. Rests use 'R' + duration char. Comparing
+    shape/interval rather than absolute pitch makes repeats detected later
+    transposition-invariant.
+    """
+    tokens: list[str] = []
+    prev: int | None = None
+    for step in steps:
+        d = step.get("d", 0.0)
+        dur = _quantize_duration(d)
+        strings = step.get("strings") or ([step["string"]] if "string" in step else [])
+        if not strings:
+            tokens.append("R" + dur)
+            continue
+        p = min(STRING_TO_MIDI[s] for s in strings)
+        if prev is None:
+            iv = "S"
+        elif p > prev:
+            iv = "U"
+        elif p < prev:
+            iv = "D"
+        else:
+            iv = "="
+        prev = p
+        tokens.append(iv + dur)
+    return tokens
+
+
 def count_dropped(pitches: list[int], transpose: int, *, fold: bool) -> int:
     """Number of pitches that map to no Silaba string at this transpose."""
     return sum(
