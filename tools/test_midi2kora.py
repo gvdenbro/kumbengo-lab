@@ -237,3 +237,53 @@ def test_significant_repeats_drops_too_frequent():
     hits = {("U1", "D1"): list(range(20))}
     sig = m.significant_repeats(hits, max_occ=12)
     assert sig == {}
+
+
+def test_merge_near_repeats_merges_similar():
+    # 'U1 D1 U1' vs 'U1 D1 U2' differ by one substitution -> merged
+    blocks = {
+        ("U1", "D1", "U1"): [0],
+        ("U1", "D1", "U2"): [9],
+    }
+    groups = m.merge_near_repeats(blocks, max_edits=1)
+    assert len(groups) == 1
+    assert groups[0]["positions"] == [0, 9]
+
+
+def test_merge_near_repeats_keeps_distinct():
+    # 'U1 D1 U1' vs 'D1 U1 D1' differ by > 1 edit -> separate
+    blocks = {
+        ("U1", "D1", "U1"): [0],
+        ("D1", "U1", "D1"): [9],
+    }
+    groups = m.merge_near_repeats(blocks, max_edits=1)
+    assert len(groups) == 2
+
+
+def test_pick_dominant_longest_first():
+    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit; the longer wins
+    steps = [{"d": 0.5, "string": "L1"}] * 40
+    groups = [
+        {"pattern": ("U1", "D1", "U1"), "positions": [0, 4, 8, 12, 16]},
+        {"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [2, 10, 20]},
+    ]
+    dom = m.pick_dominant(groups, steps, phrase_min_len=3)
+    assert dom["pattern"] == ("U1", "D1", "U1", "D1", "U1")
+
+
+def test_pick_dominant_skips_short_and_oversized():
+    # phrase_min_len=8: all blocks too short -> None (fallback path)
+    steps = [{"d": 0.5, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1"), "positions": [0, 9]},]
+    assert m.pick_dominant(groups, steps, phrase_min_len=8) is None
+    # len 8 passes phrase_min_len but 8 steps * 0.5s = 4.0s > max_dur=1.0 -> None
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [0, 9]},]
+    assert m.pick_dominant(groups, steps, max_dur=1.0) is None
+
+
+def test_occurrence_spans_nonoverlapping():
+    steps = [{"d": 0.5, "string": "L1"}] * 60
+    groups = [{"pattern": ("U1", "D1", "U1", "U1", "D1", "U1", "D1", "U1"), "positions": [5, 8, 20, 40]}]
+    spans = m.occurrence_spans(groups, steps)
+    # positions 5 -> (5,12); 8 overlaps (5..12) and is skipped; 20 and 40 kept
+    assert spans == [(5, 12), (20, 27), (40, 47)]

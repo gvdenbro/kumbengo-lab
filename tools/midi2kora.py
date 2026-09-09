@@ -17,6 +17,7 @@ from pathlib import Path
 
 import mido
 import yaml
+from rapidfuzz.distance import Levenshtein
 
 # Silaba tuning: midi -> string ID
 SILABA_MIDI_TO_STRING: dict[int, str] = {
@@ -210,6 +211,91 @@ def significant_repeats(
                 del kept[pat]
                 break
     return kept
+
+
+def merge_near_repeats(
+    blocks: dict[tuple[str, ...], list[int]], *, max_edits: int = 1
+) -> list[dict]:
+    """Merge repeated blocks whose token strings are within max_edits edits.
+
+    Real repeats carry ornaments and small drift, so two occurrences should
+    still count as one phrase when their token strings are nearly identical.
+    Uses rapidfuzz's C Levenshtein (maintained; the Mongeau--Sankoff trick).
+    Returns a list of groups (pattern token-tuple + union of occurrence starts).
+    """
+    groups: list[dict] = []
+    for pat, pos in sorted(blocks.items(), key=lambda kv: (len(kv[0]), kv[1])):
+        s = "".join(pat)
+        placed = False
+        for g in groups:
+            if Levenshtein.distance(s, "".join(g["pattern"])) <= max_edits:
+                g["positions"] = sorted(set(g["positions"]) | set(pos))
+                placed = True
+                break
+        if not placed:
+            groups.append({"pattern": pat, "positions": list(pos)})
+    return groups
+
+
+def _span_duration(steps: list[dict], start: int, length: int) -> float:
+    """Total duration of steps[start:start+length]."""
+    return sum(st.get("d", 0.0) for st in steps[start : start + length])
+
+
+def pick_dominant(
+    groups: list[dict],
+    steps: list[dict],
+    *,
+    max_dur: float = 20.0,
+    phrase_min_len: int = 8,
+) -> dict | None:
+    """Pick the single repeated block that best defines the piece's phrases.
+
+    A candidate must be at least `phrase_min_len` tokens long (a phrase, not a
+    micro-motif) and have at least one occurrence whose span duration fits
+    within `max_dur` (so each occurrence is itself a learnable chunk). Among
+    candidates, the strongest wins: highest `len * occurrence_count`, ties to
+    the longer pattern. Returns the group dict, or None when nothing qualifies
+    (caller falls back to rest-based splitting).
+    """
+    best = None
+    for g in groups:
+        L = len(g["pattern"])
+        if L < phrase_min_len:
+            continue
+        if not any(
+            p + L <= len(steps) and _span_duration(steps, p, L) <= max_dur
+            for p in g["positions"]
+        ):
+            continue
+        score = (L * len(g["positions"]), L)
+        if best is None or score > best[0]:
+            best = (score, g)
+    return best[1] if best else None
+
+
+def occurrence_spans(
+    groups: list[dict], steps: list[dict], *, max_dur: float = 20.0
+) -> list[tuple[int, int]]:
+    """Return non-overlapping occurrence spans of the dominant phrase.
+
+    Spans are (start, end) inclusive step indices, greedy non-overlapping so
+    each phrase occurrence becomes exactly one chunk. Occurrences are sorted;
+    a later occurrence that overlaps the previous span is skipped (shifted
+    variant of the same phrase).
+    """
+    dom = pick_dominant(groups, steps, max_dur=max_dur)
+    if dom is None:
+        return []
+    L = len(dom["pattern"])
+    spans: list[tuple[int, int]] = []
+    for p in sorted(dom["positions"]):
+        if p + L > len(steps):
+            break
+        if spans and p <= spans[-1][1]:
+            continue
+        spans.append((p, p + L - 1))
+    return spans
 
 
 def count_dropped(pitches: list[int], transpose: int, *, fold: bool) -> int:

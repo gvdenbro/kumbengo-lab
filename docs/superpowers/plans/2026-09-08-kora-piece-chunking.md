@@ -338,13 +338,15 @@ def test_merge_near_repeats_keeps_distinct():
 
 
 def test_pick_dominant_longest_first():
-    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit; the longer wins
+    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit (scores tie at 15,
+    # tie-break to the longer pattern). phrase_min_len lowered to 3 so both
+    # qualify (default 8 would reject both).
     steps = [{"d": 0.5, "string": "L1"}] * 40
     groups = [
         {"pattern": ("U1", "D1", "U1"), "positions": [0, 4, 8, 12, 16]},
         {"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [2, 10, 20]},
     ]
-    dom = m.pick_dominant(groups, steps)
+    dom = m.pick_dominant(groups, steps, phrase_min_len=3)
     assert dom["pattern"] == ("U1", "D1", "U1", "D1", "U1")
 
 
