@@ -197,3 +197,43 @@ def test_tokenize_rest_and_leading_rest():
         {"d": 1.00, "string": "L1"},
     ]
     assert m.tokenize_steps(steps) == ["R1", "S2", "R1", "=3"]
+
+
+def test_find_repeated_blocks_basic():
+    # 'U1' repeated twice at positions 2 and 4
+    tokens = ["S1", "D1", "U1", "D1", "U1", "D1"]
+    hits = m.find_repeated_blocks(tokens, min_len=2, max_len=6, min_occ=2)
+    assert ("U1", "D1") in hits
+    assert hits[("U1", "D1")] == [2, 4]
+
+
+def test_find_repeated_blocks_greedy_nonoverlap():
+    # pattern 'S1 U1' at 0,2,4 -- greedy keeps all three (non-overlapping: [0,1],[2,3],[4,5])
+    tokens = ["S1", "U1", "S1", "U1", "S1", "U1"]
+    hits = m.find_repeated_blocks(tokens, min_len=2, max_len=6, min_occ=2)
+    assert tuple(tokens[0:2]) in hits
+    # non-overlapping starts: 0 (covers 0..1), 2 (covers 2..3), 4 (covers 4..5)
+    assert hits[tuple(tokens[0:2])] == [0, 2, 4]
+
+
+def test_find_repeated_blocks_no_repeat():
+    tokens = ["S1", "U1", "D2", "U1", "D3"]
+    hits = m.find_repeated_blocks(tokens, min_len=3, max_len=6, min_occ=2)
+    assert hits == {}
+
+
+def test_significant_repeats_drops_short_prefix():
+    # 'U1 D1' is a prefix of the longer 'U1 D1 U1' at the same starts -> dropped
+    hits = {
+        ("U1", "D1"): [2, 8],
+        ("U1", "D1", "U1"): [2, 8],
+    }
+    sig = m.significant_repeats(hits, max_occ=12)
+    assert ("U1", "D1") not in sig
+    assert ("U1", "D1", "U1") in sig
+
+
+def test_significant_repeats_drops_too_frequent():
+    hits = {("U1", "D1"): list(range(20))}
+    sig = m.significant_repeats(hits, max_occ=12)
+    assert sig == {}

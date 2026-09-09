@@ -158,6 +158,60 @@ def tokenize_steps(steps: list[dict]) -> list[str]:
     return tokens
 
 
+def find_repeated_blocks(
+    tokens: list[str], *, min_len: int = 3, max_len: int = 48, min_occ: int = 2
+) -> dict[tuple[str, ...], list[int]]:
+    """Return every exact repeated substring of the token sequence.
+
+    For each window length in [min_len, max_len] count occurrences, then keep
+    patterns seen >= min_occ times. Occurrences per pattern are greedily
+    non-overlapping (a later start must be >= previous start + length) so a
+    repeated block's occurrences tile like real musical phrases. Bounded window
+    length keeps this O(n*max_len) — microseconds at mad-world's n=447.
+    """
+    n = len(tokens)
+    hits: dict[tuple[str, ...], list[int]] = {}
+    for L in range(min_len, min(max_len, n) + 1):
+        windows: dict[tuple[str, ...], list[int]] = {}
+        for i in range(n - L + 1):
+            w = tuple(tokens[i : i + L])
+            windows.setdefault(w, []).append(i)
+        for w, pos in windows.items():
+            if len(pos) < min_occ:
+                continue
+            npos: list[int] = []
+            for p in pos:
+                if not npos or p >= npos[-1] + L:
+                    npos.append(p)
+            if len(npos) >= min_occ:
+                hits[w] = npos
+    return hits
+
+
+def significant_repeats(
+    hits: dict[tuple[str, ...], list[int]], *, max_occ: int = 12
+) -> dict[tuple[str, ...], list[int]]:
+    """Filter repeated blocks down to structurally meaningful ones.
+
+    Drop a block when (a) it occurs too often (trivial micro-motif returning
+    everywhere), or (b) it is a prefix of a longer repeated block that is its
+    strict extension at the same occurrence starts (redundant — the longer one
+    carries the same structural information).
+    """
+    kept = dict(hits)
+    for pat in list(kept):
+        if len(kept[pat]) > max_occ:
+            del kept[pat]
+            continue
+        for other in list(kept):
+            if other is pat or len(other) <= len(pat):
+                continue
+            if other[: len(pat)] == pat and set(kept[other]) >= set(kept[pat]):
+                del kept[pat]
+                break
+    return kept
+
+
 def count_dropped(pitches: list[int], transpose: int, *, fold: bool) -> int:
     """Number of pitches that map to no Silaba string at this transpose."""
     return sum(
