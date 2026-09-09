@@ -342,3 +342,31 @@ def test_partition_merges_tiny_gap_forward():
     groups = [{"pattern": PAT8, "positions": [5, 14]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
     assert out == [((0, 4), False), ((5, 13), True), ((14, 21), True), ((22, 39), False)]
+
+
+def test_chunk_invariants_across_range():
+    """Property-style: for varied random-ish step sequences the chunk plumbing
+    always produces an exact tiling with in-range windows."""
+    import random
+    rng = random.Random(42)
+    strings = ["L1", "L5", "R3", "R7", "L9"]
+    steps = []
+    prev = None
+    for i in range(120):
+        s = rng.choice(strings)
+        # bias toward repeating the previous string to create runs
+        if prev is not None and rng.random() < 0.5:
+            s = prev
+        prev = s
+        steps.append({"d": round(rng.uniform(0.3, 1.2), 3), "string": s})
+    tokens = m.tokenize_steps(steps)
+    hits = m.find_repeated_blocks(tokens)
+    sig = m.significant_repeats(hits)
+    groups = m.merge_near_repeats(sig)
+    out = m.partition_chunks(steps, groups)
+    assert out, "must always produce at least one chunk"
+    prev_end = -1
+    for (s, e), _ in out:
+        assert s == prev_end + 1 and 0 <= s <= e < len(steps)
+        prev_end = e
+    assert prev_end == len(steps) - 1

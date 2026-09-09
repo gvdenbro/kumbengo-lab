@@ -3,6 +3,7 @@
 # dependencies = [
 #     "mido",
 #     "pyyaml",
+#     "rapidfuzz",
 # ]
 # ///
 """Convert a MIDI file to a Kumbengo Lab kora piece YAML.
@@ -413,6 +414,15 @@ def main():
     parser.add_argument("--title", default="Untitled", help="Piece title")
     parser.add_argument("--fold", action="store_true", help="Fold out-of-range notes into nearest octave (default: drop)")
     parser.add_argument("--drop-unplayable", action="store_true", help="Drop notes with no Silaba string (off-scale or gap notes) instead of erroring")
+    parser.add_argument("--no-chunks", action="store_true", help="Disable automatic chunking (emit no `chunks` field)")
+    parser.add_argument("--max-chunk-size", type=float, default=20.0,
+                        help="Upper bound on fallback chunk duration in seconds (default 20)")
+    parser.add_argument("--min-chunk-size", type=float, default=8.0,
+                        help="Lower bound hint for fallback chunk duration in seconds (default 8)")
+    parser.add_argument("--min-repeat-len", type=int, default=3,
+                        help="Minimum repeated-block length in steps counting as evidence (default 3)")
+    parser.add_argument("--min-repeat-occ", type=int, default=2,
+                        help="Minimum occurrences for a repeated block to count (default 2)")
     parser.add_argument("-o", "--output", help="Output YAML path (default: stdout)")
     args = parser.parse_args()
 
@@ -471,12 +481,41 @@ def main():
             step["strings"] = strings
         steps.append(step)
 
+    # --- Chunking ---
+    if args.no_chunks:
+        chunk_list: list[dict] = []
+    else:
+        tokens = tokenize_steps(steps)
+        hits = find_repeated_blocks(tokens, min_len=args.min_repeat_len, min_occ=args.min_repeat_occ)
+        sig = significant_repeats(hits)
+        groups = merge_near_repeats(sig)
+        chunked = partition_chunks(steps, groups, max_dur=args.max_chunk_size, min_dur=args.min_chunk_size)
+
+        # Hard invariant: exact tiling, in-range windows (a tokenization guarantee)
+        prev_end = -1
+        for (s, e), _ in chunked:
+            assert 0 <= s <= e < len(steps)
+            assert s == prev_end + 1
+            prev_end = e
+        assert prev_end == len(steps) - 1
+
+        chunk_list = [
+            {"name": f"Chunk {i + 1}", "start": s, "end": e}
+            for i, ((s, e), _) in enumerate(chunked)
+        ]
+        n_repeat = sum(1 for _, is_rep in chunked if is_rep)
+        n_fallback = len(chunked) - n_repeat
+        import sys
+        print(f"Chunked into {len(chunked)} parts ({n_repeat} repeat-derived chunks, {n_fallback} fallback chunks)", file=sys.stderr)
+
     piece = {
         "title": args.title,
         "tuning": "silaba",
         "tags": ["cover"],
         "arrangements": [{"name": "Full", "steps": steps}],
     }
+    if chunk_list:
+        piece["chunks"] = chunk_list
     output = yaml.dump(piece, default_flow_style=None, sort_keys=False, allow_unicode=True)
 
     if dropped:

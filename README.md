@@ -64,9 +64,16 @@ Options:
 - `--title` — piece title in the YAML
 - `--fold` — fold out-of-range notes into nearest octave instead of dropping them
 - `--drop-unplayable` — drop notes with no Silaba string (off-scale or low-register gap notes) instead of erroring
+- `--no-chunks` — disable automatic chunking (emit no `chunks` field)
+- `--max-chunk-size` — upper bound on fallback chunk duration in seconds (default 20)
+- `--min-chunk-size` — lower bound hint for fallback chunk duration in seconds (default 8)
+- `--min-repeat-len` — minimum repeated-block length (in steps) counting as repeat evidence (default 3)
+- `--min-repeat-occ` — minimum occurrences for a repeated block to count (default 2)
 - `-o` — output file (prints to stdout if omitted)
 
 **Playability reduction (automatic).** Because a kora is played with only the thumb (low strings) and index (high strings) of each hand, at most 2 notes can sound per hand and 4 in total. The converter automatically reduces any chord that exceeds this to its most playable subset — keeping the outer notes (melody + bass) first and filling in inner notes only where a finger is free — and reports `Reduced N note(s) for playability` on stderr. Off-scale or out-of-range notes are separate: handle those with `--transpose`/`--fold`/`--drop-unplayable`.
+
+**Chunking (automatic).** Generated pieces carry a `chunks` field — a list of `{name, start, end}` windows into the `Full` arrangement's steps. Each occurrence of the piece's dominant repeated phrase becomes its own chunk (duplicates kept), so you can learn a long transcription one loopable chunk at a time. Regions the detector can't explain repeat-wise are split at the largest rest gaps, targeting `--max-chunk-size`; if nothing meaningful repeats, the whole piece is split at rests. The generator reports `Chunked into N parts (M repeat-derived chunks, K fallback chunks)` on stderr. Chunk names are generic (`Chunk 1`, `Chunk 2`, …) — rename them in the YAML if you like. Hand-written YAML may omit `chunks` for a single full piece.
 
 If your source is LilyPond, export MIDI first:
 
