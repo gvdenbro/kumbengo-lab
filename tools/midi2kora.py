@@ -298,6 +298,88 @@ def occurrence_spans(
     return spans
 
 
+def _interval_duration(steps: list[dict], s: int, e: int) -> float:
+    """Total duration of steps[s:e] (half-open)."""
+    return sum(st.get("d", 0.0) for st in steps[s:e])
+
+
+def _split_range(steps: list[dict], s: int, e: int, max_dur: float) -> list[tuple[int, int]]:
+    """Split inclusive range [s,e] at the largest internal rests until every
+    piece is <= max_dur. Returns inclusive (start, end) pairs."""
+    if s > e:
+        return []
+    if _interval_duration(steps, s, e + 1) <= max_dur:
+        return [(s, e)]
+    segs = [(s, e)]
+    while True:
+        done = True
+        for i, (a, b) in enumerate(segs):
+            if _interval_duration(steps, a, b + 1) <= max_dur:
+                continue
+            done = False
+            best = max(range(a, b), key=lambda k: steps[k].get("d", 0.0))
+            segs[i : i + 1] = [(a, best), (best + 1, b)]
+            break
+        if done:
+            break
+    return segs
+
+
+def partition_chunks(
+    steps: list[dict],
+    groups: list[dict],
+    *,
+    max_dur: float = 20.0,
+    min_dur: float = 8.0,
+) -> list[tuple[tuple[int, int], bool]]:
+    """Partition steps into contiguous, exactly-tiling chunks.
+
+    Chunks are the occurrence spans of the dominant repeated phrase (each
+    occurrence one chunk, labeled is_repeat=True, kept whole — the point of
+    practice) interleaved with the leftover gaps. Gaps longer than max_dur are
+    subdivided by `_split_range` at the largest internal rests; gaps shorter
+    than min_dur are merged forward into the previous chunk while the merged
+    duration stays <= max_dur. With no qualifying phrase, the whole piece is
+    simply split by `_split_range`. The result always exactly tiles and covers
+    every step.
+    """
+    n = len(steps)
+    spans = [(s, e) for s, e in occurrence_spans(groups, steps, max_dur=max_dur)]
+    if not spans:
+        return [((a, b), False) for a, b in _split_range(steps, 0, n - 1, max_dur)]
+
+    out: list[tuple[tuple[int, int], bool]] = []
+    prev = 0
+    for s, e in spans:
+        if s > prev:
+            out.append(((prev, s - 1), False))
+        out.append(((s, e), True))
+        prev = e + 1
+    if prev < n:
+        out.append(((prev, n - 1), False))
+
+    final: list[tuple[tuple[int, int], bool]] = []
+    for (s, e), is_repeat in out:
+        if is_repeat or _interval_duration(steps, s, e + 1) <= max_dur:
+            final.append(((s, e), is_repeat))
+        else:
+            for a, b in _split_range(steps, s, e, max_dur):
+                final.append(((a, b), False))
+
+    merged: list[tuple[tuple[int, int], bool]] = []
+    for (s, e), is_repeat in final:
+        if (
+            merged
+            and _interval_duration(steps, merged[-1][0][0], e + 1) <= max_dur
+            and _interval_duration(steps, s, e + 1) < min_dur
+        ):
+            ms, me = merged[-1][0]
+            merged[-1] = ((ms, e), merged[-1][1])
+        else:
+            merged.append(((s, e), is_repeat))
+    return merged
+
+
 def count_dropped(pitches: list[int], transpose: int, *, fold: bool) -> int:
     """Number of pitches that map to no Silaba string at this transpose."""
     return sum(

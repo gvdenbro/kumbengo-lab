@@ -499,10 +499,12 @@ Append to `tools/test_midi2kora.py`:
 
 ```python
 def test_partition_tiles_whole_piece():
-    # dominant phrase repeated across the piece -> repeat chunks + gap fallback,
-    # everything tiles exactly
-    steps = [{"d": 0.35, "string": "L1"}] * 100
-    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [5, 20, 60]}]
+    # Patterns must be >= phrase_min_len=8 tokens to qualify as a dominant
+    # phrase (see pick_dominant). Verified: spans (5,12),(20,27); gap (13,19)
+    # of 7s < min_dur merges into the first repeat -> (5,19); the 12s gap
+    # (28,39) does not merge.
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [5, 20]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
     prev_end = -1
     for (s, e), _ in out:
@@ -511,6 +513,7 @@ def test_partition_tiles_whole_piece():
     assert prev_end == len(steps) - 1
     assert out[0][0][0] == 0
     assert out[-1][0][1] == len(steps) - 1
+    assert out == [((0, 4), False), ((5, 19), True), ((20, 27), True), ((28, 39), False)]
 
 
 def test_partition_fallback_subdivides_long_leftover():
@@ -521,27 +524,28 @@ def test_partition_fallback_subdivides_long_leftover():
         assert is_rep is False
         dur = sum(st["d"] for st in steps[s : e + 1])
         assert dur <= 20.0
+    # largest-gap-first cascade: 10, 10, 10, 20 seconds
+    assert [e - s + 1 for (s, e), _ in out] == [1, 1, 1, 2]
 
 
 def test_partition_repeat_chunk_stays_whole():
-    # a detected repeat span longer than max_dur stays intact as a phrase chunk
+    # a detected repeat span is kept as a single True chunk, and does not get
+    # merged into the (>= min_dur) gap that follows it
     steps = [{"d": 1.0, "string": "L1"}] * 40
-    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [0, 20]}]
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [0, 20]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
-    assert out[0][1] is True
-    assert out[0][0] == (0, 4)  # first occurrence whole
+    assert out[0] == ((0, 7), True)  # first occurrence whole
+    assert out[2] == ((20, 27), True)  # second occurrence whole
 
 
 def test_partition_merges_tiny_gap_forward():
-    # two repeat spans with a 2-step gap between them: the gap is smaller than
-    # min_dur=8.0 and the merge stays <= max_dur, so it is absorbed
-    steps = [{"d": 0.5, "string": "L1"}] * 30
-    groups = [{"pattern": ("U1", "D1", "U1"), "positions": [3, 8, 20]}]
+    # two repeat spans one step apart: the 1s gap (13,13) is smaller than
+    # min_dur=8 and the merge stays <= max_dur, so it is absorbed into the
+    # first repeat chunk
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [5, 14]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
-    # span (3,5) then gap (6,7) merged in, then span (8,10): chunks are
-    # (0,2) gap, (3,10) repeat-with-gap-absorbed, (11,19) gap, (20,22), (23,29)
-    assert out[1][0] == (3, 10)
-```
+    assert out == [((0, 4), False), ((5, 13), True), ((14, 21), True), ((22, 39), False)]
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -601,7 +605,7 @@ def partition_chunks(
     n = len(steps)
     spans = [(s, e) for s, e in occurrence_spans(groups, steps, max_dur=max_dur)]
     if not spans:
-        return [(a, b, False) for a, b in _split_range(steps, 0, n - 1, max_dur)]
+        return [((a, b), False) for a, b in _split_range(steps, 0, n - 1, max_dur)]
 
     out: list[tuple[tuple[int, int], bool]] = []
     prev = 0
