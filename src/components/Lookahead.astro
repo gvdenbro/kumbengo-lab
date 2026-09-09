@@ -84,7 +84,10 @@ function gapToHeight(gap: number, minGap: number): string {
 
     items.forEach((item, i) => {
       const el = item as HTMLElement;
-      el.classList.toggle('current', i === currentIndex);
+      const inside = region === null || region.start === null
+        || (i >= region.start && region.end !== null && i <= region.end);
+      el.classList.toggle('current', inside && i === currentIndex);
+      if (!inside) return;                    // keep outside-region items hidden, leave them alone
       if (i < currentIndex) {
         el.classList.add('hidden');
       } else if (i - start > 4) {
@@ -94,6 +97,8 @@ function gapToHeight(gap: number, minGap: number): string {
       }
     });
   }
+
+  let region: { start: number | null; end: number | null } | null = null;
 
   const arrSel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
   if (arrSel && Number(arrSel.value) !== 0) {
@@ -121,6 +126,11 @@ function gapToHeight(gap: number, minGap: number): string {
       (track as HTMLElement).style.display = active ? '' : 'none';
       (track as HTMLElement).dataset.active = String(active);
     });
+    updateVisibility(-1);
+  }) as EventListener);
+
+  document.addEventListener('player-region', ((e: CustomEvent) => {
+    region = e.detail;
     updateVisibility(-1);
   }) as EventListener);
 
