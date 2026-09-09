@@ -664,6 +664,7 @@ git commit -m "feat(midi2kora): partition steps into exactly-tiling chunks with 
 **Interfaces:**
 - Consumes: `tokenize_steps`, `find_repeated_blocks`, `significant_repeats`, `merge_near_repeats`, `partition_chunks` (Tasks 1–4)
 - Produces: new CLI flags `--no-chunks`, `--max-chunk-size`, `--min-chunk-size`, `--min-repeat-len`, `--min-repeat-occ`; YAML gains top-level `chunks` unless disabled.
+- Note: `main()` imports `tokenize_steps` etc. at call time, and the script now imports `rapidfuzz` at module load — **add `"rapidfuzz"` to the PEP 723 `# dependencies = [...]` header** (currently `mido`, `pyyaml`) so a plain `uv run tools/midi2kora.py` resolves it without `--with rapidfuzz`.
 
 - [ ] **Step 1: Write the failing test**
 
