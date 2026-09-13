@@ -75,30 +75,22 @@ function gapToHeight(gap: number, minGap: number): string {
 
 <script>
   import { getStringLabel } from '../lib/labels';
+  import { lookaheadItemVisible, type LookaheadRegion } from '../lib/player-logic';
 
   function updateVisibility(currentIndex: number) {
     const track = document.querySelector('.lookahead-track[data-active="true"]');
     if (!track) return;
     const items = track.querySelectorAll('.lookahead-item');
-    const start = Math.max(currentIndex, 0);
 
     items.forEach((item, i) => {
       const el = item as HTMLElement;
-      const inside = region === null || region.start === null
-        || (i >= region.start && region.end !== null && i <= region.end);
-      el.classList.toggle('current', inside && i === currentIndex);
-      if (!inside) return;                    // keep outside-region items hidden, leave them alone
-      if (i < currentIndex) {
-        el.classList.add('hidden');
-      } else if (i - start > 4) {
-        el.classList.add('hidden');
-      } else {
-        el.classList.remove('hidden');
-      }
+      const visible = lookaheadItemVisible(i, currentIndex, region);
+      el.classList.toggle('hidden', !visible);
+      el.classList.toggle('current', visible && i === currentIndex);
     });
   }
 
-  let region: { start: number | null; end: number | null } | null = null;
+  let region: LookaheadRegion | null = null;
 
   const arrSel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
   if (arrSel && Number(arrSel.value) !== 0) {

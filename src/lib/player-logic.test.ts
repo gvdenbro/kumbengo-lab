@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTotalDuration, getMidiNotes, computeOnsets, regionFromChunk, chunkSteps, type Region } from './player-logic';
+import { getTotalDuration, getMidiNotes, computeOnsets, regionFromChunk, chunkSteps, lookaheadItemVisible, type Region } from './player-logic';
 
 describe('getTotalDuration', () => {
   it('returns 0 for empty steps', () => {
@@ -110,5 +110,64 @@ describe('chunkSteps', () => {
 
   it('empty region (start > end) yields empty steps', () => {
     expect(chunkSteps(steps, { start: 5, end: 4 })).toEqual([]);
+  });
+});
+
+describe('lookaheadItemVisible', () => {
+  const region: Region = { start: 25, end: 53 };
+
+  it('shows a window of current + 4 inside the region', () => {
+    expect(lookaheadItemVisible(30, 30, region)).toBe(true);
+    expect(lookaheadItemVisible(31, 30, region)).toBe(true);
+    expect(lookaheadItemVisible(34, 30, region)).toBe(true);
+  });
+
+  it('hides items past the window inside the region', () => {
+    expect(lookaheadItemVisible(35, 30, region)).toBe(false);
+    expect(lookaheadItemVisible(53, 30, region)).toBe(false);
+  });
+
+  it('hides items before the current index (played notes)', () => {
+    expect(lookaheadItemVisible(29, 30, region)).toBe(false);
+    expect(lookaheadItemVisible(25, 30, region)).toBe(false);
+  });
+
+  it('always hides items outside the region, even if previously shown', () => {
+    // The stale-state bug: notes visible from earlier playback (or another
+    // chunk) must be hidden once a region is active.
+    expect(lookaheadItemVisible(5, -1, region)).toBe(false);
+    expect(lookaheadItemVisible(5, 30, region)).toBe(false);
+    expect(lookaheadItemVisible(60, 30, region)).toBe(false);
+    expect(lookaheadItemVisible(0, 30, region)).toBe(false);
+  });
+
+  it('region with null start behaves like no region (All selected)', () => {
+    expect(lookaheadItemVisible(3, -1, { start: null, end: null })).toBe(true);
+    expect(lookaheadItemVisible(4, 0, { start: null, end: null })).toBe(true);
+    expect(lookaheadItemVisible(5, 0, { start: null, end: null })).toBe(false);
+  });
+
+  it('before playback a selected chunk shows its own opening window', () => {
+    // Freshly selected chunk (region 25-53) with no playback yet:
+    // only the chunk's first 5 steps are shown — nothing before it.
+    expect(lookaheadItemVisible(25, -1, region)).toBe(true);
+    expect(lookaheadItemVisible(29, -1, region)).toBe(true);
+    expect(lookaheadItemVisible(30, -1, region)).toBe(false);
+    expect(lookaheadItemVisible(24, -1, region)).toBe(false);
+    expect(lookaheadItemVisible(53, -1, region)).toBe(false);
+  });
+
+  it('no region shows the first 5 items before playback starts', () => {
+    expect(lookaheadItemVisible(0, -1, null)).toBe(true);
+    expect(lookaheadItemVisible(3, -1, null)).toBe(true);
+    expect(lookaheadItemVisible(4, -1, null)).toBe(true);
+    expect(lookaheadItemVisible(5, -1, null)).toBe(false);
+  });
+
+  it('no region hides past notes as playback advances', () => {
+    expect(lookaheadItemVisible(2, 3, null)).toBe(false); // past
+    expect(lookaheadItemVisible(3, 3, null)).toBe(true);  // current
+    expect(lookaheadItemVisible(7, 3, null)).toBe(true);  // +4
+    expect(lookaheadItemVisible(8, 3, null)).toBe(false); // beyond window
   });
 });

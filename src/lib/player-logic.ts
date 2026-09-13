@@ -5,6 +5,12 @@ export interface Region {
   end: number;
 }
 
+/** Region as dispatched on `player-region` — nulls mean "All" (whole piece). */
+export interface LookaheadRegion {
+  start: number | null;
+  end: number | null;
+}
+
 export function regionFromChunk(
   chunks: Chunk[],
   index: number,
@@ -53,4 +59,33 @@ export function computeOnsets(steps: Step[], speedPercent: number): number[] {
     t += step.d;
   }
   return onsets;
+}
+
+/**
+ * Deterministic visibility decision for a lookahead item.
+ *
+ * Returns true when item `index` should be shown at playback position
+ * `currentIndex` (which may be -1 = no playback yet) within `region`
+ * (null or {start: null} = whole piece). Items outside the region are
+ * ALWAYS hidden — this is what prevents stale notes (from earlier
+ * playback or a previously selected chunk) from staying on screen.
+ * Before playback starts, the window anchors on the region start (or 0
+ * for the whole piece), matching what "only that chunk's items are shown"
+ * means for a freshly selected chunk.
+ */
+export function lookaheadItemVisible(
+  index: number,
+  currentIndex: number,
+  region: LookaheadRegion | null,
+): boolean {
+  const inside =
+    region === null ||
+    region.start === null ||
+    (index >= region.start && region.end !== null && index <= region.end);
+  if (!inside) return false;
+  const start =
+    currentIndex >= 0
+      ? currentIndex
+      : (region?.start != null ? region.start : 0);
+  return index >= start && index - start <= 4;
 }
