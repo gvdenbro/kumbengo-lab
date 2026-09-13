@@ -18,6 +18,14 @@ const stepSchema = z.object({
   message: 'Use string or strings, not both',
 });
 
+const chunkSchema = z.object({
+  name: z.string(),
+  start: z.number().int().nonnegative(),
+  end: z.number().int().nonnegative(),
+}).refine((c) => c.start <= c.end, {
+  message: 'chunk start must be <= end',
+});
+
 const arrangementSchema = z.object({
   name: z.string(),
   steps: z.preprocess(
@@ -35,6 +43,7 @@ const pieces = defineCollection({
     draft: z.boolean().optional(),
     tags: z.array(z.string()),
     arrangements: z.array(arrangementSchema).min(1),
+    chunks: z.array(chunkSchema).optional(),
   }),
 });
 

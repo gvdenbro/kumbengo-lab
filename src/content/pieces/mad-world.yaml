@@ -640,3 +640,18 @@ arrangements:
     strings: [R6, L7, L6]
   - d: 0.706
     strings: [R4, L5, R9, L11]
+chunks:
+- {name: Chunk 1, start: 0, end: 24}
+- {name: Chunk 2, start: 25, end: 53}
+- {name: Chunk 3, start: 54, end: 82}
+- {name: Chunk 4, start: 83, end: 111}
+- {name: Chunk 5, start: 112, end: 156}
+- {name: Chunk 6, start: 157, end: 186}
+- {name: Chunk 7, start: 187, end: 225}
+- {name: Chunk 8, start: 226, end: 254}
+- {name: Chunk 9, start: 255, end: 283}
+- {name: Chunk 10, start: 284, end: 333}
+- {name: Chunk 11, start: 334, end: 371}
+- {name: Chunk 12, start: 372, end: 386}
+- {name: Chunk 13, start: 387, end: 409}
+- {name: Chunk 14, start: 410, end: 446}

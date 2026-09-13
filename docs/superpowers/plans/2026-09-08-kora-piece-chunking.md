@@ -1,6 +1,6 @@
 # Kora Piece Chunking Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make `tools/midi2kora.py` automatically split generated kora transcriptions into musically sensible, loopable chunks (each occurrence of a repeated phrase its own chunk, size-based fallback), and give the player a chunk selector that loops within a chunk using the existing Loop checkbox — all while keeping hand-written YAML without chunks working as today.
 
@@ -33,7 +33,7 @@
 - Consumes: `STRING_TO_MIDI: dict[str, int]` (already defined in the module)
 - Produces: `DUR_SHORT: float = 0.45`, `DUR_MED: float = 0.70`, `tokenize_steps(steps: list[dict]) -> list[str]` — one 2-char token per step.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tools/test_midi2kora.py`:
 
@@ -77,12 +77,12 @@ def test_tokenize_rest_and_leading_rest():
     assert m.tokenize_steps(steps) == ["R1", "S2", "R1", "=3"]
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py::test_tokenize_single_note_start -v`
 Expected: FAIL — `AttributeError: module 'midi2kora' has no attribute 'tokenize_steps'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add to `tools/midi2kora.py` after `reduce_to_playable`:
 
@@ -133,12 +133,12 @@ def tokenize_steps(steps: list[dict]) -> list[str]:
     return tokens
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py -v`
 Expected: PASS (all 4 tokenize tests, plus existing playability/transpose tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py
@@ -157,7 +157,7 @@ git commit -m "feat(midi2kora): add transposition-invariant step tokenizer"
 - Consumes: `tokenize_steps` (Task 1)
 - Produces: `find_repeated_blocks(tokens, *, min_len=3, max_len=48, min_occ=2) -> dict[tuple[str, ...], list[int]]`, `significant_repeats(hits, *, max_occ=12) -> dict[tuple[str, ...], list[int]]`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tools/test_midi2kora.py`:
 
@@ -202,12 +202,12 @@ def test_significant_repeats_drops_too_frequent():
     assert sig == {}
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py::test_find_repeated_blocks_basic -v`
 Expected: FAIL — `AttributeError: module 'midi2kora' has no attribute 'find_repeated_blocks'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add to `tools/midi2kora.py` after `tokenize_steps`:
 
@@ -266,12 +266,12 @@ def significant_repeats(
     return kept
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py -v`
 Expected: PASS (all 4 find/significant tests, plus existing tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py
@@ -280,7 +280,7 @@ git commit -m "feat(midi2kora): add repeated-substring detection and significanc
 
 ---
 
-### Task 3: Merge near-repeats and derive rest-nudged boundaries
+### Task 3: Merge near-repeats and pick the dominant phrase
 
 **Files:**
 - Modify: `tools/midi2kora.py` (add `merge_near_repeats` + `pick_dominant` + `occurrence_spans` after `significant_repeats`; add `from rapidfuzz.distance import Levenshtein` at top)
@@ -290,7 +290,7 @@ git commit -m "feat(midi2kora): add repeated-substring detection and significanc
 - Consumes: `rapidfuzz.distance.Levenshtein` (new import), `significant_repeats` (Task 2)
 - Produces: `merge_near_repeats(blocks, *, max_edits=1) -> list[dict]` where each dict is `{"pattern": tuple[str,...], "positions": list[int]}`; `pick_dominant(groups, steps, *, max_dur=20.0, phrase_min_len=8) -> dict | None`; `occurrence_spans(groups, steps, *, max_dur=20.0) -> list[tuple[int, int]]`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tools/test_midi2kora.py`:
 
@@ -338,13 +338,15 @@ def test_merge_near_repeats_keeps_distinct():
 
 
 def test_pick_dominant_longest_first():
-    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit; the longer wins
+    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit (scores tie at 15,
+    # tie-break to the longer pattern). phrase_min_len lowered to 3 so both
+    # qualify (default 8 would reject both).
     steps = [{"d": 0.5, "string": "L1"}] * 40
     groups = [
         {"pattern": ("U1", "D1", "U1"), "positions": [0, 4, 8, 12, 16]},
         {"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [2, 10, 20]},
     ]
-    dom = m.pick_dominant(groups, steps)
+    dom = m.pick_dominant(groups, steps, phrase_min_len=3)
     assert dom["pattern"] == ("U1", "D1", "U1", "D1", "U1")
 
 
@@ -366,12 +368,12 @@ def test_occurrence_spans_nonoverlapping():
     assert spans == [(5, 12), (20, 27), (40, 47)]
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py::test_merge_near_repeats_merges_similar -v`
 Expected: FAIL — `AttributeError: module 'midi2kora' has no attribute 'merge_near_repeats'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 At the top of `tools/midi2kora.py`, add the import after the existing imports:
 
@@ -467,16 +469,16 @@ def occurrence_spans(
     return spans
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py -v`
 Expected: PASS (all merge/pick/spans tests plus existing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py
-git commit -m "feat(midi2kora): merge near-repeats and derive rest-nudged chunk boundaries"
+git commit -m "feat(midi2kora): merge near-repeats and pick the dominant phrase"
 ```
 
 ---
@@ -491,16 +493,18 @@ git commit -m "feat(midi2kora): merge near-repeats and derive rest-nudged chunk 
 - Consumes: `occurrence_spans` (Task 3)
 - Produces: `partition_chunks(steps, groups, *, max_dur=20.0, min_dur=8.0) -> list[tuple[tuple[int, int], bool]]` — list of `((start, end), is_repeat)` where `start`/`end` are inclusive step indices and `is_repeat` True when the chunk came from the dominant phrase occurrence span.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tools/test_midi2kora.py`:
 
 ```python
 def test_partition_tiles_whole_piece():
-    # dominant phrase repeated across the piece -> repeat chunks + gap fallback,
-    # everything tiles exactly
-    steps = [{"d": 0.35, "string": "L1"}] * 100
-    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [5, 20, 60]}]
+    # Patterns must be >= phrase_min_len=8 tokens to qualify as a dominant
+    # phrase (see pick_dominant). Verified: spans (5,12),(20,27); gap (13,19)
+    # of 7s < min_dur merges into the first repeat -> (5,19); the 12s gap
+    # (28,39) does not merge.
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [5, 20]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
     prev_end = -1
     for (s, e), _ in out:
@@ -509,6 +513,7 @@ def test_partition_tiles_whole_piece():
     assert prev_end == len(steps) - 1
     assert out[0][0][0] == 0
     assert out[-1][0][1] == len(steps) - 1
+    assert out == [((0, 4), False), ((5, 19), True), ((20, 27), True), ((28, 39), False)]
 
 
 def test_partition_fallback_subdivides_long_leftover():
@@ -519,34 +524,35 @@ def test_partition_fallback_subdivides_long_leftover():
         assert is_rep is False
         dur = sum(st["d"] for st in steps[s : e + 1])
         assert dur <= 20.0
+    # largest-gap-first cascade: 10, 10, 10, 20 seconds
+    assert [e - s + 1 for (s, e), _ in out] == [1, 1, 1, 2]
 
 
 def test_partition_repeat_chunk_stays_whole():
-    # a detected repeat span longer than max_dur stays intact as a phrase chunk
+    # a detected repeat span is kept as a single True chunk, and does not get
+    # merged into the (>= min_dur) gap that follows it
     steps = [{"d": 1.0, "string": "L1"}] * 40
-    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [0, 20]}]
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [0, 20]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
-    assert out[0][1] is True
-    assert out[0][0] == (0, 4)  # first occurrence whole
+    assert out[0] == ((0, 7), True)  # first occurrence whole
+    assert out[2] == ((20, 27), True)  # second occurrence whole
 
 
 def test_partition_merges_tiny_gap_forward():
-    # two repeat spans with a 2-step gap between them: the gap is smaller than
-    # min_dur=8.0 and the merge stays <= max_dur, so it is absorbed
-    steps = [{"d": 0.5, "string": "L1"}] * 30
-    groups = [{"pattern": ("U1", "D1", "U1"), "positions": [3, 8, 20]}]
+    # two repeat spans one step apart: the 1s gap (13,13) is smaller than
+    # min_dur=8 and the merge stays <= max_dur, so it is absorbed into the
+    # first repeat chunk
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [5, 14]}]
     out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
-    # span (3,5) then gap (6,7) merged in, then span (8,10): chunks are
-    # (0,2) gap, (3,10) repeat-with-gap-absorbed, (11,19) gap, (20,22), (23,29)
-    assert out[1][0] == (3, 10)
-```
+    assert out == [((0, 4), False), ((5, 13), True), ((14, 21), True), ((22, 39), False)]
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py::test_partition_tiles_whole_piece -v`
 Expected: FAIL — `AttributeError: module 'midi2kora' has no attribute 'partition_chunks'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add after `occurrence_spans`:
 
@@ -599,7 +605,7 @@ def partition_chunks(
     n = len(steps)
     spans = [(s, e) for s, e in occurrence_spans(groups, steps, max_dur=max_dur)]
     if not spans:
-        return [(a, b, False) for a, b in _split_range(steps, 0, n - 1, max_dur)]
+        return [((a, b), False) for a, b in _split_range(steps, 0, n - 1, max_dur)]
 
     out: list[tuple[tuple[int, int], bool]] = []
     prev = 0
@@ -633,12 +639,12 @@ def partition_chunks(
     return merged
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py -v`
 Expected: PASS (all 4 partition tests, plus existing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py
@@ -658,8 +664,9 @@ git commit -m "feat(midi2kora): partition steps into exactly-tiling chunks with 
 **Interfaces:**
 - Consumes: `tokenize_steps`, `find_repeated_blocks`, `significant_repeats`, `merge_near_repeats`, `partition_chunks` (Tasks 1–4)
 - Produces: new CLI flags `--no-chunks`, `--max-chunk-size`, `--min-chunk-size`, `--min-repeat-len`, `--min-repeat-occ`; YAML gains top-level `chunks` unless disabled.
+- Note: `main()` imports `tokenize_steps` etc. at call time, and the script now imports `rapidfuzz` at module load — **add `"rapidfuzz"` to the PEP 723 `# dependencies = [...]` header** (currently `mido`, `pyyaml`) so a plain `uv run tools/midi2kora.py` resolves it without `--with rapidfuzz`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tools/test_midi2kora.py`:
 
@@ -692,12 +699,12 @@ def test_chunk_invariants_across_range():
     assert prev_end == len(steps) - 1
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/test_midi2kora.py::test_chunk_invariants_across_range -v`
 Expected: FAIL — `AttributeError: module 'midi2kora' has no attribute 'tokenize_steps'` or a later plumbing attribute; this is the integration test that lands with Task 5's wiring (the helpers exist from Tasks 1–4, so it should PASS once main() plumbing exists — run it again after Step 3).
 
-- [ ] **Step 3: Wire chunking into `main()`**
+- [x] **Step 3: Wire chunking into `main()`**
 
 In `main()`, extend the argument parser (after the existing `--drop-unplayable` arg):
 
@@ -758,7 +765,7 @@ Then add `chunks` to the piece dict (after `"arrangements"`):
         piece["chunks"] = chunk_list
 ```
 
-- [ ] **Step 4: Run the full Python suite + CLI smoke**
+- [x] **Step 4: Run the full Python suite + CLI smoke**
 
 Run: `uv run --with pytest --with mido --with pyyaml --with rapidfuzz pytest tools/ -v`
 Expected: PASS (all tests).
@@ -793,7 +800,7 @@ Expected: prints `chunks: N steps: 447 coverage OK`. From the planning prototype
 
 Also update `README.md`: add the five options to the options table in the "MIDI to kora" section (`--no-chunks`, `--max-chunk-size`, `--min-chunk-size`, `--min-repeat-len`, `--min-repeat-occ`), and add a short "**Chunking (automatic).**" paragraph after the existing **Playability reduction** paragraph describing: generated pieces get a `chunks` field; each repeated phrase occurrence is its own chunk; fallback splits non-repeating regions at rest gaps targeting `--max-chunk-size`; chunks are windows (start/end indices) into the `Full` arrangement; hand-written YAML may omit `chunks` for a single full piece.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tools/midi2kora.py tools/test_midi2kora.py README.md
@@ -814,7 +821,7 @@ git commit -m "feat(midi2kora): emit chunk windows with CLI tuning and stderr re
 - Consumes: none from earlier tasks (independent of Python)
 - Produces: `Chunk { name: string; start: number; end: number }`; `assertChunksValid(chunks: Chunk[] | undefined, fullSteps: Step[], pieceId: string): void` — throws `Error` on out-of-range or missing `Full`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `src/lib/piece.test.ts`:
 
@@ -848,12 +855,12 @@ describe('assertChunksValid', () => {
 
 (Adjust the existing imports at the top of `piece.test.ts` to include the new imports.)
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/lib/piece.test.ts`
 Expected: FAIL — `assertChunksValid is not a function`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `src/lib/piece.ts`, after the `Step` interface:
 
@@ -912,12 +919,12 @@ export async function getStaticPaths() {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- --run src/lib/piece.test.ts`
 Expected: PASS (all tests, including the new describe block).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/content.config.ts src/lib/piece.ts src/lib/piece.test.ts src/pages/pieces/[slug].astro
@@ -936,7 +943,7 @@ git commit -m "feat(site): add chunks schema and build-time validation"
 - Consumes: `getTotalDuration` (already in file); `Chunk` type from `src/lib/piece.ts`
 - Produces: `interface Region { start: number; end: number }`; `regionFromChunk(chunks: Chunk[], index: number, fullSteps: Step[]): Region | null`; `chunkSteps(fullSteps: Step[], region: Region | null): Step[]`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `src/lib/player-logic.test.ts`:
 
@@ -949,8 +956,9 @@ Add:
 ```ts
 describe('regionFromChunk', () => {
   const steps = Array.from({ length: 30 }, () => ({ d: 1, string: 'L1' }));
+  // chunks array holds only real chunks; index 0 of the selector is the
+  // virtual "All" option (regionFromChunk returns null for it).
   const chunks = [
-    { name: 'All', start: 0, end: 29 },
     { name: 'A', start: 0, end: 9 },
     { name: 'B', start: 10, end: 19 },
     { name: 'C', start: 20, end: 29 },
@@ -967,7 +975,7 @@ describe('regionFromChunk', () => {
 
   it('clamps an out-of-range chunk to valid bounds', () => {
     const bad = [{ name: 'X', start: 5, end: 999 }];
-    const r = regionFromChunk(bad, 0, steps);
+    const r = regionFromChunk(bad, 1, steps);
     expect(r).toEqual({ start: 5, end: 29 });
   });
 });
@@ -983,7 +991,7 @@ describe('chunkSteps', () => {
     const r: Region = { start: 10, end: 19 };
     const out = chunkSteps(steps, r);
     expect(out).toHaveLength(10);
-    expect(out[0].string).toBe('L1');
+    expect(out[0].string).toBe('L11'); // index 10 -> (10 % 11) + 1 = 11
   });
 
   it('empty region (start > end) yields empty steps', () => {
@@ -992,12 +1000,12 @@ describe('chunkSteps', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- --run src/lib/player-logic.test.ts`
 Expected: FAIL — `regionFromChunk is not a function`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `src/lib/player-logic.ts`, add the import and functions:
 
@@ -1033,12 +1041,12 @@ export function chunkSteps(fullSteps: Step[], region: Region | null): Step[] {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- --run src/lib/player-logic.test.ts`
 Expected: PASS (all tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/player-logic.ts src/lib/player-logic.test.ts
@@ -1059,7 +1067,7 @@ git commit -m "feat(player): add chunk region helpers"
 - Consumes: `regionFromChunk`, `chunkSteps`, `Region` from `src/lib/player-logic.ts` (Task 7); `type Chunk` from `src/lib/piece.ts`
 - Dispatches: `player-region` CustomEvent with `detail: { start: number | null, end: number | null }` (null = All)
 
-- [ ] **Step 1: Add region state + scheduler region support**
+- [x] **Step 1: Add region state + scheduler region support**
 
 In `Player.tsx`:
 
@@ -1176,7 +1184,7 @@ const steps = regionRef.current ? fullSteps : arrangements[arrangementIndex].ste
 startScheduler(steps, regionRef.current);
 ```
 
-- [ ] **Step 2: Add the chunk selector UI + wiring**
+- [x] **Step 2: Add the chunk selector UI + wiring**
 
 Before the `return` statement, compute the currently-selected chunk index (0 = All) and a `fullSteps` reference (chunks always index into the `Full` arrangement):
 
@@ -1212,7 +1220,7 @@ In the returned JSX, after the Loop checkbox and before the Speed label, add (gu
 )}
 ```
 
-- [ ] **Step 3: Narrow the lookahead to the region**
+- [x] **Step 3: Narrow the lookahead to the region**
 
 In `src/components/Lookahead.astro` script, add a region variable and update the
 `updateVisibility` function so it never un-hides (or hides) items outside the
@@ -1257,7 +1265,7 @@ chunk is selected (`player-region` has non-null start), only that chunk's items
 are shown; the existing `player-step` handler keeps following playback within
 it. When `All` is selected (start null), behavior is exactly today's.
 
-- [ ] **Step 4: Wire `chunks` into the page**
+- [x] **Step 4: Wire `chunks` into the page**
 
 In `src/pages/pieces/[slug].astro`, pass chunks to Player:
 
@@ -1270,7 +1278,7 @@ In `src/pages/pieces/[slug].astro`, pass chunks to Player:
 />
 ```
 
-- [ ] **Step 5: Verify with tests + manual dev run**
+- [x] **Step 5: Verify with tests + manual dev run**
 
 Run: `npm test`
 Expected: PASS (all existing + new tests).
@@ -1292,7 +1300,7 @@ npm run build
 
 Expected: build succeeds with the committed pieces.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/Player.tsx src/components/Lookahead.astro src/pages/pieces/[slug].astro

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, Component, type ReactNode } from 'react';
 import { getAudioContext, initAudioOnFirstClick, samples, registerSynthSounds, getSampleInfo, soundMap, loadBuffer } from '@strudel/webaudio';
 import { superdough } from 'superdough';
-import { getStepStrings, type Step } from '../lib/piece';
-import { getTotalDuration, getMidiNotes, computeOnsets } from '../lib/player-logic';
+import { getStepStrings, type Step, type Chunk } from '../lib/piece';
+import { getTotalDuration, getMidiNotes, computeOnsets, regionFromChunk, chunkSteps, type Region } from '../lib/player-logic';
 
 interface Arrangement {
   name: string;
@@ -12,6 +12,7 @@ interface Arrangement {
 interface Props {
   arrangements: Arrangement[];
   tuning: Record<string, { midi: number }>;
+  chunks?: Chunk[];
 }
 
 let prebaked: Promise<void> | undefined;
@@ -30,11 +31,13 @@ type PlayerState = 'stopped' | 'loading' | 'playing' | 'paused';
 
 interface NoteEntry { index: number; strings: string[]; time: number; }
 
-function PlayerInner({ arrangements, tuning }: Props) {
+function PlayerInner({ arrangements, tuning, chunks }: Props) {
   const [state, setState] = useState<PlayerState>('stopped');
   const [looping, setLooping] = useState(false);
   const [tempoPercent, setTempoPercent] = useState(100);
   const [arrangementIndex, setArrangementIndex] = useState(0);
+  const [region, setRegion] = useState<Region | null>(null);
+  const regionRef = useRef<Region | null>(null);
 
   const schedulerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -48,6 +51,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
 
   useEffect(() => { loopingRef.current = looping; }, [looping]);
   useEffect(() => { tempoPercentRef.current = tempoPercent; }, [tempoPercent]);
+  useEffect(() => { regionRef.current = region; }, [region]);
 
   useEffect(() => {
     const sel = document.getElementById('arrangement-select') as HTMLSelectElement | null;
@@ -93,21 +97,23 @@ function PlayerInner({ arrangements, tuning }: Props) {
     rafRef.current = requestAnimationFrame(drawLoop);
   }, []);
 
-  const startScheduler = useCallback((steps: Step[]) => {
+  const startScheduler = useCallback((steps: Step[], region: Region | null) => {
     const ctx = getAudioContext();
+    const segSteps = chunkSteps(steps, region);
+    const startOffset = region ? region.start : 0;
 
     function schedule() {
       const speed = tempoPercentRef.current;
       const scale = 100 / speed;
-      const onsets = computeOnsets(steps, speed);
-      const totalDuration = getTotalDuration(steps, speed);
+      const onsets = computeOnsets(segSteps, speed);
+      const totalDuration = getTotalDuration(segSteps, speed);
 
-      while (nextIndexRef.current < steps.length) {
+      while (nextIndexRef.current < segSteps.length) {
         const loopStart = startTimeRef.current + loopCountRef.current * totalDuration;
         const onset = loopStart + onsets[nextIndexRef.current];
         if (onset > ctx.currentTime + LOOKAHEAD) break;
 
-        const step = steps[nextIndexRef.current];
+        const step = segSteps[nextIndexRef.current];
         const strings = getStepStrings(step);
         if (strings.length > 0) {
           const midiNotes = getMidiNotes(strings, tuning);
@@ -115,18 +121,18 @@ function PlayerInner({ arrangements, tuning }: Props) {
             superdough({ s: 'folkharp', note }, onset, step.d * scale);
           }
         }
-        noteQueueRef.current.push({ index: nextIndexRef.current, strings, time: onset });
+        noteQueueRef.current.push({ index: startOffset + nextIndexRef.current, strings, time: onset });
         nextIndexRef.current++;
       }
 
-      if (nextIndexRef.current >= steps.length) {
+      if (nextIndexRef.current >= segSteps.length) {
         if (loopingRef.current) {
           loopCountRef.current++;
           nextIndexRef.current = 0;
         } else {
           const loopStart = startTimeRef.current + loopCountRef.current * totalDuration;
-          const lastOnset = loopStart + onsets[steps.length - 1];
-          const lastDur = steps[steps.length - 1].d * scale;
+          const lastOnset = loopStart + onsets[segSteps.length - 1];
+          const lastDur = segSteps[segSteps.length - 1].d * scale;
           const delay = (lastOnset + lastDur - ctx.currentTime) * 1000 + 100;
           if (delay > 0) {
             stopTimerRef.current = window.setTimeout(() => {
@@ -149,7 +155,8 @@ function PlayerInner({ arrangements, tuning }: Props) {
     try {
       await prebaked;
 
-      const steps = arrangements[arrangementIndex].steps;
+      const fullSteps = arrangements.find(a => a.name === 'Full')?.steps ?? arrangements[0].steps;
+      const steps = regionRef.current ? fullSteps : arrangements[arrangementIndex].steps;
       if (steps.length === 0) { setState('stopped'); return; }
 
       const uniqueMidi = [...new Set(
@@ -178,7 +185,7 @@ function PlayerInner({ arrangements, tuning }: Props) {
       loopCountRef.current = 0;
       noteQueueRef.current = [];
       setState('playing');
-      startScheduler(steps);
+      startScheduler(steps, regionRef.current);
     } catch (err) {
       console.error('Playback failed:', err);
       setState('stopped');
@@ -194,7 +201,9 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const resume = useCallback(() => {
     getAudioContext().resume();
     setState('playing');
-    startScheduler(arrangements[arrangementIndex].steps);
+    const fullSteps = arrangements.find(a => a.name === 'Full')?.steps ?? arrangements[0].steps;
+    const steps = regionRef.current ? fullSteps : arrangements[arrangementIndex].steps;
+    startScheduler(steps, regionRef.current);
   }, [arrangementIndex, arrangements, startScheduler]);
 
   const togglePlayPause = useCallback(() => {
@@ -210,6 +219,13 @@ function PlayerInner({ arrangements, tuning }: Props) {
 
   const handleLoopChange = useCallback((checked: boolean) => {
     setLooping(checked);
+  }, []);
+
+  const handleRegionChange = useCallback((r: Region | null) => {
+    setRegion(r);
+    document.dispatchEvent(new CustomEvent('player-region', {
+      detail: { start: r ? r.start : null, end: r ? r.end : null },
+    }));
   }, []);
 
   useEffect(() => {
@@ -233,6 +249,13 @@ function PlayerInner({ arrangements, tuning }: Props) {
   const playLabel = state === 'loading' ? 'Loading' : state === 'playing' ? 'Pause' : 'Play';
   const isActive = state === 'playing' || state === 'paused';
 
+  const fullSteps = arrangements.find(a => a.name === 'Full')?.steps ?? arrangements[0].steps;
+  let selectedIdx = 0;
+  if (region && chunks) {
+    const i = chunks.findIndex(c => c.start === region.start && c.end === region.end);
+    selectedIdx = i >= 0 ? i + 1 : 0;
+  }
+
   return (
     <>
     <div id="player" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', margin: '1rem 0' }}>
@@ -254,6 +277,24 @@ function PlayerInner({ arrangements, tuning }: Props) {
         />{' '}
         Loop
       </label>
+      {chunks && chunks.length > 0 && (
+        <label>
+          Chunk:{' '}
+          <select
+            value={String(selectedIdx)}
+            onChange={e => {
+              const idx = Number(e.target.value);
+              stopPlayback();
+              handleRegionChange(regionFromChunk(chunks, idx, fullSteps));
+            }}
+          >
+            <option value="0">All</option>
+            {chunks.map((c, i) => (
+              <option key={i} value={i + 1} title={`steps ${c.start}–${c.end}`}>{c.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         Speed:{' '}
         <input

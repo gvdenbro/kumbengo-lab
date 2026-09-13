@@ -158,3 +158,215 @@ def test_best_transpose_recovers_off_scale():
 
 def test_best_transpose_zero_when_already_optimal():
     assert m.best_transpose([65], fold=False) == (0, 0)
+
+
+def test_tokenize_single_note_start():
+    assert m.tokenize_steps([{"d": 0.35, "string": "L5"}]) == ["S1"]
+
+
+def test_tokenize_intervals_up_down_same():
+    # L5 (F3=53), R3 (C4=60) up, L4 (E3=52) down, L4 again same
+    steps = [
+        {"d": 0.35, "string": "L5"},
+        {"d": 0.35, "string": "R3"},
+        {"d": 0.35, "string": "L4"},
+        {"d": 0.35, "string": "L4"},
+    ]
+    assert m.tokenize_steps(steps) == ["S1", "U1", "D1", "=1"]
+
+
+def test_tokenize_duration_quantization():
+    # <=0.45 -> '1'; 0.45<d<0.70 -> '2'; >=0.70 -> '3'
+    steps = [
+        {"d": 0.35, "string": "L1"},
+        {"d": 0.50, "string": "L1"},
+        {"d": 0.90, "string": "L1"},
+        {"d": 0.45, "string": "L1"},
+        {"d": 0.70, "string": "L1"},
+    ]
+    assert m.tokenize_steps(steps) == ["S1", "=2", "=3", "=1", "=3"]
+
+
+def test_tokenize_rest_and_leading_rest():
+    # rests carry 'R'+dur; a leading rest keeps prev=None so the first
+    # sounding note still gets 'S'
+    steps = [
+        {"d": 0.30},
+        {"d": 0.50, "string": "L1"},
+        {"d": 0.35},
+        {"d": 1.00, "string": "L1"},
+    ]
+    assert m.tokenize_steps(steps) == ["R1", "S2", "R1", "=3"]
+
+
+def test_find_repeated_blocks_basic():
+    # 'U1' repeated twice at positions 2 and 4
+    tokens = ["S1", "D1", "U1", "D1", "U1", "D1"]
+    hits = m.find_repeated_blocks(tokens, min_len=2, max_len=6, min_occ=2)
+    assert ("U1", "D1") in hits
+    assert hits[("U1", "D1")] == [2, 4]
+
+
+def test_find_repeated_blocks_greedy_nonoverlap():
+    # pattern 'S1 U1' at 0,2,4 -- greedy keeps all three (non-overlapping: [0,1],[2,3],[4,5])
+    tokens = ["S1", "U1", "S1", "U1", "S1", "U1"]
+    hits = m.find_repeated_blocks(tokens, min_len=2, max_len=6, min_occ=2)
+    assert tuple(tokens[0:2]) in hits
+    # non-overlapping starts: 0 (covers 0..1), 2 (covers 2..3), 4 (covers 4..5)
+    assert hits[tuple(tokens[0:2])] == [0, 2, 4]
+
+
+def test_find_repeated_blocks_no_repeat():
+    tokens = ["S1", "U1", "D2", "U1", "D3"]
+    hits = m.find_repeated_blocks(tokens, min_len=3, max_len=6, min_occ=2)
+    assert hits == {}
+
+
+def test_significant_repeats_drops_short_prefix():
+    # 'U1 D1' is a prefix of the longer 'U1 D1 U1' at the same starts -> dropped
+    hits = {
+        ("U1", "D1"): [2, 8],
+        ("U1", "D1", "U1"): [2, 8],
+    }
+    sig = m.significant_repeats(hits, max_occ=12)
+    assert ("U1", "D1") not in sig
+    assert ("U1", "D1", "U1") in sig
+
+
+def test_significant_repeats_drops_too_frequent():
+    hits = {("U1", "D1"): list(range(20))}
+    sig = m.significant_repeats(hits, max_occ=12)
+    assert sig == {}
+
+
+def test_merge_near_repeats_merges_similar():
+    # 'U1 D1 U1' vs 'U1 D1 U2' differ by one substitution -> merged
+    blocks = {
+        ("U1", "D1", "U1"): [0],
+        ("U1", "D1", "U2"): [9],
+    }
+    groups = m.merge_near_repeats(blocks, max_edits=1)
+    assert len(groups) == 1
+    assert groups[0]["positions"] == [0, 9]
+
+
+def test_merge_near_repeats_keeps_distinct():
+    # 'U1 D1 U1' vs 'D1 U1 D1' differ by > 1 edit -> separate
+    blocks = {
+        ("U1", "D1", "U1"): [0],
+        ("D1", "U1", "D1"): [9],
+    }
+    groups = m.merge_near_repeats(blocks, max_edits=1)
+    assert len(groups) == 2
+
+
+def test_pick_dominant_longest_first():
+    # two groups: len 3 occ 5 vs len 5 occ 3 — both fit; the longer wins
+    steps = [{"d": 0.5, "string": "L1"}] * 40
+    groups = [
+        {"pattern": ("U1", "D1", "U1"), "positions": [0, 4, 8, 12, 16]},
+        {"pattern": ("U1", "D1", "U1", "D1", "U1"), "positions": [2, 10, 20]},
+    ]
+    dom = m.pick_dominant(groups, steps, phrase_min_len=3)
+    assert dom["pattern"] == ("U1", "D1", "U1", "D1", "U1")
+
+
+def test_pick_dominant_skips_short_and_oversized():
+    # phrase_min_len=8: all blocks too short -> None (fallback path)
+    steps = [{"d": 0.5, "string": "L1"}] * 40
+    groups = [{"pattern": ("U1", "D1", "U1"), "positions": [0, 9]},]
+    assert m.pick_dominant(groups, steps, phrase_min_len=8) is None
+    # len 8 passes phrase_min_len but 8 steps * 0.5s = 4.0s > max_dur=1.0 -> None
+    groups = [{"pattern": ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1"), "positions": [0, 9]},]
+    assert m.pick_dominant(groups, steps, max_dur=1.0) is None
+
+
+def test_occurrence_spans_nonoverlapping():
+    steps = [{"d": 0.5, "string": "L1"}] * 60
+    groups = [{"pattern": ("U1", "D1", "U1", "U1", "D1", "U1", "D1", "U1"), "positions": [5, 8, 20, 40]}]
+    spans = m.occurrence_spans(groups, steps)
+    # positions 5 -> (5,12); 8 overlaps (5..12) and is skipped; 20 and 40 kept
+    assert spans == [(5, 12), (20, 27), (40, 47)]
+
+
+# Patterns must be >= phrase_min_len=8 tokens to qualify as a dominant phrase
+# (see pick_dominant); shorter patterns never enter the repeat-chunk path.
+PAT8 = ("U1", "D1", "U1", "D1", "U1", "D1", "U1", "D1")
+
+
+def test_partition_tiles_whole_piece():
+    # dominant phrase repeated across the piece -> repeat chunks + gap fallback,
+    # everything tiles exactly, and a repeat chunk is labeled True.
+    # Verified: spans (5,12),(20,27); gap (13,19) of 7s < min_dur merges into
+    # the first repeat -> (5,19); the 12s gap (28,39) does not merge.
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": PAT8, "positions": [5, 20]}]
+    out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
+    prev_end = -1
+    for (s, e), _ in out:
+        assert s == prev_end + 1
+        prev_end = e
+    assert prev_end == len(steps) - 1
+    assert out[0][0][0] == 0
+    assert out[-1][0][1] == len(steps) - 1
+    assert out == [((0, 4), False), ((5, 19), True), ((20, 27), True), ((28, 39), False)]
+
+
+def test_partition_fallback_subdivides_long_leftover():
+    # 50s of continuous notes with no repeats: must split at largest gaps, all <= max_dur
+    steps = [{"d": 10.0, "string": "L1"}] * 5  # 50s, gaps all equal
+    out = m.partition_chunks(steps, [], max_dur=20.0, min_dur=8.0)
+    for (s, e), is_rep in out:
+        assert is_rep is False
+        dur = sum(st["d"] for st in steps[s : e + 1])
+        assert dur <= 20.0
+    # largest-gap-first cascade: 10, 10, 10, 20 seconds
+    assert [e - s + 1 for (s, e), _ in out] == [1, 1, 1, 2]
+
+
+def test_partition_repeat_chunk_stays_whole():
+    # a detected repeat span is kept as a single True chunk, and does not get
+    # merged into the (>= min_dur) gap that follows it
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": PAT8, "positions": [0, 20]}]
+    out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
+    assert out[0] == ((0, 7), True)  # first occurrence whole
+    assert out[2] == ((20, 27), True)  # second occurrence whole
+
+
+def test_partition_merges_tiny_gap_forward():
+    # two repeat spans one step apart: the 1s gap (13,13) is smaller than
+    # min_dur=8 and the merge stays <= max_dur, so it is absorbed into the
+    # first repeat chunk
+    steps = [{"d": 1.0, "string": "L1"}] * 40
+    groups = [{"pattern": PAT8, "positions": [5, 14]}]
+    out = m.partition_chunks(steps, groups, max_dur=20.0, min_dur=8.0)
+    assert out == [((0, 4), False), ((5, 13), True), ((14, 21), True), ((22, 39), False)]
+
+
+def test_chunk_invariants_across_range():
+    """Property-style: for varied random-ish step sequences the chunk plumbing
+    always produces an exact tiling with in-range windows."""
+    import random
+    rng = random.Random(42)
+    strings = ["L1", "L5", "R3", "R7", "L9"]
+    steps = []
+    prev = None
+    for i in range(120):
+        s = rng.choice(strings)
+        # bias toward repeating the previous string to create runs
+        if prev is not None and rng.random() < 0.5:
+            s = prev
+        prev = s
+        steps.append({"d": round(rng.uniform(0.3, 1.2), 3), "string": s})
+    tokens = m.tokenize_steps(steps)
+    hits = m.find_repeated_blocks(tokens)
+    sig = m.significant_repeats(hits)
+    groups = m.merge_near_repeats(sig)
+    out = m.partition_chunks(steps, groups)
+    assert out, "must always produce at least one chunk"
+    prev_end = -1
+    for (s, e), _ in out:
+        assert s == prev_end + 1 and 0 <= s <= e < len(steps)
+        prev_end = e
+    assert prev_end == len(steps) - 1
